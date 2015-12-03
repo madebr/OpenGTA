@@ -1,0 +1,80 @@
+2006/8/21, tok@openlinux.org.uk <tok@openlinux.org.uk>:
+> I have got it; quite a lot in there.
+>
+> Guess I have to try my luck with dosbox, wine and such; last time I
+> tried neither m1win nor junction25 were working very well (if I remember
+> correctly).
+
+thats weird, since i can run both topdown j25 and 3D beta j25 just
+fine, only M1win doesn't work (on xp) for some reason. i sent you old
+M1 for DOS in the pack i sent you the url to.
+
+> Thanks for the other tips; now the main problem are the incorrect
+> tex-coords. I think I have a pretty good idea why it breaks and a few
+> on how to fix it.
+> I found the off-by-one in the tile-indices on my own on the same afternoon.
+
+some of your side tiles are rotated, there is no side rotation, sides
+only have a bit flag which means "mirror" - no rotations.
+
+cds says about side tiles that bit 5 and 6 in type_map_ext contain the
+mirroring:
+bit 5 means that textures on north and south sides should be mirrored,
+bit 6 indicates same for east and west side of that cube.
+
+> I have started with the g24 files and hit a small snag; I don't
+> understand 'palette_index' (so far) and the actual way tiles
+> (lid+side textures; not working with sprites so far) index the clut
+> isn't working either.  [but don't tell me yet]
+
+the pal_index reindexes virtual palette numbers into actual - physical
+palette numbers.
+
+it works like this:
+
+you take tile palette index, you add palette_index
+
+for sprites for example you need to skip clut dedicated to tiles:
+pal_index = (g24_header.tileclut_size div 1024)+ activesprite.clut;
+
+for tiles it is just simple, but remember - if it is lid you need to
+add side tiles to the number (and side tiles + lid tiles for animation
+/ aux tiles):
+pal_index[tile number]
+
+please_see_attached_illustration which also shows the palclut visualized :)
+
+> I have put a few new screenshots (after your fixes) up and removed the
+> code until I have worked out the license.
+> I am soon going on vacation for some time, so there won't be any updates
+> for a few weeks. You'll hear from me when I am back.
+>
+> these already look a lot better
+> http://skybound.portland.co.uk/gta/nyc_3d__two_bugs_down_2006-08-21.jpg
+
+In the nyc i can clearly see you are rotating side tiles, where they
+shouldn't be, side tiles are never rotated in gta1 (they are in gta2)
+in gta1 they just have mirroring flag in type_map_ext.
+
+> http://skybound.portland.co.uk/gta/far_out_2006-08-21.jpg
+
+and i am seeing this right? - the san andreas map on screenshoot -
+unless you rotated the camera itself, should be rotated 180° left (i
+know how it shouls look, since i drawn entire san andreas map layout
+in mspaint with alt + tabbing 7 years ago ;) ).
+
+> http://skybound.portland.co.uk/gta/texture_coords_are_next_2006-08-21.jpg
+
+this looks quite right, but it appears lid rotation is wrong in blocks
+where the type_map_ext mirror flags are used.
+
+i have a delphi project written in pascal, which can render all tiles
+from g24 files, i can send you whole source code for it, it may help
+you understand how g24 files work :)
+
+thats all for now,  and enjoy your vacations! :)
+
+
+> Best regards,
+> tok
+>

@@ -1,0 +1,20 @@
+GTA Settings runs fine here. Winex 2.2.1. 
+---
+In order to run "GTA Settings.exe" you need a legit Windows install (so you have MFC42.DLL to be specific). The DLL needs to be in your WineX "windows\system32" directory. 
+---
+no need to use the setup tool, drop this into your system.reg:
+
+[Software\\DMA Design\\Grand Theft Auto]
+"Language"=dword:00000000
+
+[Software\\DMA Design\\Grand Theft Auto\\Controls]
+"Control 0"=dword:000000cb
+"Control 1"=dword:000000cd
+"Control 2"=dword:000000c8
+"Control 3"=dword:000000d0
+"Control 4"=dword:00000039
+"Control 5"=dword:0000001c
+"Control 6"=dword:0000001d
+"Control 7"=dword:0000002d
+"Control 8"=dword:0000002c
+"Control 9"=dword:0000000f

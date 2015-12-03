@@ -1,0 +1,115 @@
+you should only work with g24 files, since most, if not all mods for gta
+only use g24 files, they are much better quality and are not any harder than
+gry files (actually there are also GRX files described in cds.doc for use by
+editor but nobody has these).
+
+you should take a look at how the slope models work, it is all in very
+simple order, you could simplify things a lot, since gta1 maps don't use
+more complex things.
+
+my friend steve made some nice code for rendering map slopes some time back,
+here is how it works in pascal, basicly it modifies edge heights for the
+cube depending on slope number, slope 0 is normal cube and other slope
+levels modify the height, the bottom vertices stay where they are, so you
+can easily draw quads using this:
+
+        //  1---2
+        //  | z |
+        //  3---4
+
+        // calculate slope (lid vertex z values)
+        case s of
+          1..8: // 2 blocks
+            begin
+              z1:=(((s-1) mod 2)+ord(s in [1,2, 5,6]))/2;
+              z2:=(((s-1) mod 2)+ord(s in [1,2, 7,8]))/2;
+              z3:=(((s-1) mod 2)+ord(s in [3,4, 5,6]))/2;
+              z4:=(((s-1) mod 2)+ord(s in [3,4, 7,8]))/2;
+            end;
+          9..40: // 8 blocks
+            begin
+              z1:=(((s-9) mod 8)+ord(s in [9..16, 25..32]))/8;
+              z2:=(((s-9) mod 8)+ord(s in [9..16, 33..40]))/8;
+              z3:=(((s-9) mod 8)+ord(s in [17..24, 25..32]))/8;
+              z4:=(((s-9) mod 8)+ord(s in [17..24, 33..40]))/8;
+            end;
+          41..44: // 1 block
+            begin
+              z1:=ord(s in [41, 43]);
+              z2:=ord(s in [41, 44]);
+              z3:=ord(s in [42, 43]);
+              z4:=ord(s in [42, 44]);
+            end;
+        else // no slope
+          z1:=1; z2:=1; z3:=1; z4:=1;
+          //z1:=0; z2:=0; z3:=0; z4:=0;
+        end;
+
+i don't recomment display lists for this, i tried it in my game and got huge
+slowdowns, maybe if you compiled bigger parts of maps into it, but you will
+need to take into account that the game uses sprites, and sprites + slopes
+don't mix too good, in my game i solved this by rendering without any depth
+buffer at all, but i have to do some painful sorting of rendering order, if
+you want to render map with zbuffer you could use projected textures for
+cars or render map in layers bottom to up, switching off zbuffer when
+rendering sprites.
+
+if a cube is set to flat, all faces on it use transparency, and if left +
+right faces use same texture the right face is folded into left double-sided
+tile one to form fences (same applies to up and bottom tiles, they create a
+double-sided fence on north tile only)
+
+transparency rule in gta this:
+
+every palette index 0 is transparent if the map tile is set to use it. i
+recommend you to convert graphical data, take the 8 bit graphic and palette
+and create 32 bit image and upload it to opengl, create alpha transparency
+channel using palette index 0.
+
+every tile can have 4 shading levels, in g24 they are stored in palette
+clut, i recommend you to ignore the shading data as whole, and use glcolor
+commands to apply shading levels, also gtacars g24 editor has a terrible
+habbit of generating these shades wrong and they look ugly in some mode.
+
+for sprites, they use one palette, except peds (pedesterian and cop) and
+cars,
+i suggest your game should render all ped sprites into one bigger texture,
+using vertex coordinates to address each of these, you will need to create
+around 30 or more different recoloured remaps while loading g24 file (all
+tiles would fit into 256*512 texture if you use block sorting algorythm to
+optimize room usage), every ped remap would cost 524.288 bytes, 30 remaps
+would so end up at 15728640b - 15 mb, too bad that all new hardware comes
+without support for palettized textures, they would help a lot here, gta1
+for windows for example uses driectdraw and the renderer is custom built.
+
+cars are even more difficult, they come in 16 different color variant, and
+each of cars can have delta damage or doors or special police light
+animations on them, i talked to dma employee working on gta2 and he said
+that each car simply uses its own texture, which is created, modified and
+destroyed as needed, don't worrs about speed, i done tests for my own game
+and i can say that this is not a problem, the deltas don't change too often,
+and when they are they are cached as long as the car is onscreen.
+
+some fonts in gta1 have limited use, such as pager messages or score counter
+so they are missing characters or use modified order, a lot of font stuff is
+hard-coded, but i found out that some onscreen fonts such as score
+multiplier and lifes counter fonts are actually remapped using a palette in
+G24 file (!!), i suggest you to just use the font as-is and ignore the
+recoloring variants, probably very few people would notice this, but then
+you can recolour them with glcolor commands aniway.
+
+the idea of a project website sounds good, don't worry about legal troubles,
+take2 won't bother about this little project for a older game that they
+released as free few years ago on rockstar classics website (
+http://www.rockstargames.com/classics/), they did discreetly interfere when
+a member on gtaforums ran a project to bring gta vice city map to unreal
+tournament engine, and for hot cofee fiasco they knew it was their fault all
+the time, and they even supported us with emails that aren't for the public,
+as for the CDS and MTD docs, they were officaly released to public with no
+licenses (same for gta2 too) so using them is not legal trouble.
+
+also when you have time check out http://www.dmadesign.org/ it is DMA Design
+history website ran by Mike Daily who worked on gta1 graphical engine for
+gta1, gta1 prototypes and created lemmings game, it has some history pages
+and a forum, altrough it looks inactive it is not, if you want you can ask
+him questions in the forum :)

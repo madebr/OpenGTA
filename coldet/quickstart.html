@@ -1,0 +1,52 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>ColDet - Quick Start</title>
+</head>
+<body>
+
+<center>
+<h1>
+Quickstart:</h1></center>
+
+<h3>
+Model Setup:</h3>
+For each mesh, create a collision model by using:
+<pre>CollisionModel3D* model = newCollisionModel3D();</pre>
+(Shared meshes can use one model)
+<br>Add all the triangles the mesh has to the model by using:
+<pre>model->addTriangle(vertex1,vertex2,vertex3);</pre>
+Call:
+<pre>model->finalize();</pre>
+&nbsp;
+<h3>
+Collision Test:</h3>
+Assuming you have two models (m1,m2), either set both of their’s transformation
+<br>matrices (world matrix) by calling:
+<pre>m1->setTransform(model1_transformation_matrix);</pre>
+
+<pre>m2->setTransform(model2_transformation_matrix);</pre>
+or set only one of them (in case you’re testing the model against itself,
+with different
+<br>transform) Then call:
+<pre>m1->collision(m2);</pre>
+The function returns a bool indicating if a collision has occurred.&nbsp;&nbsp;
+Note that if you test a
+<br>model against itself with a different transform, you need to supply
+that transform as an
+<br>optional parameter.
+<br>&nbsp;
+<h3>
+Collision Test Results:</h3>
+Use the getCollidingTriangles function to get which triangles have collided.&nbsp;&nbsp;
+Use the
+<br>getCollisionPoint function to find the exact collision point.
+<br>&nbsp;
+<h3>
+Other Collision Tests:</h3>
+You can use the rayCollision and sphereCollision functions to test the
+model against
+<br>these primitives.
+</body>
+</html>

@@ -1,0 +1,133 @@
+i emailed you all this but am posting it here just-in-case: 
+ 
+hi, i declare myself an expert on gta1 and gta2 map format, i can help you with anything you ask, email me at jernejcoder@gmail.com, let's get straight to answers: 
+
+* Can anyone tell me more about the height/size of blocks as drawn in-game? Currently I texture a unit-cube, but that doesn't look right (may have other causes).
+
+one gta cube is 1*1*1 unit big
+
+* When looking at the "slope type" bits in "type_map" (CDS.DOC) I am not sure howto interpret something like "1- 2 = up 26 low, high"; is it 26 degrees, pixel or another unit?
+
+use it like this: 
+ 
+* 1- 2 = up 26 low, high
+* 3 - 4 = down 26 low, high
+* 5 - 6 = left 26 low, high
+* 7 - 8 = right 26 low, high
+
+* 9 - 16 = up 7 low - high
+* 17 - 24 = down 7 low - high
+* 25 - 32 = left 7 low - high
+* 33 - 40 = right 7 low - high
+
+* 41 - 44 = 45 up,down,left,right
+
+there are 3 types of slopes in gta1, (90°, 45° and 7°) all change level for just one cube.
+take parts 1 and 2, these when used together make a pass from lower to upper level over 2 cubes, cube 1 is lower and cube 2 is upper part for this.
+
+* Concerning the FON files; the GTA hacking handbook (http://gta.mendelsohn.de/Reference/Fil_index.html) seems to define them, but the link is broken; the older (zip) version doesn't contain that file. Is that fileformat documented somewhere?
+
+this is very easy format: 
+ 
+Quote:
+
+
+type
+TFon_file_header = packed record
+NumPics:byte;
+height:Byte;
+end;
+
+type
+TFon_image_header = packed record
+width:byte;
+end;
+
+the file starts with TFon_file_header which tells you num pics and all pictures height
+
+then for NumPics there are repeatitous data for characters starting with TFon_image_header that tells you character width, following that you get charwidth * fontheight of 8 bit bitmap data. 
+
+last 768 bytes in a file is palette (RGB format)
+
+
+
+
+i have sound format as well: 
+
+Quote:
+
+
+grand theft auto .sdt format 
+this file is copyright 2002 Delfi delfi@volja.net 
+data types are named as used in borland delphi's object pascal language 
+ 
+warning! 
+this is for GTA1 and GTA:L only
+gta2 and gta3 use different format... 
+ 
+sdt files contains info for raw sound data files with same name but raw extension
+ 
+divide size of sdt file by 12 to get number of sound records
+each record contains information on how to use raw file
+ 
+here is delphi packed record: 
+ 
+Tsoundentry = packed record
+rawstart: longword;
+rawsize: longword;
+samplerate: longword;
+end;
+ 
+you can export sound like this: 
+ 
+make new empty file and write wav file header: 
+ 
+TWave_data = packed record
+  ChunkID: array[0..3] of char;     // 'RIFF' text
+  ChunkSize: Longword;
+  Format: array[0..3] of char;      // 'WAVE' text
+  Subchunk1ID: array[0..3] of char; // 'fmt ' text
+  Subchunk1Size: Longword;
+  AudioFormat: Word;
+  NumChannels: Word;
+  SampleRate: Longword;
+  ByteRate: Longword;
+  BlockAlign: Word;
+  BitsPerSample: Word;
+  Subchunk2ID: array[0..3] of char; // 'data' text
+  Subchunk2Size: Longword;
+end;
+ 
+set info in header
+ 
+Wave_data.ChunkID := 'RIFF';
+Wave_data.ChunkSize:= 49188;
+Wave_data.Format:= 'WAVE';
+Wave_data.Subchunk1ID:= 'fmt ';
+Wave_data.Subchunk1Size:= 16;
+Wave_data.AudioFormat:= 1;
+Wave_data.NumChannels:= 1;
+Wave_data.SampleRate:= sample rate of entry
+Wave_data.BitsPerSample:=8;
+Wave_data.ByteRate:= sample rate of entry
+Wave_data.BlockAlign:=1; 
+Wave_data.Subchunk2ID:= 'data';
+Wave_data.Subchunk2Size:= raw data size 
+ 
+now copy raw data and write it after this header 
+if you did everything correct you will be able to play wav file with any program... 
+ 
+something interesting from GTA Wave gta sound editor readme file: 
+In GTA, all the sounds are in 8-bit mono format, except for those in
+LEVEL000. The sounds in this file are 16-bit, the first three being
+stereo.
+
+
+
+should this be all for now, i have slope cubes in a 3d format representation if you want, email me at jernejcoder@gmail.com  or MSN - stdcall@gmail.com (messenger only) 
+ 
+i'm onto a similar project, a gta1 / gta2 clone project, but gta formats are too limiting for me, and i went onto coding my own gta game clone, you can get screenshoots & demo http://gtatools.com/tdc/, it is written with opengl and delphi 4, i've gotten rendering pretty much perfect, and made my own map and sprite editor, but won't be compatible with gta file formats, but converters can be easily done, here is a picture: 
+ 
+gtatools.com/tdc/tdcware.jpg 
+ 
+best regards, Jernej L.

@@ -1,0 +1,27 @@
+Cityscape Data Structure
+http://azz.gouranga.com/files/cds.zip
+
+Do not miss the rest of these gems:
+http://azz.gouranga.com/index.php?page=8
+
+GTA Mission Template Description (can be found elsewhere)
+http://www.fileplanet.com/19571/10000/fileinfo/2/0/section/General
+
+GTA2 Format Docs (somewhat related ;-)
+http://files.filefront.com/GTA2+Format+Docs/;10536;;/fileinfo.html
+
+The unofficial Grand Theft Auto Reference Handbook
+http://gta.mendelsohn.de/Reference/
+
+Corrections and Notes regarding DMA GTA technical doument [cds.doc v12.10]
+http://www.fifengr.com/gtacars/topic.html
+
+--- other links ---
+A Stream-based Time Synchronization Technique For Networked Computer Games
+http://www.mine-control.com/zack/timesync/timesync.html
+
+Fix Your Timestep!
+http://www.gaffer.org/game-physics/fix-your-timestep/
+
+Car Physics for Games - by Marco Monster
+http://web.archive.org/web/20051218060818/http://home.planet.nl/~monstrous/tutcar.html

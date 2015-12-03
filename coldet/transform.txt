@@ -1,0 +1,21 @@
+The matrices used to describe model transformations are affine 4x4 matrices
+which are D3D style, row major with translations in the 4th row.
+
+1  2  3  4
+5  6  7  8
+9 10 11 12
+13 14 15 16
+
+The translation vector Tx,Ty,Tz is in elements 13,14,15
+
+If you use the transposed scheme, which is:
+1 5  9 13
+2 6 10 14
+3 7 11 15
+4 8 12 16
+
+With the translation vector in elements 13,14,15 you can use
+this matrix without any conversion.
+
+It is also important to note that the transformations should include
+no scaling, as it disrupts the consistency of the collision model.

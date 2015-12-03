@@ -1,0 +1,261 @@
+/************************************************************************
+* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+*                                                                       *
+* This software is provided as-is, without any express or implied       *
+* warranty. In no event will the authors be held liable for any         *
+* damages arising from the use of this software.                        *
+*                                                                       *
+* Permission is granted to anyone to use this software for any purpose, *
+* including commercial applications, and to alter it and redistribute   *
+* it freely, subject to the following restrictions:                     *
+*                                                                       *
+* 1. The origin of this software must not be misrepresented; you must   *
+* not claim that you wrote the original software. If you use this       *
+* software in a product, an acknowledgment in the product documentation *
+* would be appreciated but is not required.                             *
+*                                                                       *
+* 2. Altered source versions must be plainly marked as such, and must   *
+* not be misrepresented as being the original software.                 *
+*                                                                       *
+* 3. This notice may not be removed or altered from any source          *
+* distribution.                                                         *
+************************************************************************/
+#include <map>
+#include <cassert>
+#include "gl_spritecache.h"
+#include "opengta.h"
+#include "dataholder.h"
+#include "buffercache.h"
+#include "log.h"
+
+namespace OpenGL {
+  SpriteIdentifier::SpriteIdentifier() : sprNum(0), remap(-1), delta(0) {}
+  SpriteIdentifier::SpriteIdentifier(PHYSFS_uint16 num, PHYSFS_sint16 map, PHYSFS_uint32 d) :
+    sprNum(num), remap(map), delta(d) {}
+  SpriteIdentifier::SpriteIdentifier(const SpriteIdentifier & other) :
+    sprNum(other.sprNum), remap(other.remap), delta(other.delta) {}
+
+  bool SpriteIdentifier::operator ==(const SpriteIdentifier & other) const {
+    if ((sprNum == other.sprNum) &&
+      (remap == other.remap) &&
+      (delta == other.delta))
+      return true;
+    return false;
+  }
+  bool SpriteIdentifier::operator <(const SpriteIdentifier & other) const {
+    if (sprNum < other.sprNum)
+      return true;
+    else if (sprNum > other.sprNum)
+      return false;
+    if (remap < other.remap)
+      return true;
+    else if (remap > other.remap)
+      return false;
+    if (delta < other.delta)
+      return true;
+    return false;
+  }
+
+  SpriteCache::SpriteCache() {
+#ifdef DO_SCALE2X
+    doScale2x = true;
+#else
+    doScale2x = false;
+#endif
+  }
+
+  void SpriteCache::setScale2x(bool enabled) {
+#ifndef DO_SCALE2X
+    if (enabled)
+      // FIXME: for some reason I can not catch this exception, thus it only prints
+      //throw E_NOTSUPPORTED("Scale2x feature disabled at compile time");
+      ERROR << "scale2x feature disabled at compile time - ignoring request" << std::endl;
+#endif
+    if (loadedSprites.begin() == loadedSprites.end()) {
+      doScale2x = enabled;
+    }
+    else {
+      ERROR << "scale2x cannot be set during game - ignoring request" << std::endl;
+    }
+  }
+
+  bool SpriteCache::getScale2x() {
+    return doScale2x;
+  }
+
+  SpriteCache::~SpriteCache() {
+    clearAll();
+  }
+
+  void SpriteCache::clearAll() {
+    SpriteMapType::iterator i = loadedSprites.begin();
+    while (i != loadedSprites.end()) {
+      glDeleteTextures(1, &(*i).second.inPage);
+      ++i;
+    }
+    loadedSprites.clear();
+  }
+
+  bool SpriteCache::has(PHYSFS_uint16 sprNum) {
+    SpriteMapType::iterator i = loadedSprites.find(SpriteIdentifier(sprNum, -1, 0));
+    if (i != loadedSprites.end())
+      return true;
+    INFO << "sprite not loaded sprnum: " << sprNum <<std::endl;
+    return false;
+  }
+
+  bool SpriteCache::has(PHYSFS_uint16 sprNum, PHYSFS_sint16 remap) {
+    SpriteMapType::iterator i = loadedSprites.find(SpriteIdentifier(sprNum, remap, 0));
+    if (i != loadedSprites.end())
+      return true;
+    INFO << "sprite not loaded sprnum: " << sprNum << " remap: " << remap <<std::endl;
+    return false;
+  }
+
+  bool SpriteCache::has(const SpriteIdentifier & si) {
+    SpriteMapType::iterator i = loadedSprites.find(si);
+    if (i != loadedSprites.end())
+      return true;
+    INFO << "sprite not loaded sprnum: " << si.sprNum << " remap: " << si.remap << 
+      " delta: " << si.delta << std::endl;
+    return false;
+  }
+
+  PagedTexture & SpriteCache::get(PHYSFS_uint16 sprNum) {
+    SpriteMapType::iterator i = loadedSprites.find(SpriteIdentifier(sprNum, -1, 0));
+    assert(i != loadedSprites.end());
+    return i->second;
+  }
+
+  PagedTexture & SpriteCache::get(PHYSFS_uint16 sprNum, PHYSFS_sint16 remap) {
+    SpriteMapType::iterator i = loadedSprites.find(SpriteIdentifier(sprNum, remap, 0));
+    assert(i != loadedSprites.end());
+    return i->second;
+  }
+
+  PagedTexture & SpriteCache::get(const SpriteIdentifier & si) {
+    SpriteMapType::iterator i = loadedSprites.find(si);
+    assert(i != loadedSprites.end());
+    return i->second;
+  }
+
+  void SpriteCache::add(PHYSFS_uint16 sprNum, PHYSFS_sint16 remap, PagedTexture & t) {
+    loadedSprites.insert(
+      std::make_pair<SpriteIdentifier, PagedTexture>(
+        SpriteIdentifier(sprNum, remap, 0), t));
+  }
+
+  void SpriteCache::add(const SpriteIdentifier & si, PagedTexture & t) {
+    loadedSprites.insert(std::make_pair<SpriteIdentifier, PagedTexture>(si, t));
+  }
+
+  PagedTexture SpriteCache::create(PHYSFS_uint16 sprNum, 
+    OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes st, PHYSFS_sint16 remap  = -1 ) {
+    /*
+    OpenGTA::GraphicsBase & style = OpenGTA::StyleHolder::Instance().get();
+    PHYSFS_uint16 real_num = style.spriteNumbers.reIndex(sprNum, st);
+
+    OpenGTA::GraphicsBase::SpriteInfo* info = style.getSprite(real_num);
+    assert(info);
+    
+    OpenGL::PagedTexture t = createSprite(real_num, remap, info);
+    add(real_num, remap, t);
+    return t;
+    */
+    return create(sprNum, st, remap, 0);
+  }
+
+  PagedTexture SpriteCache::create(PHYSFS_uint16 sprNum,
+        OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes st,
+        PHYSFS_sint16 remap, PHYSFS_uint32 delta) {
+    OpenGTA::GraphicsBase & style = OpenGTA::StyleHolder::Instance().get();
+    PHYSFS_uint16 real_num = style.spriteNumbers.reIndex(sprNum, st);
+
+    OpenGTA::GraphicsBase::SpriteInfo* info = style.getSprite(real_num);
+    assert(info);
+    
+    OpenGL::PagedTexture t = createSprite(real_num, remap, delta, info);
+    SpriteIdentifier si(real_num, remap, delta);
+    add(si, t);
+    return t;
+  }
+
+  OpenGL::PagedTexture SpriteCache::createSprite(size_t sprite_num, PHYSFS_sint16 remap,
+    PHYSFS_uint32 delta, OpenGTA::GraphicsBase::SpriteInfo* info) {
+    INFO << "creating new sprite: " << sprite_num << " remap: " << remap << std::endl;
+    unsigned char* src = OpenGTA::StyleHolder::Instance().get().
+      getSpriteBitmap(sprite_num, remap , delta);
+    unsigned int glwidth = 1;
+    unsigned int glheight = 1;
+
+    while(glwidth < info->w)
+      glwidth <<= 1;
+    while(glheight < info->h)
+      glheight <<= 1;
+    unsigned char* dst = Util::BufferCacheHolder::Instance().requestBuffer(glwidth * glheight * 4);
+    Util::BufferCacheHolder::Instance().unlockBuffer(src);
+    assert(dst != NULL);
+    unsigned char * t = dst;
+    unsigned char * r = src;
+    for (unsigned int i = 0; i < info->h; i++) {
+      memcpy(t, r, info->w * 4);
+      t += glwidth * 4;
+      r += info->w * 4;
+    }
+#ifdef DO_SCALE2X
+    if (doScale2x) {
+#define MAX(a,b)    (((a) > (b)) ? (a) : (b))
+#define MIN(a,b)    (((a) < (b)) ? (a) : (b))
+
+      const int srcpitch = glwidth * 4;
+      const int dstpitch = glwidth * 8;
+      Uint8* srcpix = dst;
+      Util::BufferCacheHolder::Instance().lockBuffer(dst);
+      Uint8* dstpix = Util::BufferCacheHolder::Instance().requestBuffer(glwidth * glheight * 4 * 4);
+      Uint32 E0, E1, E2, E3, B, D, E, F, H;
+      for(unsigned int looph = 0; looph < glheight; ++looph)
+      {
+        for(unsigned int loopw = 0; loopw < glwidth; ++ loopw)
+        {
+          B = *(Uint32*)(srcpix + (MAX(0,looph-1)*srcpitch) + (4*loopw));
+          D = *(Uint32*)(srcpix + (looph*srcpitch) + (4*MAX(0,loopw-1)));
+          E = *(Uint32*)(srcpix + (looph*srcpitch) + (4*loopw));
+          F = *(Uint32*)(srcpix + (looph*srcpitch) + (4*MIN(glwidth-1,loopw+1)));
+          H = *(Uint32*)(srcpix + (MIN(glheight-1,looph+1)*srcpitch) + (4*loopw));
+
+          E0 = D == B && B != F && D != H ? D : E;
+          E1 = B == F && B != D && F != H ? F : E;
+          E2 = D == H && D != B && H != F ? D : E;
+          E3 = H == F && D != H && B != F ? F : E;
+
+          *(Uint32*)(dstpix + looph*2*dstpitch + loopw*2*4) = E0;
+          *(Uint32*)(dstpix + looph*2*dstpitch + (loopw*2+1)*4) = E1;
+          *(Uint32*)(dstpix + (looph*2+1)*dstpitch + loopw*2*4) = E2;
+          *(Uint32*)(dstpix + (looph*2+1)*dstpitch + (loopw*2+1)*4) = E3;
+        }
+      }
+      Util::BufferCacheHolder::Instance().unlockBuffer(dst);
+      dst = dstpix;
+    }
+#endif
+
+    GLuint texid;
+    glGenTextures(1, &texid);
+    glBindTexture(GL_TEXTURE_2D, texid);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#ifdef DO_SCALE2X
+    if (doScale2x)
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glwidth*2, glheight*2, 0, GL_RGBA, GL_UNSIGNED_BYTE, dst);
+    else
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glwidth, glheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, dst);
+#else
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glwidth, glheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, dst);
+#endif
+    return OpenGL::PagedTexture(texid, 0, 0, 
+      float(info->w)/float(glwidth), float(info->h)/float(glheight));
+  }
+
+}

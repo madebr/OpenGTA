@@ -1,0 +1,79 @@
+== OpenGTA project overview ==
+
+- \subpage Fileformats
+- \subpage Rendering
+
+
+\namespace Audio
+\brief Making noise.
+
+Very incomplete wrapper around \e SDL_sound and \e SDL_mixer.
+
+\namespace Loki
+\brief From: http://loki-lib.sourceforge.net/
+
+Loki is a C++ library of designs, containing flexible implementations 
+of common design patterns and idioms.
+
+I only use the \e Singleton a lot, but there is some nice code there.
+
+\namespace OpenGL
+\brief Drawing stuff
+
+A bunch of quite experimental code; the highlights:
+
+- #OpenGL::TextureCache
+
+The following are used as \e Singletons:
+- #OpenGL::Camera      --- #OpenGL::CameraHolder
+- #OpenGL::Screen      --- #OpenGL::ScreenHolder
+- #OpenGL::SpriteCache --- #OpenGL::SpriteCacheHolder
+
+\namespace Util
+\brief This and that
+
+- #Util::ci_string
+- #Util::Log
+- A bunch of exceptions derived from std::exception
+
+And a \e Singleton object:
+- #Util::BufferCache   --- #Util::BufferCacheHolder
+
+
+= Fileformats of the GTA1 data files =
+
+Fortunately some documentation exists, specifically about
+the most important formats.
+
+Reading _(cds.doc) is probably vital; you may want them all.
+So in no particular order:
+
+include(`doc/doc_links.txt')dnl ~oh m4, your glorious thing~
+
+Support for the following formats is implemented:
+- CMP (compressed map)    #OpenGTA::Map
+- FNT (font bitmaps)      #OpenGTA::Font
+- FXT (text strings)      #OpenGTA::MessageDB
+- GRY (8bit graphics)     #OpenGTA::Graphics8Bit
+- G24 (24 bit graphics)   #OpenGTA::Graphics24Bit
+- SDT (RAW sound offsets) #OpenGTA::SoundsDB
+
+
+= Rendering the scene =
+
+The central part is #OpenGTA::CityView, which renders the #OpenGTA::Map
+using the graphics loaded inside a derived instance of 
+#OpenGTA::GraphicsBase.
+
+CityView maintains a couple of #OpenGL::TextureCache (s) to store the
+texture-ids (for the static city blocks).
+
+#OpenGTA::BlockData contains the vertex data and texture coords for
+each of the of the possible blocks; this corresponds to
+#OpenGTA::Map::BlockInfo::slopeType.
+
+Drawing of objects (sprites) is being moved into #OpenGTA::SpriteManager,
+though this is not yet complete.
+
+#OpenGL::DrawableFont can display strings using the bitmaps from
+a #OpenGTA::Font.

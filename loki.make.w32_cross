@@ -1,0 +1,19 @@
+VER = 0.1.5
+
+all: loki/lib/libloki.a
+
+export CXX = i586-mingw32msvc-g++
+export AR  = i586-mingw32msvc-ar
+
+loki-$(VER).tar.gz:
+	wget http://surfnet.dl.sourceforge.net/sourceforge/loki-lib/loki-$(VER).tar.gz
+
+loki-$(VER): loki-$(VER).tar.gz
+	tar zxf loki-$(VER).tar.gz
+
+loki: loki-$(VER)
+	mv loki-$(VER) loki
+
+loki/lib/libloki.a: loki
+	./tools/replace_in_files.sh 's/export OS ?= .*/export OS = Windows/' loki/Makefile
+	make -C loki build-static build-shared

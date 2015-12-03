@@ -1,0 +1,64 @@
+Copyright (c) 2005-2006 tok@openlinux.org.uk
+
+This software is provided 'as-is', without any express or implied warranty.
+In no event will the authors be held liable for any damages arising from
+the use of this software.
+
+The act of running this software is not restricted; you may redistribute
+it and the corresponding machine-readable source code freely, subject to
+the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software.
+
+2. You may not use the executable form in a commercial product.
+
+3. A derived work must either inherit the non-commercial restriction or
+   all the data structures copyrighted by DMA Design have to be replaced.
+   Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+
+5. This notice may not be removed or altered from any distribution.
+
+***************************************************************************
+The file formats of the data files are described in documentation released
+by DMA Design; this software would not exist without it.
+
+It is my understanding that this documentation was meant for fans of the
+original game, thus I cannot place the implementing code under a free
+license.
+This restriction only applies to a few of the code files (marked as such).
+
+***************************************************************************
+This software includes a number of libraries and smaller code blocks;
+these remain under their respective licenses.
+
+* SDL - Simple DirectMedia Layer
+  Copyright (C) 1997-2006 Sam Lantinga
+  GNU Lesser General Public License
+
+* SDL_image
+  Copyright (C) 1999-2004 Sam Lantinga
+  GNU Library General Public License
+
+* PhysicsFS
+  Copyright (c) 2003 Ryan C. Gordon and others
+  This library is distributed under the terms of the zlib license
+
+* The Loki Library
+  Copyright (c) 2001 by Andrei Alexandrescu (and others)
+  MIT license as well as the following:
+  
+ Permission to use, copy, modify, distribute and sell this software for any 
+ purpose is hereby granted without fee, provided that the above copyright 
+ notice appear in all copies and that both that copyright notice and this 
+ permission notice appear in supporting documentation.
+
+***************************************************************************
+Please do not redistribute the data files of the original game together
+with this software.
+
+GTA is a trademark of Take 2 Interactive Software Inc.
+
+This project is not affiliated with either Take 2 Interactive or DMA 
+Design.

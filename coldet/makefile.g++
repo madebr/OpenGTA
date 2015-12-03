@@ -1,0 +1,50 @@
+PROJECT=coldet
+LIB=libcoldet.a
+CC=g++
+OPT=-O2
+CFLAGS=-c $(OPT) -DGCC
+OBJS= \
+coldet.o \
+coldet_bld.o \
+box.o \
+box_bld.o \
+tritri.o \
+math3d.o \
+sysdep.o \
+mytritri.o
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	rm -f $(LIB)
+	ar cr $(LIB) $(OBJS)
+	ranlib $(LIB)
+
+coldet.o: coldet.cpp
+	$(CC) $(CFLAGS) coldet.cpp
+
+coldet_bld.o: coldet_bld.cpp
+	$(CC) $(CFLAGS) coldet_bld.cpp
+
+box.o: box.cpp
+	$(CC) $(CFLAGS) box.cpp
+
+box_bld.o: box_bld.cpp
+	$(CC) $(CFLAGS) box_bld.cpp
+
+tritri.o: tritri.c
+	gcc $(CFLAGS) tritri.c
+
+mytritri.o: mytritri.cpp
+	$(CC) $(CFLAGS) mytritri.cpp
+
+math3d.o: math3d.cpp
+	$(CC) $(CFLAGS) math3d.cpp
+
+sysdep.o: sysdep.cpp
+	$(CC) $(CFLAGS) sysdep.cpp
+
+
+clean:
+	rm -f *.o $(LIB)
+
