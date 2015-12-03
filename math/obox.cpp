@@ -8,7 +8,7 @@
 //
 // Check if a point is in this bounding box
 //
-bool OBox::IsPointInBox(const Vector3D &InP)
+bool OBox::IsPointInBox(const Vector3D &InP) const
 {
   // Rotate the point into the box's coordinates
   Vector3D P = Transform(InP, m_M.Inverse());
@@ -23,7 +23,7 @@ bool OBox::IsPointInBox(const Vector3D &InP)
 //
 // Check if a sphere overlaps any part of this bounding box
 //
-bool OBox::IsSphereInBox( const Vector3D &InP, float fRadius)
+bool OBox::IsSphereInBox( const Vector3D &InP, float fRadius) const
 {
   float fDist;
   float fDistSq = 0;
@@ -44,7 +44,7 @@ bool OBox::IsSphereInBox( const Vector3D &InP, float fRadius)
 //
 // Check if the bounding box is completely behind a plane( defined by a normal and a point )
 //
-bool OBox::BoxOutsidePlane( const Vector3D &InNorm, const Vector3D &InP )
+bool OBox::BoxOutsidePlane( const Vector3D &InNorm, const Vector3D &InP ) const
 {
   // Plane Normal in Box Space
   Vector3D Norm = rotateVector(InNorm, m_M.Inverse() );
@@ -62,7 +62,7 @@ bool OBox::BoxOutsidePlane( const Vector3D &InNorm, const Vector3D &InP )
 //
 // Does the Line (L1, L2) intersect the Box?
 //
-bool OBox::IsLineInBox( const Vector3D& L1, const Vector3D& L2 )
+bool OBox::IsLineInBox( const Vector3D& L1, const Vector3D& L2 ) const
 {	
   // Put line in box space
   Matrix3D MInv = m_M.Inverse();
@@ -90,7 +90,7 @@ bool OBox::IsLineInBox( const Vector3D& L1, const Vector3D& L2 )
 //
 // Returns a 3x3 rotation matrix as vectors
 //
-inline void OBox::GetInvRot( Vector3D *pvRot )
+inline void OBox::GetInvRot( Vector3D *pvRot ) const
 {
   pvRot[0] = Vector3D( m_M.m[0][0], m_M.m[0][1], m_M.m[0][2] );
   pvRot[1] = Vector3D( m_M.m[1][0], m_M.m[1][1], m_M.m[1][2] );
@@ -101,7 +101,7 @@ inline void OBox::GetInvRot( Vector3D *pvRot )
 // Check if any part of a box is inside any part of another box
 // Uses the separating axis test.
 //
-bool OBox::IsBoxInBox( OBox &BBox )
+bool OBox::IsBoxInBox( OBox &BBox ) const
 {
   Vector3D SizeA = m_Extent;
   Vector3D SizeB = BBox.m_Extent;

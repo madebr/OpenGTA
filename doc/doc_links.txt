@@ -17,6 +17,7 @@ Corrections and Notes regarding DMA GTA technical doument [cds.doc v12.10]
 http://www.fifengr.com/gtacars/topic.html
 
 --- other links ---
+
 A Stream-based Time Synchronization Technique For Networked Computer Games
 http://www.mine-control.com/zack/timesync/timesync.html
 

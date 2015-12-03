@@ -1,0 +1,5 @@
+OpenSteer_0_8_2_source.zip
+
+This is only a subset of OpenSteer; didn't want to add code that I don't use.
+
+The docs are gone as well.

@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This file contains code derived from information copyrighted by       *
 * DMA Design. It may not be used in a commercial product.               *
@@ -179,10 +179,13 @@ namespace OpenGTA {
       void prepareSideTexture(unsigned int idx, unsigned char* dst);
       void prepareLidTexture(unsigned int idx, unsigned char* dst);
       void prepareAuxTexture(unsigned int idx, unsigned char* dst);
+      unsigned int getRandomPedRemapNumber();
+      unsigned int getPedRemapNumberType(unsigned int _type);
       
       SpriteNumbers spriteNumbers;
 
       CarInfo* findCarByModel(PHYSFS_uint8);
+      size_t   getNumCarModels() { return carInfos.size(); }
       unsigned char* getTmpBuffer(bool rgba);
       SpriteInfo* getSprite(size_t id) { return spriteInfos[id]; }
 
@@ -253,6 +256,9 @@ namespace OpenGTA {
       bool delta_is_a_set;
 
       Util::Set sideTexBlockMove;
+
+      unsigned int firstValidPedRemap;
+      unsigned int lastValidPedRemap;
   };
 
   // just a forward declaration
@@ -468,7 +474,7 @@ namespace OpenGTA {
       void loadObjects();
       void loadRoutes();
       void loadLocations();
-      void loadNavData();
+      void loadNavData(const size_t level_num);
       static const PHYSFS_uint8 _topHeaderSize = 28;
       static const PHYSFS_uint64 _baseSize = 262144;
   };

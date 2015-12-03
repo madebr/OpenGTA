@@ -1,6 +1,28 @@
+/************************************************************************
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
+*                                                                       *
+* This software is provided as-is, without any express or implied       *
+* warranty. In no event will the authors be held liable for any         *
+* damages arising from the use of this software.                        *
+*                                                                       *
+* Permission is granted to anyone to use this software for any purpose, *
+* including commercial applications, and to alter it and redistribute   *
+* it freely, subject to the following restrictions:                     *
+*                                                                       *
+* 1. The origin of this software must not be misrepresented; you must   *
+* not claim that you wrote the original software. If you use this       *
+* software in a product, an acknowledgment in the product documentation *
+* would be appreciated but is not required.                             *
+*                                                                       *
+* 2. Altered source versions must be plainly marked as such, and must   *
+* not be misrepresented as being the original software.                 *
+*                                                                       *
+* 3. This notice may not be removed or altered from any source          *
+* distribution.                                                         *
+************************************************************************/
 #include <SDL.h>
-#include "timer.h"
 #include <iostream>
+#include "timer.h"
 
 Timer::TimeEvent::TimeEvent(const uint32_t & b, const uint32_t e, CallbackType & c) :
   begin(b), end(e), callback(c) {}
@@ -12,18 +34,30 @@ Timer::TimeEvent::TimeEvent(const TimeEvent & o) :
   begin(o.begin), end(o.end), callback(o.callback) {}
 
 Timer::Timer() {
+  simIsRunning = false;
+#ifdef TIMER_OPENSTEER_CLOCK
+  sdlTicks = uint32_t(floor(clock.realTimeSinceFirstClockUpdate()*1000));
+  clock.setPausedState(simIsRunning);
+#else
   sdlTicks = SDL_GetTicks();
+#endif
   simTicks = 0;
   delta = 0;
-  simIsRunning = false;
 }
 
 Timer::~Timer() {
   clearAllEvents();
 }
 
+
 void Timer::update() {
+#ifdef TIMER_OPENSTEER_CLOCK
+  if (simIsRunning)
+    clock.update();
+  uint32_t nowTicks = uint32_t(floor(clock.realTimeSinceFirstClockUpdate()*1000));
+#else
   uint32_t nowTicks = SDL_GetTicks();
+#endif
   delta = nowTicks - sdlTicks;
   sdlTicks = nowTicks;
   if (simIsRunning)
@@ -34,6 +68,13 @@ void Timer::update() {
 
   if (simIsRunning && simTimeEvents.size() > 0)
     checkSimEvents();
+}
+
+void Timer::setSimulationRunning(bool yes) {
+  simIsRunning = yes;
+#ifdef TIMER_OPENSTEER_CLOCK
+  clock.setPausedState(!yes);
+#endif
 }
 
 void Timer::checkRTEvents() {

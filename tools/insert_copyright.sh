@@ -8,4 +8,5 @@ if [ $# -gt 0 ]; then
 fi
 sed '1{h; r $1
   D; }
-2{x; G; }' $copyright_file $input
+2{x; G; }' $copyright_file $input >${input}.copy
+mv ${input}.copy $input

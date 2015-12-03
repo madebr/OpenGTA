@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This file contains code derived from information copyrighted by       *
 * DMA Design. It may not be used in a commercial product.               *
@@ -11,8 +11,10 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include "navdata.h"
 #include "log.h"
+#include "dataholder.h"
 #include "m_exceptions.h"
 
 namespace OpenGTA {
@@ -67,27 +69,30 @@ namespace OpenGTA {
     return res;
   }
 
-  NavData::Sector::Sector(PHYSFS_file* fd) : Rect2D() {
+  NavData::Sector::Sector(PHYSFS_file* fd) : Rect2D(), sam(0), name("") {
     sam = 0;
     isADummy = 0;
-    std::memset(&name, 0, 30);
     assert(fd);
+    //memset(name2, 0, 30);
     PHYSFS_read(fd, static_cast<void*>(&x), 1, 1);
     PHYSFS_read(fd, static_cast<void*>(&y), 1, 1);
     PHYSFS_read(fd, static_cast<void*>(&w), 1, 1);
     PHYSFS_read(fd, static_cast<void*>(&h), 1, 1);
     PHYSFS_read(fd, static_cast<void*>(&sam), 1, 1);
-    PHYSFS_read(fd, static_cast<void*>(&name), 30, 1);
+    // seek over the name embedded in the mapfile; use sample-num to
+    // lookup in msg-db
+    //PHYSFS_read(fd, static_cast<void*>(&name2), 30, 1);
+    PHYSFS_seek(fd, PHYSFS_tell(fd) + 30);
   }
 
-  NavData::Sector::Sector() : Rect2D() {
+  NavData::Sector::Sector() : Rect2D(), sam(0), name("") {
     x = 0;
     y = 0;
     w = 255;
     h = 255;
     sam = 0;
-    std::memset(&name, 0, 30);
     isADummy = 1;
+    //memset(name2, 0, 30);
   }
 
   const char* NavData::Sector::getFullName() {
@@ -117,7 +122,7 @@ namespace OpenGTA {
     return n.c_str();
   }
 
-  NavData::NavData(PHYSFS_uint32 size, PHYSFS_file *fd) {
+  NavData::NavData(PHYSFS_uint32 size, PHYSFS_file *fd, const size_t level_num) {
     if (size % 35) {
       std::ostringstream o;
       o << "Navdata size: " << size << " % 35 != 0";
@@ -126,6 +131,8 @@ namespace OpenGTA {
     }
     PHYSFS_uint32 c = size / 35;
     assert(fd);
+
+    MessageDB & msg = MainMsgHolder::Instance().get();
     for (PHYSFS_uint32 i = 0; i < c; ++i) {
       Sector *sec = new Sector(fd);
       if (sec->getSize() == 0) { // workaround for 'NYC.CMP' (empty sectors)
@@ -133,16 +140,25 @@ namespace OpenGTA {
         WARN << "skipping zero size sector" << std::endl;
         continue;
       }
-      else
+      else {
+        std::ostringstream os;
+        os << std::setfill('0') << std::setw(3) << level_num << "area" << std::setfill('0') <<
+          std::setw(3) << int(sec->sam);
+
+        //INFO << i << " " << sec->name2 << std::endl << os.str() << " : " << msg.getText(os.str()) << std::endl;
+        sec->name = msg.getText(os.str());
+
         areas.insert(std::pair<PHYSFS_uint16, Sector*>(sec->getSize(), sec));
+      }
     }
     // dummy catch-all sector for gta london maps
     areas.insert(std::pair<PHYSFS_uint16, Sector*>(255*255, new Sector()));
+
     /*
     std::cout << "map areas (by size)" << std::endl;
     SectorMapType::iterator i = areas.begin();
     while (i != areas.end()) {
-      std::cout << " " << i->first << " : " << i->second->name << " @ " <<
+      std::cout << " " << i->first << " : " << i->second->name2 << " @ " <<
       int(i->second->x) << "," << int(i->second->y)  << "  " << int(i->second->w) << "x" <<
       int(i->second->h) <<  " sample " << int(i->second->sam) << std::endl;
       ++i;

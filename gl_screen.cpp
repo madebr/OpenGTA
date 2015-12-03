@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This software is provided as-is, without any express or implied       *
 * warranty. In no event will the authors be held liable for any         *
@@ -56,6 +56,12 @@ namespace OpenGL {
     setSystemMouseCursor(false);
   }
 
+  void Screen::setupGlVars( float fov, float near_p, float far_p) {
+    fieldOfView = fov;
+    nearPlane = near_p;
+    farPlane = far_p;
+  }
+
   void Screen::setSystemMouseCursor(bool visible) {
     SDL_ShowCursor((visible ? SDL_ENABLE : SDL_DISABLE));
   }
@@ -103,14 +109,73 @@ namespace OpenGL {
     if (err)
       //throw "SDL_Init failed: " + std::string(SDL_GetError());
       throw E_INVALIDFORMAT("SDL_Init failed: " + std::string(SDL_GetError()));
-    SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8);
+
+    const char* sdl_err = SDL_GetError();
+    if (strlen(sdl_err) > 0)
+      INFO << "sdl_init complained: " << sdl_err << std::endl;
+    SDL_ClearError();
+
+    const SDL_VideoInfo *vInfo = SDL_GetVideoInfo();
+
+    if (vInfo == NULL)
+      throw E_NOTSUPPORTED("SDL_GetVideoInfo failed: " + std::string(SDL_GetError()));
+
+    if (vInfo->hw_available == 1)
+      videoFlags |= SDL_HWSURFACE;
+    else
+      videoFlags |= SDL_SWSURFACE;
+
+    if (vInfo->blit_hw)
+      videoFlags |= SDL_HWACCEL;
+
+    bpp = vInfo->vfmt->BitsPerPixel;
+ 
+    INFO << "video-probe:" << std::endl <<
+     " hw-surface: " << (vInfo->hw_available == 1 ? "on" : "off") << std::endl <<
+     " hw-blit: " << (vInfo->blit_hw ? "on" : "off") << std::endl <<
+     " bpp: " << int (bpp) << std::endl;
+
+    size_t color_depth_triple[3];
+    switch(bpp) {
+      case 32:
+      case 24:
+        for (int i=0; i < 3; ++i)
+          color_depth_triple[i] = 8;
+        break;
+      case 16:
+        color_depth_triple[0] = 5;
+        color_depth_triple[1] = 6;
+        color_depth_triple[2] = 5;
+        break;
+      case 15:
+        for (int i=0; i < 3; ++i)
+          color_depth_triple[i] = 5;
+        break;
+      case 8:
+        color_depth_triple[0] = 2;
+        color_depth_triple[1] = 3;
+        color_depth_triple[2] = 3;
+        break;
+      default:
+        throw E_NOTSUPPORTED("Invalid bit-per-pixel setting");
+    }
+
+    SDL_GL_SetAttribute( SDL_GL_RED_SIZE,   color_depth_triple[0]);
+    SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, color_depth_triple[1]);
+    SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  color_depth_triple[2]);
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16);
+    SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1);
+#ifdef HAVE_SDL_VSYNC
     SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1);
+#endif
+
+    sdl_err = SDL_GetError();
+    if (strlen(sdl_err) > 0)
+      ERROR << "setting sdl_gl attributes: " << sdl_err << std::endl;
   }
 
   void Screen::initGL() {
+    GL_CHECKERROR;
     //GLfloat LightAmbient[]  = { 0.8f, 0.8f, 0.8f, 1.0f };
     //GLfloat LightDiffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
     //GLfloat LightPosition[] = { 128.0f, 200.0f, 128.0f, 1.0f };
@@ -128,15 +193,24 @@ namespace OpenGL {
     glCullFace(GL_BACK);
     //glPolygonMode(GL_FRONT, GL_FILL);
     //glPolygonMode(GL_BACK, GL_LINE);
+    GL_CHECKERROR;
   }
 
   void Screen::resize(Uint32 w, Uint32 h) {
     if (h == 0)
       h = 1;
     surface = SDL_SetVideoMode(w, h, bpp, videoFlags);
+    if (surface == NULL) {
+      ERROR << "vide-mode: " << w << ", " << h << " bpp: " << bpp << 
+      " hw-surface: " << (videoFlags & SDL_HWSURFACE == SDL_HWSURFACE ? "on" : "off") << 
+      " hw-blit: " << (videoFlags & SDL_HWACCEL == SDL_HWACCEL ? "on" : "off") << std::endl;
+      throw E_NOTSUPPORTED(SDL_GetError());
+    }
+
     glViewport(0, 0, w, h);
     width = w;
     height = h;
+    GL_CHECKERROR;
   }
 
   void Screen::set3DProjection() {

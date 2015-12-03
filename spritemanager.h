@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This software is provided as-is, without any express or implied       *
 * warranty. In no event will the authors be held liable for any         *
@@ -25,10 +25,16 @@
 
 #include <list>
 #include <map>
-#include "pedestrian.h"
+#include "abstract_container.h"
+//#include "pedestrian.h"
+#include "game_objects.h"
 #include "Singleton.h"
+#include "train_system.h"
+#include "map_helper.h"
 
 namespace OpenGTA {
+
+#if 0
   class SpriteManager {
     public:
       SpriteManager();
@@ -62,11 +68,17 @@ namespace OpenGTA {
       void drawPed(Pedestrian & ped);
       void drawCar(Car & car);
       void drawObject(GameObject & obj);
+      void drawExplosion(GameObject & obj);
+
+      void drawTrain(TrainSegment & train);
+      TrainSegment & getTrainById(const Uint32 & id);
 
       void createProjectile(uint8_t typeId, float, Vector3D p, Vector3D d, Uint32 & ticks);
+      void createExplosion(Vector3D center);
       void drawProjectile(Projectile & p);
       void collideProjectile(Projectile & p);
 
+      typedef std::list<TrainSegment> TrainListType;
     protected:
       typedef std::list<Pedestrian> PedListType;
       PedListType activePeds;
@@ -76,14 +88,105 @@ namespace OpenGTA {
       ObjectListType activeObjects;
       typedef std::list<Projectile> ProjectileListType;
       ProjectileListType activeProjectiles;
+      TrainListType activeTrains;
+    public:
+      TrainSystem   trainSystem;
+    protected:
       typedef std::map<Uint32, SpriteObject::Animation> AnimLookupType;
       AnimLookupType animations;
     private:
       Uint32 drawMode;
   };
+#endif
+  class SpriteManager : 
+    public AbstractContainer<Pedestrian>,
+    public AbstractContainer<Car>,
+    public AbstractContainer<SpriteObject> { //,
+    //public AbstractContainer<TrainSegment> {
+      public:
+
+        ~SpriteManager();
+        void drawInRect(SDL_Rect & r);
+        void clear();
+        void removeDeadStuff();
+
+        template <typename T> T & add(const T & t) {
+          return AbstractContainer<T>::doAdd(t);
+        }
+        template <typename T> size_t getNum() {
+          return AbstractContainer<T>::objs.size();
+        }
+        inline Pedestrian & getPed(uint32_t id) {
+          return AbstractContainer<Pedestrian>::doGet(id);
+        }
+        inline Car & getCar(uint32_t id) {
+          return AbstractContainer<Car>::doGet(id);
+        }
+        inline SpriteObject & getObject(uint32_t id) {
+          return AbstractContainer<SpriteObject>::doGet(id);
+        }
+        /*
+        inline TrainSegment & getTrain(uint32_t id) {
+          return AbstractContainer<TrainSegment>::doGet(id);
+        }*/
+
+        template <typename T> inline std::list<T> & getList() {
+          return AbstractContainer<T>::objs;
+        }
+
+        inline void removePed(uint32_t id) {
+          AbstractContainer<Pedestrian>::doRemove(id);
+        }
+        inline void removeCar(uint32_t id) {
+          AbstractContainer<Car>::doRemove(id);
+        }
+        void realRemove();
+
+        inline bool getDrawTexture() { return (drawMode & 1); }
+        inline bool getDrawTexBorder() { return (drawMode & 2); }
+        inline bool getDrawBBox() { return (drawMode & 4); }
+        void setDrawTexture(bool v);
+        void setDrawTexBorder(bool v);
+        void setDrawBBox(bool v);
+        void drawBBoxOutline(const OBox &);
+        void drawTextureOutline(const float &, const float &);
+
+        void draw(Car &);
+        void draw(Pedestrian &);
+        void draw(SpriteObject &);
+        void draw(Projectile &);
+
+        void drawExplosion(SpriteObject &);
+
+        void update(Uint32 ticks);
+
+        SpriteObject::Animation & getAnimationById(const Uint32 & id);
+        void registerAnimation(const Uint32 & id, const SpriteObject::Animation & anim);
+
+        void createExplosion(Vector3D center);
+        void createProjectile(uint8_t typeId, float, Vector3D p, Vector3D d, Uint32 & ticks, Uint32 & owner);
+
+
+      public:
+        //TrainSystem   trainSystem;
+        SpriteManager();
+        Util::SpriteCreationArea creationArea;
+      protected:
+        typedef std::map<Uint32, SpriteObject::Animation> AnimLookupType;
+        AnimLookupType animations;
+        typedef std::list<Projectile> ProjectileListType;
+        ProjectileListType activeProjectiles;
+
+      private:
+        Uint32 drawMode;
+
+        //SpriteManager(const SpriteManager & o) : trainSystem(AbstractContainer<TrainSegment>::objs) {assert(0);}
+        SpriteManager(const SpriteManager & o) {assert(0);}
+
+    };
 
   typedef Loki::SingletonHolder<SpriteManager, Loki::CreateUsingNew, 
-    Loki::DefaultLifetime, Loki::SingleThreaded> SpriteManagerHolder; 
+          Loki::DefaultLifetime, Loki::SingleThreaded> SpriteManagerHolder; 
 }
 
 #endif

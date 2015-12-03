@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This file contains code derived from information copyrighted by       *
 * DMA Design. It may not be used in a commercial product.               *
@@ -15,6 +15,7 @@
 #include "navdata.h"
 #include "log.h"
 #include "m_exceptions.h"
+#include "datahelper.h"
 
 /* see http://members.aol.com/form1/fixed.htm for fixed point floats:
  * int_var = (long) fixed_var >> 8; // for 8 bits after point
@@ -35,6 +36,7 @@ namespace OpenGTA {
       o << filename << " with error: " << SDL_GetError();
       throw E_FILENOTFOUND(o.str());
     }
+    size_t level_as_num = Helper::mapFileName2Number(filename);
     loadHeader();
     loadBase();
     loadColumn();
@@ -42,7 +44,7 @@ namespace OpenGTA {
     loadObjects();
     loadRoutes();
     loadLocations();
-    loadNavData();
+    loadNavData(level_as_num);
     //dump();
   }
   Map::~Map() {
@@ -217,11 +219,11 @@ namespace OpenGTA {
     }
 
   }
-  void Map::loadNavData() {
+  void Map::loadNavData(const size_t levelNum) {
     PHYSFS_uint32 _si = _baseSize + columnSize + _topHeaderSize +
       objectPosSize + routeSize + 3 * 6 * 6 + blockSize;
     PHYSFS_seek(fd, _si); 
-    nav = new NavData(navDataSize, fd);
+    nav = new NavData(navDataSize, fd, levelNum);
     assert(nav);
   }
   PHYSFS_uint16 Map::getNumBlocksAt(PHYSFS_uint8 x, PHYSFS_uint8 y) {

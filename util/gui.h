@@ -1,9 +1,32 @@
+/************************************************************************
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
+*                                                                       *
+* This software is provided as-is, without any express or implied       *
+* warranty. In no event will the authors be held liable for any         *
+* damages arising from the use of this software.                        *
+*                                                                       *
+* Permission is granted to anyone to use this software for any purpose, *
+* including commercial applications, and to alter it and redistribute   *
+* it freely, subject to the following restrictions:                     *
+*                                                                       *
+* 1. The origin of this software must not be misrepresented; you must   *
+* not claim that you wrote the original software. If you use this       *
+* software in a product, an acknowledgment in the product documentation *
+* would be appreciated but is not required.                             *
+*                                                                       *
+* 2. Altered source versions must be plainly marked as such, and must   *
+* not be misrepresented as being the original software.                 *
+*                                                                       *
+* 3. This notice may not be removed or altered from any source          *
+* distribution.                                                         *
+************************************************************************/
 #ifndef UTIL_GUI_H
 #define UTIL_GUI_H
 #include <string>
 #include <list>
 #include <map>
 #include <SDL.h>
+#include "Singleton.h"
 #include "animation.h"
 #include "gl_pagedtexture.h"
 #include "image_loader.h"
@@ -48,6 +71,9 @@ namespace GUI {
 
   };
 
+  typedef Loki::SingletonHolder<Manager, Loki::CreateUsingNew, Loki::DefaultLifetime,
+          Loki::SingleThreaded> ManagerHolder;
+
   class Animation : public Util::Animation {
     public:
       Animation(const std::vector<uint16_t> & _indices, const uint16_t fps) :
@@ -65,20 +91,11 @@ namespace GUI {
     size_t    id;
     SDL_Rect  rect;
     SDL_Color color;
-    inline void copyRect(const SDL_Rect & src) {
-      rect.x = src.x;
-      rect.y = src.y;
-      rect.w = src.w;
-      rect.h = src.h;
-    }
-    inline void copyColor(const SDL_Color & src) {
-      color.r = src.r;
-      color.g = src.g;
-      color.b = src.b;
-      color.unused = src.unused;
-    }
+    void copyRect(const SDL_Rect & src);
+    void copyColor(const SDL_Color & src);
     virtual void draw();
-    Manager * manager;
+    virtual void update(Uint32 ticks) {}
+    Manager & manager;
   };
 
   struct TexturedObject : public Object {
@@ -120,6 +137,22 @@ namespace GUI {
     OpenGL::DrawableFont * font;
     std::string text;
     void draw();
+  };
+
+  struct Pager : public Object {
+    Pager(const size_t Id, const SDL_Rect & r, const size_t texid,
+      const std::string & fontFile, const size_t fontScale) : Object(Id, r) {
+      OpenGL::DrawableFont & fnt = OpenGTA::FontCacheHolder::Instance().getFont(fontFile, fontScale);
+      font = &fnt;
+      texId = texid;
+      offset = r.w-5;
+    }
+    OpenGL::DrawableFont * font;
+    size_t texId;
+    void update(Uint32 ticks);
+    void draw();
+    std::string lastMsg;
+    int offset;
   };
 }
 #endif

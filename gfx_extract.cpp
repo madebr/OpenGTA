@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This software is provided as-is, without any express or implied       *
 * warranty. In no event will the authors be held liable for any         *
@@ -197,15 +197,15 @@ int main(int argc, char* argv[]) {
 
     switch(section) {
       case 0:
-        graphics.getSide(idx, remap, rgba);
+        graphics.getSide(idx, 0, rgba);
         image = get_image(graphics.getTmpBuffer(rgba), 64,64);
         break;
       case 1:
-        graphics.getLid(idx, remap, rgba);
+        graphics.getLid(idx, 0, rgba);
         image = get_image(graphics.getTmpBuffer(rgba), 64, 64);
         break;
       case 2:
-        graphics.getAux(idx, remap, rgba);
+        graphics.getAux(idx, 0, rgba);
         image = get_image(graphics.getTmpBuffer(rgba), 64, 64);
         break;
       case 3:

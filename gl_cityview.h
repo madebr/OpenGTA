@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This software is provided as-is, without any express or implied       *
 * warranty. In no event will the authors be held liable for any         *
@@ -31,6 +31,7 @@
 
 namespace OpenGTA {
 
+  class BlockAnimCtrl;
   class CityView {
     public:
       CityView();
@@ -59,6 +60,9 @@ namespace OpenGTA {
       void CityView::setDrawLines(bool v);
 
       void resetTextures();
+      const SDL_Rect & getActiveRect() { return activeRect; }
+      const SDL_Rect & getOnScreenRect() { return drawnRect; }
+      BlockAnimCtrl* blockAnims;
       
     protected:
       void setNull();
@@ -69,6 +73,7 @@ namespace OpenGTA {
       Util::CFrustum frustum;
       OpenGL::TextureCache<uint8_t>* sideCache;
       OpenGL::TextureCache<uint8_t>* lidCache;
+      OpenGL::TextureCache<uint8_t>* auxCache;
       Map* loadedMap;
       OpenGTA::GraphicsBase* style;
       GLfloat zoomLevel;
@@ -78,6 +83,9 @@ namespace OpenGTA {
       bool topDownView;
       bool drawTextured;
       bool drawLines;
+
+      SDL_Rect activeRect;
+      SDL_Rect drawnRect;
 
       int  scene_rendered_vertices;
       int  scene_rendered_blocks;

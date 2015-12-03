@@ -149,6 +149,23 @@ public:
   {
     return fabs (x - v.x) < e && fabs (y - v.y) < e && fabs (z - v.z) < e;
   }
+
+  // component-wise maximum
+  const Vector max(const Vector & other) const {
+    Vector _res;
+    _res.x = (x > other.x) ? x : other.x;
+    _res.y = (y > other.y) ? y : other.y;
+    _res.z = (z > other.x) ? z : other.z;
+    return _res;
+  }
+
+  const Vector abs() const {
+    Vector _res;
+    _res.x = (x >= 0) ? x : -x;
+    _res.y = (y >= 0) ? y : -y;
+    _res.z = (z >= 0) ? z : -z;
+    return _res;
+  }
 };
 //
 // A 3D position

@@ -24,6 +24,11 @@ Just run 'make' or specifically 'make viewer'.
 
 The other programs are/were used for development or debugging.
 
+The distributed win32 binaries are created with a cross-compiler.
+
+The file doc/compiling.txt in the source code release contains
+information on the build process.
+
 = Installing the data-files =
 
 You can download the game from http://www.rockstargames.com/classics/ .
@@ -39,6 +44,13 @@ Needed:
 
 STYLE*.GRY (for 8-bit graphics)
 STYLE*.G24 (for 24-bit graphics)
+
+Will be needed (in the future):
+MISSION.INI
+*.RAT ( 8 bit menu graphics)
+*.RAW (24 bit menu graphics)
+AUDIO/*.RAW AUDIO/*.SDT (sound effects)
+AUDIO/*.WAV (cutscene text; in legacy format)
 
 = Running =
 
@@ -61,6 +73,13 @@ The optional param loads the respective city; default is 0:
 2 - MIAMI.CMP
 
 flags are:
+
+-V  show version and compile time switches
+-h  show usage
+
+( The compiled-in usage information is more recent than the 
+  following. )
+
 * screen dimensions (have to specify neither or both)
 -w width
 -h height
@@ -92,17 +111,15 @@ furthermore:
   f       : toggle fullscreen/windowed
   PRINT   : save 'screenshot.bmp' in current directory
   p       : dump coords (in lua syntax) to stdout
-  i,j,k,l : move player-char
   F2      : toggle drawing of sprite bounding-boxes
   F3      : toggle marking of sprite tex-border-boxes
   F4      : toggle free-move vs. follow-player
-  F5      : toggle drawing of road heading arrows
+  F5      : toggle drawing of road heading arrows (& normals)
   F6      : city map mode (ESC to exit, +, -, cursor keys)
-  1 - 8   : choose a specific player-sprite animation
-  9, 0    : set the player-sprite to a specific frame
+  F9      : toggle city blocks drawn textured
+  F10     : toggle blocks wireframe lines
 
 in 3d view:
-  F1      : demo-flight over the city
   w       : forward
   s       : backward
   space   : stop
@@ -111,6 +128,14 @@ in 3d view:
 
 You can move the view with the mouse; when you switch
 to 3d and the screen is black: move the mouse down.
+
+in follow-player mode:
+  i,j,k,l : move player-char
+  l-shift : toggle walking/running
+  0       : unselect weapon / unarmed
+  1,2,3,4 : select weapon (only switches graphic)
+  F7      : draw explosion at player pos (graphical effect)
+  F8      : create random-walker ped at player-pos
 
 == luaviewer: viewer + Lua (optional target) ==
 

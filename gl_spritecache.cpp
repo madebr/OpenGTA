@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This software is provided as-is, without any express or implied       *
 * warranty. In no event will the authors be held liable for any         *
@@ -22,11 +22,14 @@
 ************************************************************************/
 #include <map>
 #include <cassert>
+#include <SDL_image.h>
 #include "gl_spritecache.h"
 #include "opengta.h"
 #include "dataholder.h"
 #include "buffercache.h"
 #include "log.h"
+//#include "physfsrwops.h"
+//#include "image_loader.h"
 
 namespace OpenGL {
   SpriteIdentifier::SpriteIdentifier() : sprNum(0), remap(-1), delta(0) {}
@@ -187,6 +190,26 @@ namespace OpenGL {
       getSpriteBitmap(sprite_num, remap , delta);
     unsigned int glwidth = 1;
     unsigned int glheight = 1;
+    #if 0
+    if (sprite_num == 257) {
+      info->w = 72;
+      info->h = 72;
+      SDL_RWops * rwops = PHYSFSRWOPS_openRead("tree.png");//file.c_str());
+      SDL_Surface *surface = IMG_Load_RW(rwops, 1);
+      assert(surface);
+      uint16_t bpp = surface->format->BytesPerPixel;
+      ImageUtil::NextPowerOfTwo npot(surface->w, surface->h);
+      uint8_t * buffer = Util::BufferCacheHolder::Instance().requestBuffer(npot.w * npot.h * bpp);
+      SDL_LockSurface(surface);
+      ImageUtil::copyImage2Image(buffer, (uint8_t*)surface->pixels, surface->pitch, surface->h,
+          npot.w * bpp);
+      SDL_UnlockSurface(surface);
+
+      GLuint texture = ImageUtil::createGLTexture(npot.w, npot.h, (bpp == 4) ? true : false, buffer);
+      return OpenGL::PagedTexture(texture, 0, 0, GLfloat(surface->w)/npot.w, GLfloat(surface->h)/npot.h);
+
+    }
+    #endif
 
     while(glwidth < info->w)
       glwidth <<= 1;

@@ -26,7 +26,18 @@ namespace OpenGL {
   void Camera::update_game(Uint32 ticks) {
     Vector3D delta(center - *followTarget);
     //INFO << delta.x << ", " << delta.y << ", " << delta.z << std::endl;
+    float height_dist = fabs(delta.y);
     delta.y = 0;
+    if (camGravity) {
+      if (center.y - followTarget->y > 4.1) {
+        delta.y = 0.001f * height_dist;
+      }
+      else if (center.y - followTarget->y < 3.9) {
+        delta.y = -0.001f * height_dist; 
+      }
+    }
+    //INFO << center.y << " " << followTarget->y<< " " << height_dist << std::endl;
+
     center += -delta;
     eye += -delta;
     gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z,

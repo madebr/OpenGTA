@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This software is provided as-is, without any express or implied       *
 * warranty. In no event will the authors be held liable for any         *
@@ -34,7 +34,8 @@ namespace OpenGTA {
   }
 
   template<> GraphicsBase & ActiveStyle::get() {
-    assert(m_data);
+    if (!m_data)
+      throw E_NOTSUPPORTED("Load a style-file first!");
     return *m_data;
   }
 
@@ -81,7 +82,8 @@ namespace OpenGTA {
   }
   
   template<> Map & ActiveMap::get() {
-    assert(m_data);
+    if (!m_data)
+      throw E_NOTSUPPORTED("Load a map-file first!");
     return *m_data;
   }
   
@@ -92,6 +94,32 @@ namespace OpenGTA {
     }
     catch (const Exception & e) {
       ERROR << "loading map failed: " << e.what();
+      m_data = 0;
+    }
+    assert(m_data);
+  }
+
+  template<> MainMsgLookup::ActiveData() {
+    m_data = 0;
+  }
+
+  template<> MainMsgLookup::~ActiveData() {
+    unload();
+  }
+  
+  template<> MessageDB & MainMsgLookup::get() {
+    if (!m_data)
+      throw E_NOTSUPPORTED("Load a message-file first!");
+    return *m_data;
+  }
+  
+  template<> void MainMsgLookup::load(const std::string & file) {
+    unload();
+    try {
+      m_data = new MessageDB(file); 
+    }
+    catch (const Exception & e) {
+      ERROR << "loading message-db failed: " << e.what();
       m_data = 0;
     }
     assert(m_data);

@@ -62,10 +62,11 @@ int main(int argc, char* argv[]) {
 
   for (int i = 0; i < 256; i++) {
     for (int j = 0; j < 256; j++) {
-      PHYSFS_uint16 emptycount = map.getNumBlocksAt(j,i);
+      PHYSFS_uint16 emptycount = map.getNumBlocksAtNew(j,i);
       int found_type = 0;
-      for (int c=6-emptycount; c > 0; c--) {
-        OpenGTA::Map::BlockInfo* bi = map.getBlockAt(j, i, c);
+      //for (int c=6-emptycount; c > 0; c--) {
+      for (int c = 0; c < emptycount ; ++c) {
+        OpenGTA::Map::BlockInfo* bi = map.getBlockAtNew(j, i, c);
         /*
         if (bi->blockType() > 0)
           found_type = bi->blockType();
@@ -83,10 +84,12 @@ int main(int argc, char* argv[]) {
         if (bi->railEndTurn())
           std::cout << " end: " << i << ", " << j << std::endl;
         */
+        /*
         if (bi->blockType() > 0)
           found_type = bi->blockType();
         if (bi->trafficLights())
           found_type = 0;
+        */
         if (bi->railway())
           found_type = 7;
       }

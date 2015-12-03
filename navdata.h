@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This file contains code derived from information copyrighted by       *
 * DMA Design. It may not be used in a commercial product.               *
@@ -11,6 +11,7 @@
 #ifndef NAVDATA_H
 #define NAVDATA_H
 #include <map>
+#include <string>
 #include <physfs.h>
 
 namespace OpenGTA {
@@ -77,14 +78,15 @@ namespace OpenGTA {
          * 2) probably sound?
          */
         PHYSFS_uint8 sam; // sample number
-        char         name[30]; // FIXME: should not be used
+        //char         name2[30]; // FIXME: should not be used
+        std::string  name;
         /** Returns the name prefixed with sub-area location.
          */
         const char*  getFullName();
         private:
           bool isADummy;
       };
-      NavData(PHYSFS_uint32 size, PHYSFS_file *fd);
+      NavData(PHYSFS_uint32 size, PHYSFS_file *fd, const size_t level_num);
       ~NavData();
       Sector* getSectorAt(PHYSFS_uint8, PHYSFS_uint8);
     private:

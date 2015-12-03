@@ -1,4 +1,5 @@
 #include <SDL.h>
+#define USE_RWOPS
 #include <SDL_sound.h>
 #include <SDL_mixer.h>
 #include <string>
@@ -69,7 +70,15 @@ void SoundDevice::open(int r, Uint16 f, int c, int bs) {
   open();
 }
 
-#if 0
+int music_volume=127;
+
+bool sound_enabled=false;
+
+bool playing_music=false;
+Sound_Sample *music_sound=0;
+int music_loops=1;
+int current_music_loop=0;
+
 void myMusicPlayer(void *udata, Uint8 *stream, int len) {
   int i,act=0;
   Sint16 *ptr2;
@@ -123,15 +132,84 @@ void myMusicPlayer(void *udata, Uint8 *stream, int len) {
     for(i=0;i<len;i++) stream[i]=0;
   } /* if */ 
 } /* myMusicPlayer */
-#endif
 
 #include "fx_sdt.h"
-#include "sound_resample.h"
+#include "sound_resample2.h"
+
+class AudioChunkCache {
+  public:
+    struct ChunkId {
+      std::string src_file;
+      size_t      idx_in_file;
+      ChunkId(const std::string & file, const size_t idx) :
+        src_file(file), idx_in_file(idx) {}
+      bool operator == (const ChunkId & o) const {
+        return (idx_in_file == o.idx_in_file && src_file == o.src_file);
+      }
+      bool operator < (const ChunkId & o) const {
+        if (idx_in_file < o.idx_in_file)
+          return true;
+        if (idx_in_file > o.idx_in_file)
+          return false;
+        return src_file < o.src_file;
+      }
+    };
+    struct ChunkData {
+      Uint8 * mem_buf;
+      Mix_Chunk * chunk;
+      size_t ref;
+      ChunkData(Uint8 * m, Mix_Chunk * c, size_t r = 1) :
+        mem_buf(m), chunk(c), ref(r) {}
+      ChunkData(const ChunkData & o) :
+        mem_buf(o.mem_buf), chunk(o.chunk), ref(o.ref) {}
+    };
+    typedef std::map< ChunkId, ChunkData > CacheType;
+    CacheType cached;
+    ChunkData & getChunk(std::string & file, size_t idx);
+    void prepareDB(std::string db_file);
+    OpenGTA::SoundsDB * getDB(std::string db_file);
+  private:
+    ChunkData loadChunk(std::string & file, size_t idx);
+    typedef std::map< std::string, OpenGTA::SoundsDB* > LookupCache;
+    LookupCache lookup;
+
+};
+
+AudioChunkCache::ChunkData & AudioChunkCache::getChunk(std::string & file, size_t idx) {
+  ChunkId id(file, idx);
+  CacheType::iterator i = cached.find(id);
+  if (i == cached.end()) {
+    ChunkData c = loadChunk(file, idx);
+    cached.insert(std::make_pair<ChunkId, ChunkData>(id, c));
+    i = cached.find(id);
+  }
+  return i->second;
+}
+
+AudioChunkCache::ChunkData AudioChunkCache::loadChunk(std::string & file, size_t idx) {
+  LookupCache::iterator j = lookup.find(file);
+  if (j == lookup.end()) {
+    prepareDB(file);
+    j = lookup.find(file);
+  }
+  OpenGTA::SoundsDB & db = *j->second;
+  OpenGTA::SoundsDB::Entry & e = db.getEntry(idx);
+  size_t si;
+  unsigned char* mem = db.getBuffered(idx);
+  Uint8 *mem2 = (Uint8*)Audio::resample_new(mem, e.rawSize, si, e.sampleRate, 44100);
+  Mix_Chunk * music = Mix_QuickLoad_RAW(mem2, si);
+  return ChunkData(mem2, music, 1);
+}
+
+void AudioChunkCache::prepareDB(std::string db) {
+  lookup[db] = new OpenGTA::SoundsDB(db);
+}
 
 int main(int argc, char *argv[])
 {
   PHYSFS_init(argv[0]);
   PHYSFS_addToSearchPath("gtadata.zip", 1);
+  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
 
   Uint32 sdl_init_flags = SDL_INIT_AUDIO | SDL_INIT_VIDEO;
   if (SDL_Init(sdl_init_flags) == -1)
@@ -143,11 +221,16 @@ int main(int argc, char *argv[])
   SoundDevice dev;
   dev.open();
 
+  if (argc == 3) {
+  AudioChunkCache acc;
+  std::string foo(argv[1]);
+  AudioChunkCache::ChunkData & cd = acc.getChunk(foo, atoi(argv[2]));
+  /*
   OpenGTA::SoundsDB db(argv[1]);
   OpenGTA::SoundsDB::Entry & e = db.getEntry(atoi(argv[2]));
   unsigned char* mem = db.getBuffered(atoi(argv[2]));
   size_t si;
-  Uint8 *mem2 = (Uint8*)resample_new(mem, e.rawSize, si, e.sampleRate, 44100);
+  Uint8 *mem2 = (Uint8*)Audio::resample_new(mem, e.rawSize, si, e.sampleRate, 44100);
 
   //write(1, mem, e.rawSize+ 36 + 8);
 
@@ -161,13 +244,40 @@ int main(int argc, char *argv[])
   }
   delete [] mem;
   Mix_PlayChannel(0,music,0);
+  */
 
-  while (Mix_Playing(0)) {
+  Mix_PlayChannel(0, cd.chunk, 0);
+  }
+  else {
+    /*
+    SDL_RWops * rw = PHYSFSRWOPS_openRead(argv[1]);
+    assert(rw);
+    Mix_Music * music = Mix_LoadMUS_RW(rw);
+    assert(music);
+    Mix_PlayMusic(music, 0);
+    */
+     Sound_Init();
+     Sound_AudioInfo inf;
+#define AUDIO_BUFFER   4096 
+        inf.format=AUDIO_S16;
+        inf.channels=2;
+        inf.rate=44100;
+
+      SDL_RWops * rw = PHYSFSRWOPS_openRead(argv[1]);
+
+      assert(rw);
+     music_sound = Sound_NewSample(rw, "mp3" ,&inf,AUDIO_BUFFER);
+     assert(music_sound);
+     Mix_HookMusic(myMusicPlayer, 0);
+     playing_music = true;
+  }
+  //while (Mix_Playing(0)) {
+  while (playing_music) {
     SDL_Delay(1000);
   }
-  delete [] mem2;
+  //delete [] mem2;
   Mix_HaltMusic();
-  Mix_FreeChunk(music);
+  //Mix_FreeChunk(music);
   //music = NULL;
   SDL_Quit();
   return(0);

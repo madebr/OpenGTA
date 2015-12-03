@@ -140,6 +140,7 @@ struct Matrix3D
 
   float  operator() (int i, int j) const { return m[i][j]; }
   float& operator() (int i, int j)       { return m[i][j]; }
+  void RotZ(float v);
 };
 
 struct Plane

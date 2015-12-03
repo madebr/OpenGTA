@@ -48,7 +48,7 @@ the most important formats.
 Reading _(cds.doc) is probably vital; you may want them all.
 So in no particular order:
 
-include(`doc/doc_links.txt')dnl ~oh m4, your glorious thing~
+include(`doc/doc_links.txt')dnl ~oh m4, you glorious thing~
 
 Support for the following formats is implemented:
 - CMP (compressed map)    #OpenGTA::Map
@@ -68,12 +68,14 @@ using the graphics loaded inside a derived instance of
 CityView maintains a couple of #OpenGL::TextureCache (s) to store the
 texture-ids (for the static city blocks).
 
+In case of animated block textures #OpenGTA::BlockAnim and
+#OpenGTA::BlockAnimCtrl are used to display a sequence of textures.
+
 #OpenGTA::BlockData contains the vertex data and texture coords for
 each of the of the possible blocks; this corresponds to
 #OpenGTA::Map::BlockInfo::slopeType.
 
-Drawing of objects (sprites) is being moved into #OpenGTA::SpriteManager,
-though this is not yet complete.
+Drawing of objects (sprites) is done in #OpenGTA::SpriteManager.
 
 #OpenGL::DrawableFont can display strings using the bitmaps from
 a #OpenGTA::Font.

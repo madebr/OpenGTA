@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This software is provided as-is, without any express or implied       *
 * warranty. In no event will the authors be held liable for any         *
@@ -44,6 +44,11 @@ namespace OpenGL {
       Uint32  getHeight();
       bool getFullscreen();
       void makeScreenshot(const char* filename);
+      inline float getFieldOfView() { return fieldOfView; }
+      inline float getNearPlane() { return nearPlane; }
+      inline float getFarPlane() { return farPlane; }
+      void setupGlVars( float fov, float near_p, float far_p);
+
     private:
       void initGL();
       void initSDL();
@@ -54,7 +59,8 @@ namespace OpenGL {
       float  nearPlane;
       float  farPlane;
       static const Uint32 defaultVideoFlags = 
-        SDL_OPENGL | SDL_GL_DOUBLEBUFFER | SDL_HWPALETTE | SDL_HWACCEL;
+        SDL_OPENGL | SDL_GL_DOUBLEBUFFER;// | SDL_HWPALETTE | SDL_HWACCEL;
+      //FIXME: use   ^ here as well? not just SDL_GL_SetAttribute?
 
       SDL_Surface *surface;
   };

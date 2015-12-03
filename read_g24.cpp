@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This file contains code derived from information copyrighted by       *
 * DMA Design. It may not be used in a commercial product.               *
@@ -29,6 +29,23 @@ namespace OpenGTA {
     palIndex = NULL;
     loadHeader();
     setupBlocking(style);
+    // actually the next two are style003.g24, but at least somewhere close
+    firstValidPedRemap = 60;
+    lastValidPedRemap = 116;
+    if (style.find("001") != std::string::npos) {
+      firstValidPedRemap = 75;
+      lastValidPedRemap = 131;
+    }
+    else if (style.find("002") != std::string::npos) {
+      firstValidPedRemap = 79;
+      lastValidPedRemap = 135;
+    }
+    else if (style.find("003") != std::string::npos) {
+      // already set
+    }
+    else {
+      WARN << "Unknown g24 style - ped remaps most likely broken!" << std::endl;
+    }
   }
 
   Graphics24Bit::~Graphics24Bit() {
@@ -143,6 +160,7 @@ namespace OpenGTA {
     PHYSFS_uint64 st = static_cast<PHYSFS_uint64>(_topHeaderSize) +
       sideSize + lidSize + auxSize + auxBlockTrailSize + animSize +
       pagedClutSize + paletteIndexSize + objectInfoSize;
+    //INFO << "seek for " << st << std::endl;
     loadCarInfo_shared(st);
   }
 

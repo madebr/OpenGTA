@@ -1,0 +1,19 @@
+Bug: style001.gry bridge texture artifacts
+Image: http://skybound.portland.co.uk/ogta/bugs_in_transparent_texture_2006-10-03.jpg
+black pixel inside a side texture (nyc.cmp)... thus begins the
+'how many errors can there be about black vs. transparent contest'.
+%%
+Bug: wrong block texture coords
+Image: http://lh6.google.com/image/under.northern.sky/RZnek0op0yI/AAAAAAAAAB4/zfCFvPS8gWg/still_slope_tex_errors_2007-01-01.jpg
+Most likely the side that is a triangle and not a quad.
+Needs research if 'flipping' the texture is related.
+%%
+Bug: transparent pixel in g24 tiles
+Image: http://lh4.google.com/image/under.northern.sky/Rh58SCRd8kI/AAAAAAAAAEQ/FK6KLriTfOs/nyc_gry_block_transparent_pixel_bug_2007-04-12.jpg
+Those should probably just be black. It is not a very obvious
+error, but it should be fixed.
+%%
+Bug: black border around sprites
+Image: http://lh4.google.com/image/under.northern.sky/Rh58SCRd8lI/AAAAAAAAAEY/tnMwSk8IVok/g24_obj_black_border_2007-04-12.jpg
+Simply doesn't look good, especially with g24 graphics.
+%%

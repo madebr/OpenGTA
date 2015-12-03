@@ -1,6 +1,7 @@
 #include <string>
 #include "lua_vm.h"
 #include "lunar.h"
+#include "lua_map.h"
 #include "lua_cityview.h"
 #include "lua_stackguard.h"
 #include "lua_camera.h"
@@ -33,22 +34,42 @@ namespace OpenGTA {
     void LuaVM::prepare() {
       LGUARD(L);
       if (!_registered) {
+        Lunar<Block>::Register2(L);
+        Lunar<LMap>::Register2(L);
+      /*
         Lunar<CityView>::Register2(L);
         luaL_openlib(L, "camera",      Camera::methods, 0);
         luaL_openlib(L, "screen",      Screen::methods, 0);
         luaL_openlib(L, "spritecache", SpriteCache::methods, 0);
+        */
       }
       _registered = true;
     }
 
+    lua_State* LuaVM::getInternalState() {
+      return(L);
+    }
+
+    void LuaVM::setMap(OpenGTA::Map & map) {
+      LGUARD(L);
+      LMap * mptr = static_cast<LMap*>(&map);
+      lua_gettable(L, LUA_GLOBALSINDEX);
+      int scv_ref = Lunar<LMap>::push(L, mptr, false);
+      lua_pushliteral(L, "map");
+      lua_pushvalue(L, scv_ref);
+      lua_settable(L, LUA_GLOBALSINDEX);
+    }
+
     void LuaVM::setCityView(OpenGTA::CityView & cv) {
       LGUARD(L);
+      /*
       CityView *scv = static_cast<CityView*>(&cv);
       lua_gettable(L, LUA_GLOBALSINDEX);
       int scv_ref = Lunar<CityView>::push(L, scv, false);
       lua_pushliteral(L, "city_view");
       lua_pushvalue(L, scv_ref);
       lua_settable(L, LUA_GLOBALSINDEX);
+      */
     }
 
     void LuaVM::runString(const char* _str) {

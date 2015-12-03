@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This file contains code derived from information copyrighted by       *
 * DMA Design. It may not be used in a commercial product.               *
@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <iostream>
 #include "opengta.h"
+#include "m_exceptions.h"
+#include "log.h"
 
 namespace OpenGTA {
   MessageDB::MessageDB() {
@@ -31,8 +33,7 @@ namespace OpenGTA {
       f = PHYSFS_openRead(f2.c_str());
     }
     if (f == NULL) {
-      std::cerr << "Error: could not open " << file << " for reading" << std::endl;
-      return;
+      throw E_FILENOTFOUND(file);
     }
     
     messages.clear();
@@ -92,7 +93,7 @@ namespace OpenGTA {
   const std::string& MessageDB::getText(const char* id) {
     std::map<std::string, std::string>::iterator i = messages.find(std::string(id));
     if (i == messages.end()) {
-      std::cerr << "Error: string lookup failed for key: " << id << std::endl;
+      ERROR << "string lookup failed for key: " << id << std::endl;
       return _error;
     }
     return i->second;
@@ -101,7 +102,7 @@ namespace OpenGTA {
   const std::string& MessageDB::getText(const std::string &id) {
     std::map<std::string, std::string>::iterator i = messages.find(id);
     if (i == messages.end()) {
-      std::cerr << "Error: string lookup failed for key: " << id << std::endl;
+      ERROR << "string lookup failed for key: " << id << std::endl;
       return _error;
     }
     return i->second;
@@ -112,7 +113,7 @@ namespace OpenGTA {
     snprintf(reinterpret_cast<char*>(&tmp), 10, "%i", id);
     std::map<std::string, std::string>::iterator i = messages.find(std::string(tmp));
     if (i == messages.end()) {
-      std::cerr << "Error: string lookup failed for key: " << id << std::endl;
+      ERROR << "string lookup failed for key: " << id << std::endl;
       return _error;
     }
     return i->second;

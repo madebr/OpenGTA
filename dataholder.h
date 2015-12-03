@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This software is provided as-is, without any express or implied       *
 * warranty. In no event will the authors be held liable for any         *
@@ -28,18 +28,11 @@
 #include "Singleton.h"
 
 namespace OpenGTA {
-/*
-  class ActiveStyle {
-    public:
-      ActiveStyle();
-      ~ActiveStyle();
-      GraphicsBase & getStyle();
-      void load(const std::string & file);
-    private:
-      void unload();
-      GraphicsBase* m_style;
-  };
-*/
+  /** Wrapper around resource-holding classes.
+   * - you have to call 'load' before 'get'
+   *
+   * - you may call load repeatedly
+   */
   template <class T>
     class ActiveData {
       public:
@@ -52,13 +45,30 @@ namespace OpenGTA {
         T* m_data;
     };
 
+  /** The wrapper around the GRY/G24 data interface.
+   */
   typedef ActiveData< GraphicsBase > ActiveStyle;
+  /** The wrapper around the map data interface.
+   */
   typedef ActiveData< Map > ActiveMap;
+  /** The wrapper around the message-string data interface.
+   */
+  typedef ActiveData< MessageDB > MainMsgLookup;
 
+  /** Singleton: Graphics
+   */
   typedef Loki::SingletonHolder< ActiveStyle, Loki::CreateUsingNew, Loki::DefaultLifetime,
           Loki::SingleThreaded> StyleHolder;
+  /** Singleton: Map
+   */
   typedef Loki::SingletonHolder< ActiveMap, Loki::CreateUsingNew, Loki::DefaultLifetime,
           Loki::SingleThreaded> MapHolder;
+  /** Singleton: Message strings
+   */
+  typedef Loki::SingletonHolder< MainMsgLookup, Loki::CreateUsingNew, Loki::DefaultLifetime,
+          Loki::SingleThreaded> MainMsgHolder;
+
+
 }
 
 #endif

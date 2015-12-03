@@ -1,7 +1,7 @@
 include src_list.make
 
 INC_EX_LIBS = $(PHYSFS_INC) $(SDL_INC) $(LUA_INC)
-INC_INTERN = -I. -Iloki/include/loki -Iutil -Icoldet -Imath
+INC_INTERN = -I. -Iloki/include/loki -Iutil -Icoldet -Imath -Iopensteer/include
 
 INC = $(INC_INTERN) $(INC_EX_LIBS)
 
@@ -44,7 +44,7 @@ coldet/libcoldet.a:
 	make -C coldet -f makefile.g++ all
 
 clean:
-	rm -f tags depend *.o tools/*.o coldet/*.o lua_addon/*.o math/*.o util/*.o \
+	rm -f tags depend *.o tools/*.o coldet/*.o lua_addon/*.o math/*.o util/*.o opensteer/src/Clock.o \
 	spriteplayer gfxextract viewer $(TOOLS) objdump objdump_map minimap slopeview luaviewer g24
 
 html: doxy_main.h
@@ -70,9 +70,12 @@ rclean:
 
 libclean:
 	make -C coldet -f makefile.g++ clean
+	make -c loki clean
+	rm -f loki/lib/libloki.*
+	rm -f $(OSTEER_OBJ)
 	
 
 depend: loki src_list.make
 	$(RM) depend
-	$(CXX) $(CXXFLAGS) -DGCC -E -MM $(GL_SRC) $(OGTA_SRC) $(UTIL_SRC) > depend
+	$(CXX) $(CXXFLAGS) -E -MM $(GL_SRC) $(OGTA_SRC) $(UTIL_SRC) > depend
 

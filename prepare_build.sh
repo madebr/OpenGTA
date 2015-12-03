@@ -13,11 +13,11 @@ function program_exists() {
 function print_make_file_list() {
 FOO=GL_SRC
 FOOO=GL_OBJ
-( grep -l "^namespace OpenGL" *.cpp ; echo "gl_frustum.cpp";echo "math/obox.cpp coldet/math3d.cpp" ) | sort | xargs echo "$FOO ="
+( grep -l "^namespace OpenGL" *.cpp ;echo "gl_frustum.cpp";echo "math/obox.cpp coldet/math3d.cpp util/physfsrwops.c" ) | sort | xargs echo "$FOO ="
 echo "$FOOO = \${$FOO:.cpp=.o}"
 FOO=OGTA_SRC
 FOOO=OGTA_OBJ
-( grep -l "^namespace OpenGTA" *.cpp ; echo "slope_height_func.cpp" ) | sort | xargs echo "$FOO ="
+( grep -l "^namespace OpenGTA" *.cpp ; echo "slope_height_func.cpp" )|grep -v viewer.cpp |grep -v sprite_anim_player.cpp| sort | xargs echo "$FOO ="
 echo "$FOOO = \${$FOO:.cpp=.o}"
 
 UTIL_SRC=$(ls util/*.cpp | grep -v color.cpp | grep -v sound | xargs echo)
@@ -34,6 +34,13 @@ LUA_SRC   = $LUA_SRC
 LUA_OBJ   = \${LUA_SRC:.cpp=.o}
 SOUND_SRC = $SOUND_SRC
 SOUND_OBJ = \${SOUND_SRC:.cpp=.o}
+
+OSTEER_SRC = opensteer/src/Clock.cpp
+OSTEER_OBJ = \${OSTEER_SRC:.cpp=.o}
+
+SOUND_SRC = util/sound_device.cpp util/sound_fx_cache.cpp util/sound_music_player.cpp \
+util/sound_resample2.cpp util/sound_system.cpp
+SOUND_OBJ = \$(SOUND_SRC:.cpp=.p)
 
 EOF
 }
@@ -58,13 +65,13 @@ gfxextract${EXE_PFIX}: gfx_extract.cpp read_gry.o read_g24.o read_cmp.o navdata.
     -o \$@ \$+ \\
       \$(SDL_LIB) \$(SDL_GL_LIB) \$(SDL_IMG_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB)
 
-viewer${EXE_PFIX}: main2.cpp viewer.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ)
+viewer${EXE_PFIX}: main2.cpp viewer.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \$(OSTEER_OBJ)
 	\$(CXX) \$(CATCH_E) \$(FLAGS) \$(DEFS) \\
   \$(INC) \\
     -o \$@ \$+ \\
       \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(COLDET_LIB)
 
-luaviewer${EXE_PFIX}: main2.cpp viewer.cpp \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \
+luaviewer${EXE_PFIX}: main2.cpp viewer.cpp \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \$(OSTEER_OBJ) \
 \$(LUA_OBJ)
 	\$(CXX) \$(CATCH_E) -DWITH_LUA \$(FLAGS) \$(DEFS) \\
   \$(INC) \\
@@ -72,7 +79,7 @@ luaviewer${EXE_PFIX}: main2.cpp viewer.cpp \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) 
       \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(COLDET_LIB) \$(LUA_LIB)
 
 
-spriteplayer${EXE_PFIX}: sprite_anim_player.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) main2.cpp
+spriteplayer${EXE_PFIX}: sprite_anim_player.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \$(OSTEER_OBJ) main2.cpp
 	\$(CXX) \$(CATCH_E) \$(FLAGS) \$(DEFS) \\
   \$(INC) \\
     -o \$@ \$+ \\
@@ -91,6 +98,26 @@ objdump: tools/obj_dump.cpp read_gry.o \$(UTIL_OBJ) main2.o
 objdump_map: tools/obj_dump.cpp read_gry.o \$(UTIL_OBJ) main2.o read_cmp.o navdata.o
 	\$(CXX) \$(CXXFLAGS) -DDUMP_OBJ_IN_MAP -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB)
 
+car_dump: tools/car_dump.cpp dataholder.o read_gry.o read_cmp.o read_g24.o navdata.o \
+main2.o read_fxt.o util/set.o util/buffercache.o util/log.o util/m_exceptions.o
+	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB)
+
+plane_test: tests/test_plane.cpp math/line_intersect.o util/log.o \
+util/m_exceptions.o util/cell_iterator.o util/set.o util/buffercache.o \
+read_cmp.o datahelper.o navdata.o read_fxt.o read_gry.o read_g24.o \
+dataholder.o
+	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB)
+
+lua_map_test: tests/lua_map_test.o util/file_helper.o util/log.o \
+util/m_exceptions.o  util/buffercache.o  util/set.o navdata.o \
+dataholder.o read_cmp.o read_gry.o read_g24.o read_fxt.o datahelper.o \
+main2.o lua_addon/lua_map.o lua_addon/lua_vm.o lua_addon/lua_stackguard.o
+	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(LUA_LIB)
+
+sound_test: read_sdt.o util/m_exceptions.o util/sound_resample2.o \
+util/sound_device.o util/sound_system.cpp util/sound_fx_cache.o \
+util/sound_music_player.o util/physfsrwops.c util/log.o
+	\$(CXX) -DSOUND_TEST \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(AUDIO_LIB)
 EOF
 }
 
@@ -116,6 +143,19 @@ function check_sdl () {
       pkg_config_try_multiple SDL SDL sdl
     fi
   fi
+  cat <<EOF >_out_$$.cpp
+#include <SDL.h>
+int main(int argc, char* argv[]) {
+  SDL_GL_SWAP_CONTROL;
+}
+EOF
+  g++ $SDL_INC _out_$$.cpp 2>/dev/null
+  if [ $? -eq 0 ]; then
+    SDL_GL_SWAP_CONTROL='#define HAVE_SDL_VSYNC'
+  else
+    SDL_GL_SWAP_CONTROL='#undef HAVE_SDL_VSYNC'
+  fi
+  rm -f _out_$$.cpp a.out
 }
 
 function pkg_config_try_multiple () {
@@ -145,6 +185,38 @@ function check_lua () {
   fi
 }
 
+function check_sdl_audio () {
+local good=0
+cat <<EOF >_out_$$.cpp
+#include <SDL_mixer.h>
+int main(int argc, char* argv[]) {
+}
+EOF
+g++ $SDL_INC _out_$$.cpp 2>/dev/null
+if [ $? -eq 0 ]; then
+  let good=$good+1
+fi
+rm -f _out_$$.cpp
+
+cat <<EOF >_out_$$.cpp
+#include <SDL_sound.h>
+int main(int argc, char* argv[]) {
+}
+EOF
+g++ $SDL_INC _out_$$.cpp 2>/dev/null
+if [ $? -eq 0 ]; then
+  let good=$good+1
+fi
+rm -f _out_$$.cpp a.out
+
+if [ $good -eq 2 ]; then
+  AUDIO_LD="-lSDL_mixer -lSDL_sound"
+  SDL_SOUND_MIXER='#define WITH_SOUND'
+else
+  SDL_SOUND_MIXER='#undef WITH_SOUND'
+fi
+}
+
 function check_physfs () {
   program_exists pkg-config
   if [ $? -eq 1 ]; then
@@ -153,18 +225,26 @@ function check_physfs () {
 }
 
 function check_compiler () {
-  g++ 1>/dev/null 2>&1
+  if [ "$OGTA_PLATFORM" == "WIN32" ]; then
+    _CXX=i586-mingw32msvc-g++
+    _CC=i586-mingw32msvc-gcc
+  else
+    _CXX=g++
+    _CC=gcc
+  fi
+  $_CXX 1>/dev/null 2>&1
   if [ $? -eq 1 ]; then
-    CXX=g++
+    CXX=$_CXX
   else
     CXX=
   fi
-  gcc 1>/dev/null 2>&1
+  $_CC 1>/dev/null 2>&1
   if [ $? -eq 1 ]; then
-    CC=gcc
+    CC=$_CC
   else
     CC=
   fi
+  GCC_VERSION=$($CXX --version | head -n 1)
 }
 
 # defaults
@@ -172,11 +252,6 @@ function check_compiler () {
 DEBUG=-ggdb
 WARN=-Wall
 OPT=-O2
-if [ "$1" == "LINUX" ]; then
- DEFS="-DLINUX -DDO_SCALEX"
-else
- DEFS="-DWIN32 -DDO_SCALEX"
-fi
 PHYSFS_LIB=-lphysfs
 SDL_LIB=-lSDL
 LUA_LIB=-llua51
@@ -190,7 +265,7 @@ CC  = $CC
 DEBUG = $DEBUG
 OPT   = $OPT
 WARN  = $WARN
-DEFS  = $DEFS -DGCC
+DEFS  = $DEFS
 
 # def only for 'main' programs to let gdb handle the exception 
 #CATCH_E = -DDONT_CATCH
@@ -211,6 +286,9 @@ SDL_IMG_LIB = -lSDL_image
 LUA_INC    = $LUA_INC
 LUA_LIB    = $LUA_LIB
 
+AUDIO_INC  =
+AUDIO_LIB   = $AUDIO_LD
+
 LINK_LAZY  = -Xlinker --unresolved-symbols -Xlinker ignore-all
 
 EOF
@@ -225,7 +303,7 @@ CC  = i586-mingw32msvc-gcc
 #DEBUG = $DEBUG
 OPT   = $OPT
 WARN  = $WARN
-DEFS  = $DEFS -DGCC
+DEFS  = $DEFS
 
 # def only for 'main' programs to let gdb handle the exception 
 #CATCH_E = -DDONT_CATCH
@@ -256,7 +334,7 @@ function print_all() {
 check_sdl
 check_lua
 check_physfs
-check_compiler
+check_sdl_audio
 print_detected
 print_make_file_list
 print_target_list
@@ -266,12 +344,68 @@ include depend
 EOF
 }
 
-if [ "$1" == "LINUX" ]; then
-  echo "*** LINUX ***"
-  print_all > src_list.make
-else
+function print_config_h() {
+  if [ -e ogta_version ]; then
+    LAST_TOUCHED=$(cat ogta_version)
+  else
+    LAST_TOUCHED=$(find . -type f -exec ls -tl {} \; | grep -v CVS | tail -1 | awk '{print $6}')
+    echo $LAST_TOUCHED > ogta_version
+  fi
+
+  cat <<EOF
+// WIN32 already defined when cross-compiling...
+#ifndef $OGTA_PLATFORM
+#define $OGTA_PLATFORM
+#endif
+
+// to avoid some errors on prg-exit
+#define LOKI_FUNCTOR_IS_NOT_A_SMALLOBJECT
+
+// platform specific switches
+#ifdef LINUX
+#define OGTA_PLATFORM_INFO "linux"
+// for coldet; FIXME: really only for linux?
+#define GCC
+
+#elif WIN32
+#define OGTA_PLATFORM_INFO "win32"
+#else
+#error(No platform defined)
+#endif
+
+// global compile-time vars
+#define OGTA_VERSION_INFO "$LAST_TOUCHED"
+
+#define DEFAULT_SCREEN_WIDTH  640
+#define DEFAULT_SCREEN_HEIGHT 480
+
+#define OGTA_DEFAULT_DATA_PATH "gtadata.zip"
+#define OGTA_DEFAULT_MOD_PATH  ""
+#define OGTA_DEFAULT_HOME_PATH PHYSFS_getBaseDir()
+
+#define USED_GCC_VERSION "$GCC_VERSION"
+
+// enable features
+#define DO_SCALEX
+#undef WITH_LUA
+$SDL_SOUND_MIXER
+$SDL_GL_SWAP_CONTROL
+EOF
+}
+
+if [[ -n "$1" && "$1" != "LINUX" ]]; then
+  OGTA_PLATFORM=WIN32
   echo "*** WIN32 ***"
+  DEFS="-include config.h"
+  check_compiler
   print_w32settings > src_list.make
   print_make_file_list >> src_list.make
   print_target_list >> src_list.make
+else
+  OGTA_PLATFORM="LINUX"
+  echo "*** LINUX ***"
+  check_compiler
+  DEFS="-include config.h"
+  print_all > src_list.make
 fi
+print_config_h > config.h

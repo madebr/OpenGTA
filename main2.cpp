@@ -6,7 +6,7 @@
 
 extern void parse_args(int argc, char* argv[]);
 extern void on_exit();
-extern void run_init();
+extern void run_init(const char*);
 extern void run_main();
 
 int global_EC = 0;
@@ -30,10 +30,10 @@ int main(int argc, char* argv[]) {
     INFO << "ignoring exceptions" << std::endl;
   
   if (!catch_exceptions)
-    run_init();
+    run_init(argv[0]);
   else {
     try {
-      run_init();
+      run_init(argv[0]);
     }
     catch (Exception & e) {
       ERROR << "Exception during startup: " << e.what() << endl;

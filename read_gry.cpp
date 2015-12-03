@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2005-2006 tok@openlinux.org.uk                          *
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
 *                                                                       *
 * This file contains code derived from information copyrighted by       *
 * DMA Design. It may not be used in a commercial product.               *
@@ -268,6 +268,17 @@ namespace OpenGTA {
     return NULL;
   }
 
+  unsigned int GraphicsBase::getRandomPedRemapNumber() {
+    return int(rand() * (1.0f / (1.0f + RAND_MAX)) * 
+      (lastValidPedRemap - firstValidPedRemap) +
+        firstValidPedRemap);
+  }
+
+  unsigned int GraphicsBase::getPedRemapNumberType(unsigned int _type) {
+    ERROR << "not implemented"<< std::endl;
+    return _type;
+  }
+
   Graphics8Bit::Graphics8Bit(const std::string& style) : GraphicsBase() {
     fd = PHYSFS_openRead(style.c_str());
     if (fd == NULL) {
@@ -288,6 +299,8 @@ namespace OpenGTA {
     auxBlockTrailSize = 0;
     loadHeader();
     setupBlocking(style);
+    firstValidPedRemap = 131;
+    lastValidPedRemap = 187;
   }
 
   Graphics8Bit::~Graphics8Bit() {
@@ -423,7 +436,7 @@ namespace OpenGTA {
       for (int j=0; j<animation->frameCount; j++) {
         uint8_t val;
         PHYSFS_read(fd, static_cast<void*>(&val), 1, 1);
-        animation->frame.push_back(val);
+        animation->frame[j] = val;
         //PHYSFS_read(fd, static_cast<void*>(&animations[i].frame[j]), 1, 1);
       }
       animations.push_back(animation);
@@ -498,8 +511,10 @@ namespace OpenGTA {
   void GraphicsBase::loadCarInfo_shared(PHYSFS_uint64 offset) {
     PHYSFS_seek(fd, offset);
 
+    //INFO << "starting at offset " << offset << std::endl;
     PHYSFS_uint32 bytes_read = 0;
     while (bytes_read < carInfoSize) {
+      //INFO << bytes_read << ": " << carInfoSize << std::endl;
       CarInfo * car = new CarInfo();
 
       PHYSFS_readSLE16(fd, &car->width);
@@ -579,6 +594,10 @@ namespace OpenGTA {
 
       PHYSFS_readSLE16(fd, &car->numDoors);
       bytes_read += 2;
+      if (car->numDoors > 2) {
+        WARN << "num-doors: " << car->numDoors << " > 2 ???" << std::endl;
+        car->numDoors = 0;
+      }
 
       for (int i=0; i < car->numDoors; i++) {
         PHYSFS_readSLE16(fd, &car->door[i].rpx);
