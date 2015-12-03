@@ -1,0 +1,53 @@
+= What happens when you call 'make' =
+
+The main makefile checks the env-variable 'HOST'; 
+which is assumed to be "LINUX" or "WIN32", the latter actually being
+used to indicate cross-compiling using a mingw-toolchain.
+
+The main makefile checks if the 'Loki'-library is already there;
+if not 'wget's it and calls loki.make(.w32_cross) to build it.
+
+It then looks for a file named src_list.make; if that does not exist
+it calls "prepare_build.sh $HOST" which generates both src_list.make
+and config.h.
+
+The script will only work on Linux where it will use pkg-config to
+find the libraries; I hardcoded many Win32 values pointing to my
+toolchain and library pathes.
+
+Make now includes src_list.make and builds the default targets;
+there are more programs that can be build with an explicit
+"make $program_name"; look at src_list.make.
+
+If you need to setup compiler/library paths src_list.make is the
+place to do it. Then run make again.
+
+
+= Features in config.h =
+
+DO_SCALE2X
+Enable scale2x algorithm; so far only used for sprites, on if enabled.
+
+HAVE_SDL_VSYNC
+Does the SDL header define SDL_GL_SWAP_CONTROL? Must be #undef-ined if
+not, may be undefined anyway (turn feature off) and it really depends 
+whether the driver supports it (at runtime).
+
+In the future a number of WITH_* defines will be used to enable
+support for library-dependent features (Lua, SDL_sound + SDL_mixer,
+SDL_image). For the moment only the Lua related flag changes 'viewer',
+the other features are only used in testcases.
+
+DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT
+The initial screen size (unless otherwise defined); defaults to 640x480
+if not defined.
+
+DEFAULT_SCREEN_VSYNC
+Default setting for vsync;can be one of 0, 1, 2
+
+On Linux you can colorify the log-output by defining LOG_USE_ANSI_COLORS.
+
+= If you modify the code yourself =
+
+Note: the dependency system is somewhat broken, sometimes changes in
+header files are ignored; either "make clean" or "touch config.h".

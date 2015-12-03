@@ -36,6 +36,7 @@ namespace OpenGL {
       ~DrawableFont();
       void loadFont(const std::string & filename);
       GLfloat drawString(const std::string & text) ;
+      GLfloat drawString_r2l(const std::string & text) ;
       void setScale(unsigned int newScale);
       uint16_t getHeight();
       void resetTextures();

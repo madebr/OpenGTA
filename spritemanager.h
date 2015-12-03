@@ -179,6 +179,7 @@ namespace OpenGTA {
 
       private:
         Uint32 drawMode;
+        Uint32 lastCreateTick;
 
         //SpriteManager(const SpriteManager & o) : trainSystem(AbstractContainer<TrainSegment>::objs) {assert(0);}
         SpriteManager(const SpriteManager & o) {assert(0);}

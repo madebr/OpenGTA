@@ -25,6 +25,7 @@
 #include "log.h"
 #include "buffercache.h"
 #include "m_exceptions.h"
+#include "image_loader.h"
 
 namespace OpenGL {
 #ifndef DEFAULT_SCREEN_WIDTH
@@ -32,6 +33,9 @@ namespace OpenGL {
 #endif
 #ifndef DEFAULT_SCREEN_HEIGHT
 #define DEFAULT_SCREEN_HEIGHT 480
+#endif
+#ifndef DEFAULT_SCREEN_VSYNC
+#define DEFAULT_SCREEN_VSYNC 0
 #endif
 
   Screen::Screen() {
@@ -43,6 +47,8 @@ namespace OpenGL {
     fieldOfView = 60.0f;
     nearPlane = 0.1f;
     farPlane = 250.0f;
+    // 0: no vsync, 1: sdl, 2 native
+    useVsync = DEFAULT_SCREEN_VSYNC;
   }
 
   void Screen::activate(Uint32 w, Uint32 h) {
@@ -52,6 +58,7 @@ namespace OpenGL {
       height = h;
     initSDL();
     resize(width, height);
+    INFO << "activating screen: " << width << "x" << height << std::endl;
     initGL();
     setSystemMouseCursor(false);
   }
@@ -60,6 +67,10 @@ namespace OpenGL {
     fieldOfView = fov;
     nearPlane = near_p;
     farPlane = far_p;
+  }
+
+  void Screen::setupVsync(size_t mode) {
+    useVsync = mode;
   }
 
   void Screen::setSystemMouseCursor(bool visible) {
@@ -112,7 +123,7 @@ namespace OpenGL {
 
     const char* sdl_err = SDL_GetError();
     if (strlen(sdl_err) > 0)
-      INFO << "sdl_init complained: " << sdl_err << std::endl;
+      WARN << "SDL_Init complained: " << sdl_err << std::endl;
     SDL_ClearError();
 
     const SDL_VideoInfo *vInfo = SDL_GetVideoInfo();
@@ -166,33 +177,75 @@ namespace OpenGL {
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16);
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1);
 #ifdef HAVE_SDL_VSYNC
-    SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1);
+    if (useVsync == 1) {
+      SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1);
+      INFO << "enabling vertical sync:" << " SDL" << std::endl;
+    }
+#else
+    if (useVsync == 1)
+      WARN << "Cannot use SDL vsync - option disabled while compiling" << std::endl;
 #endif
 
     sdl_err = SDL_GetError();
     if (strlen(sdl_err) > 0)
       ERROR << "setting sdl_gl attributes: " << sdl_err << std::endl;
+
   }
 
   void Screen::initGL() {
     GL_CHECKERROR;
-    //GLfloat LightAmbient[]  = { 0.8f, 0.8f, 0.8f, 1.0f };
-    //GLfloat LightDiffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-    //GLfloat LightPosition[] = { 128.0f, 200.0f, 128.0f, 1.0f };
-
+    if (useVsync == 2) {
+#ifdef LINUX
+      int (*fp)(int) = (int(*)(int)) SDL_GL_GetProcAddress("glXSwapIntervalMESA");
+      if (fp) {
+        fp(1);
+        INFO << "enabling vertical sync:" << " GLX" << std::endl;
+      }
+      else
+        ERROR << "No symbol 'glXSwapIntervalMESA' found - cannot use GLX vsync" << std::endl;
+#else
+      typedef void (APIENTRY * WGLSWAPINTERVALEXT) (int);
+      WGLSWAPINTERVALEXT wglSwapIntervalEXT = 
+        (WGLSWAPINTERVALEXT) wglGetProcAddress("wglSwapIntervalEXT");
+      if (wglSwapIntervalEXT)
+      {
+        wglSwapIntervalEXT(1); // set vertical synchronisation
+        INFO << "enabling vertical sync:" << " WGL" << std::endl;
+      }
+      else
+        ERROR << "No symbol 'wglSwapIntervalEXT' found - cannot use WGL vsync" << std::endl;
+#endif
+    }
+    /*
+    GLfloat LightAmbient[]  = { 0.1f, 0.1f, 0.1f, 1.0f };
+    GLfloat LightDiffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLfloat LightPosition[] = { 1.0f, 1.0f, 0.0f, 0.0f };
+    */
     //glShadeModel( GL_SMOOTH );
     glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
     glEnable( GL_DEPTH_TEST );
-    //glEnable( GL_LIGHTING );
+    /*
+    glEnable( GL_LIGHTING );
     glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
-    //glLightfv( GL_LIGHT0, GL_AMBIENT, LightAmbient );
-    //glLightfv( GL_LIGHT0, GL_DIFFUSE, LightDiffuse );
-    //glLightfv( GL_LIGHT0, GL_POSITION, LightPosition );
-    //glEnable( GL_LIGHT0 );
+    glLightfv( GL_LIGHT0, GL_AMBIENT, LightAmbient );
+    glLightfv( GL_LIGHT0, GL_DIFFUSE, LightDiffuse );
+    glLightfv( GL_LIGHT0, GL_POSITION, LightPosition );
+    glEnable( GL_LIGHT0 );
+    */
     glEnable( GL_COLOR_MATERIAL);
     glCullFace(GL_BACK);
     //glPolygonMode(GL_FRONT, GL_FILL);
     //glPolygonMode(GL_BACK, GL_LINE);
+    glEnable(GL_TEXTURE_2D);
+
+    if (queryExtension("GL_EXT_texture_filter_anisotropic")) {
+      GLfloat maxAniso = 1.0f;
+      glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+      //if (maxAniso >= 2.0f)
+      ImageUtil::supportedMaxAnisoDegree = maxAniso;
+      INFO << "GL supports anisotropic filtering with degree: " << maxAniso << std::endl;
+    }
+
     GL_CHECKERROR;
   }
 
@@ -255,5 +308,19 @@ namespace OpenGL {
     SDL_UnlockSurface(image);
     SDL_SaveBMP(image, filename);
     SDL_FreeSurface( image );
+  }
+
+  GLboolean Screen::queryExtension(const char *extName) {
+    // from the 'Red Book'
+    char *p = (char *) glGetString(GL_EXTENSIONS);
+    char *end = p + strlen(p); 
+    while (p < end) {
+      size_t n = strcspn(p, " ");
+      if ((strlen(extName)==n) && (strncmp(extName,p,n)==0)) {
+        return GL_TRUE;
+      }
+      p += (n + 1);
+    }
+    return GL_FALSE;
   }
 }

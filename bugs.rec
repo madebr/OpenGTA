@@ -1,19 +1,72 @@
 Bug: style001.gry bridge texture artifacts
-Image: http://skybound.portland.co.uk/ogta/bugs_in_transparent_texture_2006-10-03.jpg
+Image: http://picasaweb.google.com/under.northern.sky/OpenGTAScreenshots/photo#5015284379944604402
 black pixel inside a side texture (nyc.cmp)... thus begins the
 'how many errors can there be about black vs. transparent contest'.
 %%
 Bug: wrong block texture coords
-Image: http://lh6.google.com/image/under.northern.sky/RZnek0op0yI/AAAAAAAAAB4/zfCFvPS8gWg/still_slope_tex_errors_2007-01-01.jpg
+Image: http://picasaweb.google.com/under.northern.sky/OpenGTAScreenshots/photo#5015284384239571746
+Status: maybe-closed
 Most likely the side that is a triangle and not a quad.
 Needs research if 'flipping' the texture is related.
+
+Update: fixed for the case shown in the screenshot; may lurk on north/south sides of
+blocks, flipping/rotation influence remains unknown.
 %%
 Bug: transparent pixel in g24 tiles
-Image: http://lh4.google.com/image/under.northern.sky/Rh58SCRd8kI/AAAAAAAAAEQ/FK6KLriTfOs/nyc_gry_block_transparent_pixel_bug_2007-04-12.jpg
+Image: http://picasaweb.google.com/under.northern.sky/OpenGTAScreenshots/photo#5052612481245901378
 Those should probably just be black. It is not a very obvious
 error, but it should be fixed.
 %%
 Bug: black border around sprites
-Image: http://lh4.google.com/image/under.northern.sky/Rh58SCRd8lI/AAAAAAAAAEY/tnMwSk8IVok/g24_obj_black_border_2007-04-12.jpg
+Image: http://picasaweb.google.com/under.northern.sky/OpenGTAScreenshots/photo#5052612481245901394
 Simply doesn't look good, especially with g24 graphics.
+%%
+Bug: wrong-player position in viewer.exe when switching from free mode (F4)
+A position somewhat ~north~ is actually used; if you are at the north-border of the
+city this can cause the player to be spawned outside 0->255 ^2 range, which exits
+the program.
+%%
+Bug: wrong walk/run animations when armed
+Switching between forward/backward/run often changes the weapon as well; walking
+forward with the gun doesn't work at all.
+%%
+Bug: scale2x disabled in all previous releases
+The script prepare_build.sh defines -DDO_SCALEX while the code actually is
+activated by -DDO_SCALE2X; errare humanum est.
+
+This bug will be closed when the next release includes this feature; otherwise
+see cvs.
+%%
+Bug: switching to/from fullscreen (at runtime) is broken on Windows (again?)
+Most polygons are plain white, some strange rendering errors appear as well; 
+aka. oh gl-context, where did all my textures go?
+
+Does this affect switching the screen resolution as well? Probably :-(
+%%
+Bug: vertical sync - SDL_GL_SWAP_CONTROL
+Does not work in the Win32 binaries, the SDL version I used is too old.
+
+Stopped doing anything on at least my Linux system (after an update) as well.
+%%
+Bug: Data _or_ interpretation - block type
+Image: http://picasaweb.google.com/under.northern.sky/OpenGTAScreenshots/photo#5060057403938727394
+Several problems may stem from the 'flags stored in block above the one with the graphic' gta-
+legacy. The symptom is: you can fall through some floor blocks!
+
+Probably several cases exist; either a bug in my code or some quirk of the map format.
+%%
+Bug: Collision with 'flat' blocks
+Partially transparent blocks (sign posts, fence, etc.) need special rules to handle
+blocking of peds/projectiles/car; implemented only for peds.
+
+Furthermore only works on nyc.cmp, need to research the tile-ids for the other style
+files.
+FIXME: which blocks should _not_ block projectiles?
+%%
+Bug: Pedestrian movement physics
+
+1) Moving up/down on a slope should influence speed
+
+2) You can walk up a single vertical wall (can be seen when walking on roofs;
+probably also teleports to the upper road when under the bridges in nyc.cmp.
 %%

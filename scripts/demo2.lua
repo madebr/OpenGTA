@@ -1,4 +1,5 @@
-screen.setFullscreen(true)
+
+--screen.setFullscreen(true)
 camera.setCenter(61.4261, 7.56265, 2.2242)
 camera.setEye(61.4185, 8.72266, 0.810034)
 camera.setUp(0, 1, 0)

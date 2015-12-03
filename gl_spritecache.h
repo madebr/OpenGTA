@@ -22,6 +22,7 @@
 ************************************************************************/
 #ifndef SPRITE_CACHE_H
 #define SPRITE_CACHE_H
+#include <cstddef>
 #include <physfs.h>
 #include "Singleton.h"
 #include "gl_pagedtexture.h"
@@ -65,7 +66,7 @@ namespace OpenGL {
         OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes,
         PHYSFS_sint16 remap, PHYSFS_uint32 delta);
 
-      OpenGL::PagedTexture SpriteCache::createSprite(size_t sprite_num, PHYSFS_sint16 remap, 
+      OpenGL::PagedTexture createSprite(size_t sprite_num, PHYSFS_sint16 remap, 
         PHYSFS_uint32 delta, OpenGTA::GraphicsBase::SpriteInfo* info);
     private:
 

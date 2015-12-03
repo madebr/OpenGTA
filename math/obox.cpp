@@ -1,4 +1,46 @@
+/* Derived from code written by Jonathan Kreuzer.
+ *
+ * See: http://www.3dkingdoms.com/weekly/weekly.php?a=21
+ *
+ * basically the same as bbox.h/.cpp but using coldet math 
+ *
+ * -- quote from a mail of the author --
+ *
+ * You're free to continue using my CBBox code however you want. 
+ * ... [snip] ... 
+ * The only thing I ask is a note about where it came from ( I think
+ * you said you added a link to the article, so that's fine. )
+ *
+ */
+
+/************************************************************************
+* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
+*                                                                       *
+* This software is provided as-is, without any express or implied       *
+* warranty. In no event will the authors be held liable for any         *
+* damages arising from the use of this software.                        *
+*                                                                       *
+* Permission is granted to anyone to use this software for any purpose, *
+* including commercial applications, and to alter it and redistribute   *
+* it freely, subject to the following restrictions:                     *
+*                                                                       *
+* 1. The origin of this software must not be misrepresented; you must   *
+* not claim that you wrote the original software. If you use this       *
+* software in a product, an acknowledgment in the product documentation *
+* would be appreciated but is not required.                             *
+*                                                                       *
+* 2. Altered source versions must be plainly marked as such, and must   *
+* not be misrepresented as being the original software.                 *
+*                                                                       *
+* 3. This notice may not be removed or altered from any source          *
+* distribution.                                                         *
+************************************************************************/
+
+#include <cassert>
+#include "log.h"
 #include "obox.h"
+
+#include "plane.h"
 // --------------------------
 //
 // Oriented Bounding Box Class
@@ -8,7 +50,7 @@
 //
 // Check if a point is in this bounding box
 //
-bool OBox::IsPointInBox(const Vector3D &InP) const
+bool OBox::isPointInBox(const Vector3D &InP) const
 {
   // Rotate the point into the box's coordinates
   Vector3D P = Transform(InP, m_M.Inverse());
@@ -23,7 +65,7 @@ bool OBox::IsPointInBox(const Vector3D &InP) const
 //
 // Check if a sphere overlaps any part of this bounding box
 //
-bool OBox::IsSphereInBox( const Vector3D &InP, float fRadius) const
+bool OBox::isSphereInBox( const Vector3D &InP, float fRadius) const
 {
   float fDist;
   float fDistSq = 0;
@@ -44,7 +86,7 @@ bool OBox::IsSphereInBox( const Vector3D &InP, float fRadius) const
 //
 // Check if the bounding box is completely behind a plane( defined by a normal and a point )
 //
-bool OBox::BoxOutsidePlane( const Vector3D &InNorm, const Vector3D &InP ) const
+bool OBox::boxOutsidePlane( const Vector3D &InNorm, const Vector3D &InP ) const
 {
   // Plane Normal in Box Space
   Vector3D Norm = rotateVector(InNorm, m_M.Inverse() );
@@ -52,7 +94,7 @@ bool OBox::BoxOutsidePlane( const Vector3D &InNorm, const Vector3D &InP ) const
 
   float Extent = Norm * m_Extent; //Norm.Dot( m_Extent ); // Box Extent along the plane normal
   //float Distance = InNorm.Dot( GetCenterPoint() - InP ); // Distance from Box Center to the Plane
-  float Distance = InNorm * (GetCenterPoint() - InP);
+  float Distance = InNorm * (getCenterPoint() - InP);
 
   // If Box Centerpoint is behind the plane further than its extent, the Box is outside the plane
   if ( Distance < -Extent ) return true;
@@ -62,7 +104,7 @@ bool OBox::BoxOutsidePlane( const Vector3D &InNorm, const Vector3D &InP ) const
 //
 // Does the Line (L1, L2) intersect the Box?
 //
-bool OBox::IsLineInBox( const Vector3D& L1, const Vector3D& L2 ) const
+bool OBox::isLineInBox( const Vector3D& L1, const Vector3D& L2 ) const
 {	
   // Put line in box space
   Matrix3D MInv = m_M.Inverse();
@@ -87,10 +129,40 @@ bool OBox::IsLineInBox( const Vector3D& L1, const Vector3D& L2 ) const
   return true;
 }
 
+void OBox::lineCrossBox(const Vector3D& L1, const Vector3D& L2, Vector3D & isecLocal) const {
+  // Put line in box space
+  Matrix3D MInv = m_M.Inverse();
+  Vector3D LB1 = Transform(L1, MInv);
+  Vector3D LB2 = Transform(L2, MInv);
+  float small_t = 2.0f;
+  Vector3D p_copy(0, 0, 0);
+
+  //i = 0: -x,-z <-> -x,z
+  //i = 1: -x,-z <-> x,-z
+  //i = 2: x,-z, <-> x,z
+  //i = 3: -x,z  <-> x,z
+  for (int i = 0; i < 4; i++) {
+    Vector3D s1((i <= 1 || i == 3 ? -m_Extent.x : m_Extent.x), 0, (i < 3 ? -m_Extent.z : m_Extent.z));
+    Vector3D s2((i == 0 ? -m_Extent.x : m_Extent.x), 0,  (i == 1 ? -m_Extent.z : m_Extent.z));
+    Vector3D p;
+    float dt = Math::intersection_segments(s1, s2, LB1, LB2, p);
+    if ((dt >= 0.0f) && (dt < small_t)) {
+      p_copy = p;
+      small_t = dt;
+    }
+  }
+  if (small_t >= 0.0f && small_t <= 1.0f) {
+    isecLocal = p_copy;
+    return;
+  }
+  ERROR << "Did not find intersection when OBB says there is one :-(" << std::endl;
+  isecLocal = L1;
+}
+
 //
 // Returns a 3x3 rotation matrix as vectors
 //
-inline void OBox::GetInvRot( Vector3D *pvRot ) const
+inline void OBox::getInvRot( Vector3D *pvRot ) const
 {
   pvRot[0] = Vector3D( m_M.m[0][0], m_M.m[0][1], m_M.m[0][2] );
   pvRot[1] = Vector3D( m_M.m[1][0], m_M.m[1][1], m_M.m[1][2] );
@@ -101,13 +173,13 @@ inline void OBox::GetInvRot( Vector3D *pvRot ) const
 // Check if any part of a box is inside any part of another box
 // Uses the separating axis test.
 //
-bool OBox::IsBoxInBox( OBox &BBox ) const
+bool OBox::isBoxInBox( OBox &BBox ) const
 {
   Vector3D SizeA = m_Extent;
   Vector3D SizeB = BBox.m_Extent;
   Vector3D RotA[3], RotB[3];	
-  GetInvRot( RotA );
-  BBox.GetInvRot( RotB );
+  getInvRot( RotA );
+  BBox.getInvRot( RotB );
 
   float R[3][3];  // Rotation from B to A
   float AR[3][3]; // absolute values of R matrix, to use with box extents
@@ -123,7 +195,7 @@ bool OBox::IsBoxInBox( OBox &BBox ) const
     }
 
   // Vector separating the centers of Box B and of Box A	
-  Vector3D vSepWS = BBox.GetCenterPoint() - GetCenterPoint();
+  Vector3D vSepWS = BBox.getCenterPoint() - getCenterPoint();
   // Rotated into Box A's coordinates
   Vector3D vSepA( vSepWS * RotA[0], vSepWS * RotA[1], vSepWS * RotA[2] );            
 

@@ -89,6 +89,7 @@ namespace OpenGTA {
       NavData(PHYSFS_uint32 size, PHYSFS_file *fd, const size_t level_num);
       ~NavData();
       Sector* getSectorAt(PHYSFS_uint8, PHYSFS_uint8);
+      static std::string _c, _n, _s, _w, _e, _nw, _ne, _sw, _se;
     private:
       void clear();
       typedef std::multimap<PHYSFS_uint16, Sector*> SectorMapType;

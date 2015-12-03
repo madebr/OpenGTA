@@ -28,6 +28,9 @@
 #include "log.h"
 #include "cistring.h"
 #include "opengta.h"
+#include "physfsrwops.h"
+#include "SDL_image.h"
+#include "m_exceptions.h"
 
 namespace ImageUtil {
 using OpenGL::PagedTexture;
@@ -88,6 +91,7 @@ using OpenGL::PagedTexture;
     if (whp.first == 0 || whp.second == 0) {
       PHYSFS_close(fd);
       WARN << "aborting image load" << std::endl;
+      throw E_UNKNOWNKEY(name + " - RAW file size unknown");
     }
 
     Util::BufferCache::LockedBuffer lbuf(nbytes);
@@ -115,6 +119,7 @@ using OpenGL::PagedTexture;
     if (whp.first == 0 || whp.second == 0) {
       PHYSFS_close(fd);
       WARN << "aborting image load" << std::endl;
+      throw E_UNKNOWNKEY(name + " - RAT file size unknown");
     }
     Util::BufferCache::LockedBuffer lb1(nbytes);
     PHYSFS_read(fd, lb1(), 1, nbytes);
@@ -131,20 +136,53 @@ using OpenGL::PagedTexture;
     return createEmbeddedTexture(whp.first, whp.second, false, lb2());
   }
 
+#ifdef WITH_SDL_IMAGE
+  OpenGL::PagedTexture loadImageSDL(const std::string & name) {
+    SDL_RWops * rwops = PHYSFSRWOPS_openRead(name.c_str());
+    SDL_Surface *surface = IMG_Load_RW(rwops, 1);
+    assert(surface);
+
+    NextPowerOfTwo npot(surface->w, surface->h);
+    uint16_t bpp = surface->format->BytesPerPixel;
+
+    uint8_t * buffer = Util::BufferCacheHolder::Instance().requestBuffer(npot.w * npot.h * bpp);
+    SDL_LockSurface(surface);
+    copyImage2Image(buffer, (uint8_t*)surface->pixels, surface->pitch, surface->h,
+        npot.w * bpp);
+    SDL_UnlockSurface(surface);
+    SDL_FreeSurface(surface);
+
+    GLuint texture = createGLTexture(npot.w, npot.h, (bpp == 4) ? true : false, buffer);
+    return OpenGL::PagedTexture(texture, 0, 0, GLfloat(surface->w)/npot.w, 
+      GLfloat(surface->h)/npot.h);
+  }
+#endif
+
   GLuint createGLTexture(GLsizei w, GLsizei h, bool rgba, const void* pixels) {
     GLuint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    if (!mipmapTextures)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    else
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    if (rgba)
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    //gluBuild2DMipmaps(GL_TEXTURE_2D, 4, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    else
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    //gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    if (rgba) {
+      if (mipmapTextures)
+        gluBuild2DMipmaps(GL_TEXTURE_2D, 4, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+      else
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    }
+    else {
+      if (mipmapTextures)
+        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+      else
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    }
+    if (supportedMaxAnisoDegree > 1.0f)
+      glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, &supportedMaxAnisoDegree);
 
     GL_CHECKERROR;
     return tex;
@@ -165,13 +203,86 @@ using OpenGL::PagedTexture;
       bool rgba, const void* pixels) {
     
     NextPowerOfTwo npot(w, h);
-    uint32_t bpp = (rgba ? 4 : 3);
+    uint8_t* buff = (uint8_t*)pixels;
 
-    uint32_t bufSize = npot.w * npot.h * bpp;
-    uint8_t* buff = Util::BufferCacheHolder::Instance().requestBuffer(bufSize);
-    copyImage2Image(buff, (uint8_t*)pixels, w * bpp, h, npot.w * bpp);
+    if (!(npot.w == uint32_t(w) && npot.h == uint32_t(h))) {
+      uint32_t bpp = (rgba ? 4 : 3);
+      uint32_t bufSize = npot.w * npot.h * bpp;
+      buff = Util::BufferCacheHolder::Instance().requestBuffer(bufSize);
+      copyImage2Image(buff, (uint8_t*)pixels, w * bpp, h, npot.w * bpp);
+    }
 
     GLuint tex = createGLTexture(npot.w, npot.h, rgba, buff);
     return PagedTexture(tex, 0, 0, float(w) / npot.w, float(h) / npot.h);
   }
+
+#define MAX(a,b)    (((a) > (b)) ? (a) : (b))
+#define MIN(a,b)    (((a) < (b)) ? (a) : (b))
+#define READINT24(x)      ((x)[0]<<16 | (x)[1]<<8 | (x)[2]) 
+#define WRITEINT24(x, i)  {(x)[0]=i>>16; (x)[1]=(i>>8)&0xff; x[2]=i&0xff; }
+
+  uint8_t* scale2x_24bit(const uint8_t* src, const int src_width, const int src_height) {
+    const int srcpitch = src_width * 3;
+    const int dstpitch = src_width * 6;
+
+    uint8_t *dstpix = Util::BufferCacheHolder::Instance().requestBuffer(src_width *
+        src_height * 3 * 4);
+    int E0, E1, E2, E3, B, D, E, F, H;
+    for(int looph = 0; looph < src_height; ++looph)
+    {
+      for(int loopw = 0; loopw < src_width; ++ loopw)
+      {
+        B = READINT24(src + (MAX(0,looph-1)*srcpitch) + (3*loopw));
+        D = READINT24(src + (looph*srcpitch) + (3*MAX(0,loopw-1)));
+        E = READINT24(src + (looph*srcpitch) + (3*loopw));
+        F = READINT24(src + (looph*srcpitch) + (3*MIN(src_width-1,loopw+1)));
+        H = READINT24(src + (MIN(src_height-1,looph+1)*srcpitch) + (3*loopw));
+
+        E0 = D == B && B != F && D != H ? D : E;
+        E1 = B == F && B != D && F != H ? F : E;
+        E2 = D == H && D != B && H != F ? D : E;
+        E3 = H == F && D != H && B != F ? F : E;
+
+        WRITEINT24((dstpix + looph*2*dstpitch + loopw*2*3), E0);
+        WRITEINT24((dstpix + looph*2*dstpitch + (loopw*2+1)*3), E1);
+        WRITEINT24((dstpix + (looph*2+1)*dstpitch + loopw*2*3), E2);
+        WRITEINT24((dstpix + (looph*2+1)*dstpitch + (loopw*2+1)*3), E3);
+      }
+    }
+    return dstpix;
+  }
+
+  uint8_t* scale2x_32bit(const uint8_t* src, const int src_width, const int src_height) {
+    const int srcpitch = src_width * 4;
+    const int dstpitch = src_width * 8;
+
+    uint8_t* dstpix = Util::BufferCacheHolder::Instance().requestBuffer(src_width * 
+        src_height * 4 * 4);
+    Uint32 E0, E1, E2, E3, B, D, E, F, H;
+    for(int looph = 0; looph < src_height; ++looph)
+    {
+      for(int loopw = 0; loopw < src_width; ++ loopw)
+      {
+        B = *(Uint32*)(src + (MAX(0,looph-1)*srcpitch) + (4*loopw));
+        D = *(Uint32*)(src + (looph*srcpitch) + (4*MAX(0,loopw-1)));
+        E = *(Uint32*)(src + (looph*srcpitch) + (4*loopw));
+        F = *(Uint32*)(src + (looph*srcpitch) + (4*MIN(src_width-1,loopw+1)));
+        H = *(Uint32*)(src + (MIN(src_height-1,looph+1)*srcpitch) + (4*loopw));
+
+        E0 = D == B && B != F && D != H ? D : E;
+        E1 = B == F && B != D && F != H ? F : E;
+        E2 = D == H && D != B && H != F ? D : E;
+        E3 = H == F && D != H && B != F ? F : E;
+
+        *(Uint32*)(dstpix + looph*2*dstpitch + loopw*2*4) = E0;
+        *(Uint32*)(dstpix + looph*2*dstpitch + (loopw*2+1)*4) = E1;
+        *(Uint32*)(dstpix + (looph*2+1)*dstpitch + loopw*2*4) = E2;
+        *(Uint32*)(dstpix + (looph*2+1)*dstpitch + (loopw*2+1)*4) = E3;
+      }
+    }
+    return dstpix;
+  }
+
+  bool    mipmapTextures          = false;
+  GLfloat supportedMaxAnisoDegree = 1.0f;
 }

@@ -24,6 +24,7 @@
 #include <cassert>
 #include <SDL_image.h>
 #include "gl_spritecache.h"
+#include "image_loader.h"
 #include "opengta.h"
 #include "dataholder.h"
 #include "buffercache.h"
@@ -188,8 +189,6 @@ namespace OpenGL {
     INFO << "creating new sprite: " << sprite_num << " remap: " << remap << std::endl;
     unsigned char* src = OpenGTA::StyleHolder::Instance().get().
       getSpriteBitmap(sprite_num, remap , delta);
-    unsigned int glwidth = 1;
-    unsigned int glheight = 1;
     #if 0
     if (sprite_num == 257) {
       info->w = 72;
@@ -210,6 +209,9 @@ namespace OpenGL {
 
     }
     #endif
+#if 0
+    int glwidth = 1;
+    int glheight = 1;
 
     while(glwidth < info->w)
       glwidth <<= 1;
@@ -225,8 +227,21 @@ namespace OpenGL {
       t += glwidth * 4;
       r += info->w * 4;
     }
+#endif
+    ImageUtil::NextPowerOfTwo npot(info->w, info->h);
+    Util::BufferCache & bc = Util::BufferCacheHolder::Instance();
+    uint8_t* dst = bc.requestBuffer(npot.w * npot.h * 4);
+
+    ImageUtil::copyImage2Image(dst, src, info->w * 4, info->h, npot.w * 4);
+    bc.unlockBuffer(src);
+
 #ifdef DO_SCALE2X
     if (doScale2x) {
+      bc.lockBuffer(dst);
+      uint8_t* dst_scalex = ImageUtil::scale2x_32bit(dst, npot.w, npot.h);
+      bc.unlockBuffer(dst);
+      dst = dst_scalex;
+#if 0
 #define MAX(a,b)    (((a) > (b)) ? (a) : (b))
 #define MIN(a,b)    (((a) < (b)) ? (a) : (b))
 
@@ -236,9 +251,9 @@ namespace OpenGL {
       Util::BufferCacheHolder::Instance().lockBuffer(dst);
       Uint8* dstpix = Util::BufferCacheHolder::Instance().requestBuffer(glwidth * glheight * 4 * 4);
       Uint32 E0, E1, E2, E3, B, D, E, F, H;
-      for(unsigned int looph = 0; looph < glheight; ++looph)
+      for(int looph = 0; looph < glheight; ++looph)
       {
-        for(unsigned int loopw = 0; loopw < glwidth; ++ loopw)
+        for(int loopw = 0; loopw < glwidth; ++ loopw)
         {
           B = *(Uint32*)(srcpix + (MAX(0,looph-1)*srcpitch) + (4*loopw));
           D = *(Uint32*)(srcpix + (looph*srcpitch) + (4*MAX(0,loopw-1)));
@@ -259,10 +274,14 @@ namespace OpenGL {
       }
       Util::BufferCacheHolder::Instance().unlockBuffer(dst);
       dst = dstpix;
+#endif
     }
 #endif
 
-    GLuint texid;
+    GLuint texid = (doScale2x) ?
+        ImageUtil::createGLTexture(npot.w * 2, npot.h * 2, true, dst)
+      : ImageUtil::createGLTexture(npot.w, npot.h, true, dst);
+#if 0
     glGenTextures(1, &texid);
     glBindTexture(GL_TEXTURE_2D, texid);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -277,8 +296,10 @@ namespace OpenGL {
 #else
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glwidth, glheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, dst);
 #endif
+
+#endif
     return OpenGL::PagedTexture(texid, 0, 0, 
-      float(info->w)/float(glwidth), float(info->h)/float(glheight));
+      float(info->w)/float(npot.w), float(info->h)/float(npot.h));
   }
 
 }

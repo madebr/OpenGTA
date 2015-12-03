@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include "sound_system.h"
+#include "sound_music_player.h"
 #include "physfsrwops.h"
 #include "m_exceptions.h"
 #include "log.h"
@@ -10,7 +11,12 @@ namespace Audio {
 #ifdef WITH_SOUND
   SoundSystem::SoundSystem() : device(), chunkCache() {
     SDL_InitSubSystem(SDL_INIT_AUDIO);
-    device.open();
+    try {
+      device.open();
+    }
+    catch (const Exception & e) {
+      ERROR << e.what() << std::endl;
+    }
     enabled = true;
     if (device.getStatus() == SoundDevice::OPEN)
       Sound_Init();
@@ -59,6 +65,8 @@ namespace Audio {
   }
 
   void SoundSystem::listMusicDecoders() {
+    if (!enabled)
+      return;
     std::cout << "* Supported music decoders *" << std::endl;
     const Sound_DecoderInfo **i;
     for (i = Sound_AvailableDecoders(); *i != NULL; i++) {
@@ -91,7 +99,13 @@ int main(int argc, char* argv[]) {
 
   SoundSystem noisemaker;
   noisemaker.listMusicDecoders();
-  noisemaker.playMusic(argv[1]);
+  if (argc == 2)
+    noisemaker.playMusic(argv[1]);
+  if (argc == 3) {
+    noisemaker.playFx(argv[1], atoi(argv[2]));
+    while (Mix_Playing(-1))
+      SDL_Delay(500);
+  }
   MusicPlayerCtrl::musicFinishedCB = CB_MusicDone;
   while (MusicPlayerCtrl::isPlaying) {
     SDL_Delay(1000);

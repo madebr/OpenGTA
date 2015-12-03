@@ -58,7 +58,8 @@ doxy_main.h: doc/hacking.txt tools/doxy_doc.sh
 doxyclean:
 	$(RM) doxy_main.h -r doc/html
 
-package:
+package: release_files_sorted
+	sh tools/cvslog.sh
 	(cd .. && tar jvcf ogta_src_`date +%F`.tar.bz2 -T ogta/release_files_sorted)
 	@echo "saved as: ogta_src_`date +%F.tar.bz2`"
 	

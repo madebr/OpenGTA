@@ -35,6 +35,8 @@
 #include "blockdata.h"
 #include "image_loader.h"
 #include "blockanim.h"
+#include "id_sys.h"
+#include "map_helper.h"
 
 float slope_height_offset(unsigned char slope_type, float dx, float dz);
 namespace OpenGTA {
@@ -72,6 +74,33 @@ namespace OpenGTA {
     return tex;
   }
 */
+  struct GLColor {
+    GLfloat rgb[3];
+    GLColor() { rgb[0] = rgb[1] = rgb[2] = 0; }
+    GLColor(GLfloat i) { rgb[0] = rgb[1] = rgb[2] = i; }
+    GLColor(GLfloat r, GLfloat g, GLfloat b) { rgb[0] = r; rgb[1] = g; rgb[2] = b; }
+  };
+
+  GLColor block_colors[8] = {
+    GLColor(1), // air 
+    GLColor(0, 0, 1), // water
+    GLColor(0, 1, 1), // road
+    GLColor(1, 0, 0), // pavement
+    GLColor(0, 1, 0), // field
+    GLColor(1, 1, 0), // building
+    GLColor(1), // unused
+    GLColor(1) // unused
+  };
+
+  GLfloat* map_block_type_color(uint8_t k) {
+    // k = 6  now used to fix pavement cols
+    if (k == 7)
+      WARN << "block-type: " << int(k) << " should be unused!" << std::endl;
+    if (k < 8)
+      return block_colors[k].rgb;
+    ERROR << "Invalid block-type: " << int(k) << std::endl;
+    return block_colors[0].rgb;
+  }
 
   CityView::CityView() {
     setNull();
@@ -95,6 +124,7 @@ namespace OpenGTA {
     topDownView = true;
     drawTextured = true;
     drawLines = false;
+    drawLinesBlockType = true;
     setPosition(0.0f, 0.0f, 20.0f);
 
     scene_display_list = 0;
@@ -119,8 +149,10 @@ namespace OpenGTA {
   }
   bool CityView::getDrawTextured() { return drawTextured; }
   bool CityView::getDrawLines() { return drawLines; }
+  bool CityView::getDrawLinesBlockColor() { return drawLinesBlockType; }
   void CityView::setDrawTextured(bool v) { drawTextured = v; }
   void CityView::setDrawLines(bool v) { drawLines= v; }
+  void CityView::setDrawLinesBlockColor(bool v) { drawLinesBlockType= v; }
   void CityView::cleanup() {
     //if (loadedMap)
     //  delete loadedMap;
@@ -146,6 +178,7 @@ namespace OpenGTA {
     loadedMap = &MapHolder::Instance().get();
     StyleHolder::Instance().load(style_f);
     style = &StyleHolder::Instance().get();
+    style->setDeltaHandling(true);
     /*
     for (size_t i = 0; i < style->carInfos.size(); ++i) {
       OpenGTA::GraphicsBase::CarInfo * cinfo = style->carInfos[i];
@@ -166,23 +199,33 @@ namespace OpenGTA {
     scene_display_list = glGenLists(1);
 
     SpriteManagerHolder::Instance().clear();
+
+    // safeguard against double car entries (in nyc.cmp)
+    Util::MapOfPair2Int d_car_map;
     for (PHYSFS_uint16 oc = 0; oc < loadedMap->numObjects; oc++) {
+      OpenGTA::Map::ObjectPosition & op = loadedMap->objects[oc];
+      if (op.remap >= 128) {
+        if (Util::item_count(d_car_map, op.x, op.y) == 0)
+          Util::register_item1(d_car_map, op.x, op.y);
+        else
+          continue;
+      }      
       createLevelObject(&loadedMap->objects[oc]);
     }
     //SpriteManagerHolder::Instance().trainSystem.loadStations(*loadedMap);
+    activeRect.x = activeRect.y = 0;
+    activeRect.w = activeRect.h = 0;
   }
   void CityView::createLevelObject(OpenGTA::Map::ObjectPosition *obj) {
     SpriteManager & s_man = SpriteManagerHolder::Instance();
+    uint32_t id = TypeIdBlackBox::requestId();
     if (obj->remap >= 128) {
-      Car car(*obj, 0);
+      Car car(*obj, id);
       s_man.add(car);
-      //s_man.addCar(car);
     }
     else {
-      //GameObject gobj(*obj);
-      SpriteObject gobj(*obj, 0);
+      SpriteObject gobj(*obj, id);
       s_man.add(gobj);
-      //s_man.addObject(gobj);
     }
   }
   void CityView::setZoom(const GLfloat zoom) {
@@ -232,6 +275,7 @@ namespace OpenGTA {
     int yi = int(z);
     //int zi = int(z);
     float h = 0.5f;
+    WARN << "THIS FUNCTION SHOULD NOT BE USED!" << std::endl;
     PHYSFS_uint16 emptycount = loadedMap->getNumBlocksAt(xi, yi);
     for (int c=6-emptycount; c >= 1; c--) {
       OpenGTA::Map::BlockInfo* bi = loadedMap->getBlockAt(xi, yi, c);
@@ -250,14 +294,56 @@ namespace OpenGTA {
   }
 
   OpenGL::PagedTexture CityView::renderMap2Texture() {
-    uint32_t width = OpenGL::ScreenHolder::Instance().getWidth();
-    uint32_t height = OpenGL::ScreenHolder::Instance().getHeight();
+    OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
+    uint32_t width = screen.getWidth();
+    uint32_t height = screen.getHeight();
+
+    uint32_t gl_h = 1;
+    while (gl_h < height)
+      gl_h <<= 1;
+
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    OpenGL::ScreenHolder::Instance().set3DProjection();
-    glRotatef(180, 0, 0, 1);
-    gluLookAt(128, 230, 128, 128, 0, 128, 0.0f, 0.0f, 1.0f);
-    glTranslatef(-42, 0, 0);
+    glFinish();
+    Vector3D v_off(0,0,0);
+    int persp_find_done = 0;
+    int break_loop_safe = 500;
+    while (persp_find_done != 3) {
+      OpenGL::ScreenHolder::Instance().set3DProjection();
+      glRotatef(180, 0, 0, 1);
+
+      gluLookAt(128+v_off.x, 230, 128+v_off.y, 128+v_off.x, 0, 128+v_off.y, 0.0f, 0.0f, 1.0f);
+
+      GLint viewport[4];
+      GLdouble mvmatrix[16], projmatrix[16];
+      GLdouble winx, winy, winz;
+      glGetIntegerv (GL_VIEWPORT, viewport);
+      glGetDoublev (GL_MODELVIEW_MATRIX, mvmatrix);
+      glGetDoublev (GL_PROJECTION_MATRIX, projmatrix);
+      gluProject(0, 0, 0, mvmatrix, projmatrix, viewport, &winx, &winy, &winz);
+      if (winx > 0.5f)
+        v_off.x += 0.2f;
+      else if (winx < -0.5f)
+        v_off.x -= 0.2f;
+      else
+        persp_find_done |= 1;
+      INFO << winx << " " << winy << std::endl;
+      gluProject(256, 0, 256, mvmatrix, projmatrix, viewport, &winx, &winy, &winz);
+      if (winy < -0.5f)
+        v_off.y += 0.2f;
+      else if (winy > 0.5f)
+        v_off.y -= 0.2f;
+      else
+        persp_find_done |= 2;
+      break_loop_safe--;
+      if (break_loop_safe == 0) {
+        WARN << "breaking out of loop - NOT GOOD!" << std::endl;
+        persp_find_done = 3;
+      }
+      INFO << winx << " " << winy << std::endl;
+    }
+
+    //glTranslatef(-35, 0, 0);
     for (int i = 0; i <= 255; i++) {
       for (int j= 0; j <= 255; j++) {
         glPushMatrix();
@@ -273,17 +359,28 @@ namespace OpenGTA {
       }
     }
     GL_CHECKERROR;
-    
-    uint32_t gl_h = 1;
-    while (gl_h < height)
-      gl_h <<= 1;
+
+    glFinish();
+/*
+    GLuint txtnumber;
+    glGenTextures(1, &txtnumber);					// Create 1 Texture
+	  glBindTexture(GL_TEXTURE_2D, txtnumber);			// Bind The Texture
+    GL_CHECKERROR;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gl_h, gl_h, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    GL_CHECKERROR;
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width/2, height/2);
+    GL_CHECKERROR;
+    //glViewport(0, 0, width, height);
+    return OpenGL::PagedTexture(txtnumber, 0, 0, 1, 1);
+*/
     uint32_t img_size = gl_h * gl_h * 3; 
     uint8_t *img_buf = Util::BufferCacheHolder::Instance().requestBuffer(img_size);
 
     glReadBuffer(GL_BACK);
-    for (uint32_t i = 0; i < gl_h; i++) {
-      glReadPixels(0, i, gl_h, 1, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)(img_buf + gl_h * 3 * i));
-    }
+    //for (uint32_t i = 0; i < gl_h; i++) {
+    //  glReadPixels(0, i, gl_h, 1, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)(img_buf + gl_h * 3 * i));
+    //}
+    glReadPixels(0, 0, gl_h, gl_h, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)img_buf);
     GL_CHECKERROR;
 
     sideCache->sink();
@@ -295,12 +392,26 @@ namespace OpenGTA {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    uint32_t y_off = 100;
+    uint32_t x = 0;
+    while (*(img_buf + y_off * gl_h * 3 + x) == 0 && *(img_buf + y_off * gl_h * 3 + x+1) == 0 &&
+      *(img_buf + y_off * gl_h * 3 + x + 2) == 0)
+      x += 3;
+    INFO << "color after x = " << x/3 << std::endl;
+    x = gl_h-3;
+     while (*(img_buf + y_off * gl_h * 3 + x) == 0 && *(img_buf + y_off * gl_h * 3 + x+1) == 0 &&
+      *(img_buf + y_off * gl_h * 3 + x+2) == 0)
+      x -= 3;
+    INFO << "color after x = " << x/3 << std::endl;
+
+
     GLuint tex = ImageUtil::createGLTexture(gl_h, gl_h, false, img_buf);
     float f_h = float(height) / gl_h;
     float f_w = float(width)  / gl_h;
     //float horiz_corr = (1.0f - f_w) / 2.0f;
     //return OpenGL::PagedTexture(tex, 0+horiz_corr, 0, f_w+horiz_corr, f_h);
-    return OpenGL::PagedTexture(tex, 0, 0, f_w, f_h);
+    
+    return OpenGL::PagedTexture(tex, 0, 0, f_h, f_h);
   }
 
   void CityView::draw(Uint32 ticks) {
@@ -363,6 +474,8 @@ namespace OpenGTA {
     if (y2 > 255)
       y2 = 255;
 
+    //INFO << activeRect.x << ", " << activeRect.y << " -> " << 
+    //  activeRect.x+activeRect.w << ", " << activeRect.y + activeRect.h << std::endl;
     activeRect.x = x1;
     activeRect.y = y1;
     activeRect.w = x2 - x1;
@@ -405,6 +518,12 @@ namespace OpenGTA {
           for (int c=0; c < maxcount; ++c) {
             ++scene_rendered_blocks;
             glPushMatrix();
+            if (c < maxcount - 1) {
+              Map::BlockInfo * bi = loadedMap->getBlockAtNew(j, i, c + 1);
+              aboveBlockType = bi->blockType();
+            }
+            else
+              aboveBlockType = loadedMap->getBlockAtNew(j, i, c)->blockType();
             drawBlock(loadedMap->getBlockAtNew(j, i, c));
             glPopMatrix();
             glTranslatef(0.0f, 1.0f, 0.0f);
@@ -711,6 +830,14 @@ namespace OpenGTA {
 
       }
     }
+    
+#define RESET_COLOR glColor3f(1, 1, 1)
+#define COLOR_OFF if (drawLinesBlockType) RESET_COLOR
+#define COLOR_BY_BLOCK(idx) { GLfloat *_c = map_block_type_color(idx); glColor3f(_c[0], _c[1], _c[2]); }
+#define COLOR_ON  if (drawLinesBlockType) COLOR_BY_BLOCK(aboveBlockType)
+//#define COLOR_ON  if (drawLinesBlockType) COLOR_BY_BLOCK(bi->blockType())
+
+if (drawLinesBlockType)
 
     // handle flat/transparent case
     if (is_flat) {
@@ -738,6 +865,7 @@ namespace OpenGTA {
         // lines
         if (drawLines) {
           glDisable(GL_TEXTURE_2D);
+          COLOR_ON;
           glBegin(GL_LINE_STRIP);
           for (int j=0; j < 4; j++) {
             glVertex3f(SLOPE_RAW_DATA[which][0][j][0],
@@ -750,6 +878,7 @@ namespace OpenGTA {
           glEnd();
           glEnable(GL_TEXTURE_2D);
           // end-of-lines
+          COLOR_OFF;
         }
       }
 #undef MSWAP
@@ -790,6 +919,7 @@ namespace OpenGTA {
         // lines
         if (drawLines) {
           glDisable(GL_TEXTURE_2D);
+          COLOR_ON;
           glBegin(GL_LINE_STRIP);
           for (int j=0; j < 4; j++) {
             glVertex3f(SLOPE_RAW_DATA[which][2][j][0],
@@ -810,6 +940,7 @@ namespace OpenGTA {
           glEnd();
           glEnable(GL_TEXTURE_2D);
           // end-of-lines
+          COLOR_OFF;
         }
       }
       jj = 0;
@@ -848,6 +979,7 @@ namespace OpenGTA {
         // lines
         if (drawLines) {
           glDisable(GL_TEXTURE_2D);
+          COLOR_ON;
           glBegin(GL_LINE_STRIP);
           for (int j=0; j < 4; j++) {
             glVertex3f(SLOPE_RAW_DATA[which][3][j][0],
@@ -866,6 +998,7 @@ namespace OpenGTA {
               SLOPE_RAW_DATA[which][4][0][1],
               SLOPE_RAW_DATA[which][4][0][2]);
           glEnd();
+          COLOR_OFF;
           glEnable(GL_TEXTURE_2D);
           // end-of-lines
         }
@@ -896,6 +1029,7 @@ namespace OpenGTA {
         // lines
         if (drawLines) {
           glDisable(GL_TEXTURE_2D);
+          COLOR_ON;
           glBegin(GL_LINE_STRIP);
           for (int j=0; j < 4; j++) {
             glVertex3f(SLOPE_RAW_DATA[which][0][j][0],
@@ -908,6 +1042,7 @@ namespace OpenGTA {
           glEnd();
           glEnable(GL_TEXTURE_2D);
           // end-of-lines
+          COLOR_OFF;
         }
       }
       jj = 0; // only 'lid' rotated
@@ -947,6 +1082,7 @@ namespace OpenGTA {
         // lines
         if (drawLines) {
           glDisable(GL_TEXTURE_2D);
+          COLOR_ON;
           glBegin(GL_LINE_STRIP);
           for (int j=0; j < 4; j++) {
             glVertex3f(SLOPE_RAW_DATA[which][2][j][0],
@@ -959,6 +1095,7 @@ namespace OpenGTA {
           glEnd();
           glEnable(GL_TEXTURE_2D);
           // end-of-lines
+          COLOR_OFF;
         }
       }
       jj = 0;
@@ -989,6 +1126,7 @@ namespace OpenGTA {
         // lines
         if (drawLines) {
           glDisable(GL_TEXTURE_2D);
+          COLOR_ON;
           glBegin(GL_LINE_STRIP);
           for (int j=0; j < 4; j++) {
             glVertex3f(SLOPE_RAW_DATA[which][1][j][0],
@@ -1001,6 +1139,7 @@ namespace OpenGTA {
           glEnd();
           glEnable(GL_TEXTURE_2D);
           // end-of-lines
+          COLOR_OFF;
         }
       }
       /*memcpy(sideTex1, sideTex1_bak, 8 * sizeof(GLfloat));
@@ -1037,6 +1176,7 @@ namespace OpenGTA {
         // lines
         if (drawLines) {
           glDisable(GL_TEXTURE_2D);
+          COLOR_ON;
           glBegin(GL_LINE_STRIP);
           for (int j=0; j < 4; j++) {
             glVertex3f(SLOPE_RAW_DATA[which][3][j][0],
@@ -1049,6 +1189,7 @@ namespace OpenGTA {
           glEnd();
           glEnable(GL_TEXTURE_2D);
           // end-of-lines
+          COLOR_OFF;
         }
       }
       jj = 0;
@@ -1079,6 +1220,7 @@ namespace OpenGTA {
         // lines
         if (drawLines) {
           glDisable(GL_TEXTURE_2D);
+          COLOR_ON;
           glBegin(GL_LINE_STRIP);
           for (int j=0; j < 4; j++) {
             glVertex3f(SLOPE_RAW_DATA[which][4][j][0],
@@ -1091,6 +1233,7 @@ namespace OpenGTA {
           glEnd();
           glEnable(GL_TEXTURE_2D);
           // end-of-lines
+          COLOR_OFF;
         }
       }
 

@@ -40,6 +40,12 @@ namespace Util {
       return 360.0f + res;
     return res;
   }
+  float xz_turn_angle(const Vector3D & from, const Vector3D & to) {
+    Vector3D rel_to(to);
+    rel_to = rel_to - from;
+    double res = atan(rel_to.x / rel_to.z) * 180.0f / M_PI;
+    return res;
+  }
   
   bool CellIterator::isValid() const {
     if (x < 0 || x > 255)
@@ -51,7 +57,7 @@ namespace Util {
     return (z < mapRef.getNumBlocksAtNew(x, y));
   }
 
-  OpenGTA::Map::BlockInfo & CellIterator::getBlock() {
+  OpenGTA::Map::BlockInfo & CellIterator::getBlock() const {
     assert(isValid());
     return *mapRef.getBlockAtNew(x, y, z);
   }
@@ -59,6 +65,78 @@ namespace Util {
 #define IABS(v) ((v > 0) ? v : -v)
   int CellIterator::distance(const CellIterator & o) const {
     return (IABS(x - o.x) + IABS(y - o.y) + IABS(z - o.z));
+  }
+
+  bool CellIterator::isBlockType(uint8_t t) const {
+    if (!isValid())
+      return false;
+    return (getBlock().blockType() == t);
+  }
+
+  std::pair<bool, CellIterator> CellIterator::findTypeInCol(uint8_t t) const {
+    if (isBlockType(t))
+      return std::make_pair<bool, CellIterator>(true, *this);
+    CellIterator below = down();
+    while (below.isValid()) {
+      if (below.isBlockType(t))
+        return std::make_pair<bool, CellIterator>(true, below);
+      below = below.down();
+    }
+    CellIterator above = up();
+    while (above.isValid()) {
+      if (above.isBlockType(t))
+        return std::make_pair<bool, CellIterator>(true, above);
+      above = above.up();
+    }
+    return std::make_pair<bool, CellIterator>(false, *this);
+  }
+
+  std::pair<bool, CellIterator> CellIterator::findNeighbourWithType(
+    uint8_t t, float angle_hint) {
+    assert(isValid());
+
+    if (angle_hint >= 315 || angle_hint < 45) {
+      std::pair<bool, CellIterator> p = top().findTypeInCol(t);
+//      if (p.first) INFO << p.second.x << " " << p.second.y << " " << p.second.z << std::endl;
+      if (p.first) return p;
+    }
+    if (angle_hint >= 0  || angle_hint < 90) {
+      std::pair<bool, CellIterator> p = top().right().findTypeInCol(t);
+//      if (p.first) INFO << p.second.x << " " << p.second.y << " " << p.second.z << std::endl;
+      if (p.first) return p;
+    }
+    if (angle_hint >= 45 && angle_hint < 135) {
+      std::pair<bool, CellIterator> p = right().findTypeInCol(t);
+//      if (p.first) INFO << p.second.x << " " << p.second.y << " " << p.second.z << std::endl;
+      if (p.first) return p;
+    }
+    if (angle_hint >= 90 && angle_hint < 180) {
+      std::pair<bool, CellIterator> p = right().bottom().findTypeInCol(t);
+//      if (p.first) INFO << p.second.x << " " << p.second.y << " " << p.second.z << std::endl;
+      if (p.first) return p;
+    }
+    if (angle_hint >= 135 && angle_hint < 225) {
+      std::pair<bool, CellIterator> p = bottom().findTypeInCol(t);
+//      if (p.first) INFO << p.second.x << " " << p.second.y << " " << p.second.z << std::endl;
+      if (p.first) return p;
+    }
+    if (angle_hint >= 180 && angle_hint < 270) {
+      std::pair<bool, CellIterator> p = left().bottom().findTypeInCol(t);
+//      if (p.first) INFO << p.second.x << " " << p.second.y << " " << p.second.z << std::endl;
+      if (p.first) return p;
+    }
+    if (angle_hint >= 225 && angle_hint < 315) {
+      std::pair<bool, CellIterator> p = left().findTypeInCol(t);
+//      if (p.first) INFO << p.second.x << " " << p.second.y << " " << p.second.z << std::endl;
+      if (p.first) return p;
+    }
+    if (angle_hint >= 270 && angle_hint < 360) {
+      std::pair<bool, CellIterator> p = top().left().findTypeInCol(t);
+//      if (p.first) INFO << p.second.x << " " << p.second.y << " " << p.second.z << std::endl;
+      if (p.first) return p;
+    }
+    return std::make_pair<bool, CellIterator>(false, *this);
+
   }
 
 }

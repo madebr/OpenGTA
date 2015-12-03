@@ -26,6 +26,7 @@
 #include "m_exceptions.h"
 #include "file_helper.h"
 #include "buffercache.h"
+#include "log.h"
 
 #ifndef OGTA_DEFAULT_DATA_PATH
 #define OGTA_DEFAULT_DATA_PATH "gtadata.zip"
@@ -116,5 +117,25 @@ namespace Util {
     size = PHYSFS_read(fd, buffer, 1, size);
     PHYSFS_close(fd);
     return buffer; 
+  }
+
+  const std::string FileHelper::lang2MsgFilename(const char *l) {
+    assert(l);
+    std::string lang(l);
+    if (lang.size() > 2)
+      lang = lang.substr(0, 2);
+    std::transform(lang.begin(), lang.end(), lang.begin(), tolower);
+    if (lang == "en")
+      return std::string("ENGLISH.FXT");
+    else if (lang == "de")
+      return std::string("GERMAN.FXT");
+    else if (lang == "fr")
+      return std::string("FRENCH.FXT");
+    else if (lang == "it")
+      return std::string("ITALIAN.FXT");
+
+    WARN << "Unknown language: " << l << " - falling back to english"
+      << std::endl;
+    return std::string("ENGLISH.FXT");
   }
 }

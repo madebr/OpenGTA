@@ -20,6 +20,7 @@
 * 3. This notice may not be removed or altered from any source          *
 * distribution.                                                         *
 ************************************************************************/
+#include <iostream>
 #include "sound_resample2.h"
 #include "interpolate.hpp"
 
@@ -89,4 +90,58 @@ namespace Audio {
     while (src < src_end);
     return stereo_data;
   }
+
+  Sint16 *resample16 (Uint8 * src, size_t sourcelen, size_t & size,
+      int rate, int wanted_rate) {
+    int fp_pos = 0;
+    int fp_speed = (1 << 16) * rate / wanted_rate;
+    size = sourcelen;
+    while (size & 0xFFFF0000)
+      size >>= 1, rate = (rate >> 1) + 1;
+    size = (size * wanted_rate / rate) << 1;
+
+    Sint16 *stereo_data = new Sint16[size];
+    Sint16 *data = stereo_data;
+    Uint8 *src_end = src + sourcelen;
+
+    int result;
+    int a = *(src + 0);
+    a = a + (*(src + 1) << 8);
+    int b = *(src + 2);
+    b = b + (*(src + 3) << 8);
+    int c = *(src + 4);
+    c = c + (*(src + 5) << 8);
+
+
+    std::cout << a << " " << b << " " << c << std::endl;
+    Math::Interpolator::Cubic<float> inter(a * 0.8333f, b * 0.8333f, c * 0.8333f);
+    do
+    {
+      do
+      {
+        result = int(inter.getAt(fp_pos / float(0x0000FFFF)));
+        if (result < -32768)
+          result = -32768;
+        else if (result > 32767)
+          result = 32767;
+        *data++ = result;
+
+        fp_pos += fp_speed;
+      }
+      while (!(fp_pos & 0xFFFF0000));
+      src++;
+      fp_pos &= 0x0000FFFF;
+      if (src + 2 < src_end)
+      {
+        c = *(src + 2);
+        c = c + (*(src + 3) << 8);
+        inter.shiftAndFeed (c * 0.8333f);
+      }
+      else
+        inter.shift ();
+    }
+    while (src < src_end);
+    return stereo_data;
+  }
+
 }

@@ -40,6 +40,7 @@ namespace Util {
       bool existsInVFS(const std::string & file) const;
       PHYSFS_file* openReadVFS(const std::string & file) const;
       unsigned char* bufferFromVFS(PHYSFS_file*) const;
+      static const std::string lang2MsgFilename(const char* l);
     private:
       std::string baseDataPath;
       std::string modDataPath;

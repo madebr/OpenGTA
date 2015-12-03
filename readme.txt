@@ -15,6 +15,14 @@
 * GNU Make
   [ http://www.gnu.org/software/make/ ]
 
+= Optional software =
+* Lua
+  [ http://www.lua.org/ ]
+* SDL_mixer
+  [ http://www.libsdl.org/projects/SDL_mixer/ ]
+* SDL_sound
+  [ http://icculus.org/SDL_sound/ ]
+
 = Compiling =
 
 Only tested on GNU Linux using gcc & make; I assume that GL, SDL and 
@@ -27,7 +35,7 @@ The other programs are/were used for development or debugging.
 The distributed win32 binaries are created with a cross-compiler.
 
 The file doc/compiling.txt in the source code release contains
-information on the build process.
+more information about the build process.
 
 = Installing the data-files =
 
@@ -37,7 +45,7 @@ These programs expect to find the data in the current directory, either
 directly in the file-system or in a ZIP file (named 'gtadata.zip').
 You want the content of the original game directory GTADATA, but not
 the directory itself.
-See mods/using_mods.txt for a slightly longer description.
+See doc/using_mods.txt for a slightly longer description.
 
 Needed:
 *.FXT, *.FON, *.CMP
@@ -52,12 +60,27 @@ MISSION.INI
 AUDIO/*.RAW AUDIO/*.SDT (sound effects)
 AUDIO/*.WAV (cutscene text; in legacy format)
 
+You may also want to keep the music (even though it isn't used yet).
+It is safe to assume that Ogg Vorbis [ http://vorbis.com/ ] will
+be supported, so you can encode the music files.
+
 = Running =
+
+Note: Binary releases only contain the 'viewer' application; the other
+programs should only be intersting for developers (read: compile 
+them yourself).
 
 == gfxextract ==
 
 Export/Display textures and sprites;
 run ./gfxextract -h (or without any parameters) for usage info.
+
+== spriteplayer ==
+
+Sprite graphics browser; shows internal indices, can display
+animations (ped walking, car delta anims).
+
+run ./spriteplayer -h for usage information.
 
 == viewer ==
 
@@ -72,32 +95,13 @@ The optional param loads the respective city; default is 0:
 1 - SANB.CMP
 2 - MIAMI.CMP
 
-flags are:
+There are several flags; see the compiled-in usage information.
 
 -V  show version and compile time switches
 -h  show usage
 
-( The compiled-in usage information is more recent than the 
-  following. )
-
-* screen dimensions (have to specify neither or both)
--w width
--h height
-
-* log verbosity
--l level (0 default; everything, 1 warn + error, 2 only error)
-
 Using "-l 1" will make it easier to see actual error messages;
 sometimes there is a lot of noise on 'info' level (0).
-
-* style-file
--c 0 (default; uses .GRY 8bit styles)
--c 1 (uses .G24 24bit styles)
-
-* other map & graphics files (have to specify neither or both)
--m map_filename -g style_filename
-
-This is for loading non-GTA1 data; like GTA London.
 
 keys:
 
@@ -108,7 +112,7 @@ furthermore:
   .       : decrease visible range
   ,       : increase visible range
   t       : display entire city (at a crawl)
-  f       : toggle fullscreen/windowed
+  f       : toggle fullscreen/windowed [only works on Linux]
   PRINT   : save 'screenshot.bmp' in current directory
   p       : dump coords (in lua syntax) to stdout
   F2      : toggle drawing of sprite bounding-boxes
@@ -118,6 +122,7 @@ furthermore:
   F6      : city map mode (ESC to exit, +, -, cursor keys)
   F9      : toggle city blocks drawn textured
   F10     : toggle blocks wireframe lines
+  F12     : show/hide screen-gamma scrollbar
 
 in 3d view:
   w       : forward
@@ -132,10 +137,14 @@ to 3d and the screen is black: move the mouse down.
 in follow-player mode:
   i,j,k,l : move player-char
   l-shift : toggle walking/running
+  l-ctrl  : shoot
   0       : unselect weapon / unarmed
   1,2,3,4 : select weapon (only switches graphic)
   F7      : draw explosion at player pos (graphical effect)
   F8      : create random-walker ped at player-pos
+
+You can still use + and - to zoom; but the view will try
+to return to the old position quickly.
 
 == luaviewer: viewer + Lua (optional target) ==
 

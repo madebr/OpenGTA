@@ -30,6 +30,7 @@
 #include "cell_iterator.h"
 #include "entity_controller.h"
 #include "OpenSteer/Proximity.h"
+#include "util/set.h"
 
 namespace OpenGTA {
   
@@ -90,20 +91,70 @@ namespace OpenGTA {
       bool inGroundContact;
       void tryMove(Vector3D nPos);
       uint8_t isDead;
-      void getShot(bool front = true);
+      void getShot(uint32_t shooterId, uint32_t dmg, bool front = true);
       void die();
+      typedef std::map<uint8_t, uint32_t> InventoryMap;
+      InventoryMap inventory;
+      uint8_t activeWeapon;
+      uint32_t * activeAmmo;
+      uint32_t aiMode;
+      static uint32_t fistAmmo;
+      struct AiData {
+        AiData() : id1(0), id2(0), pos1() {}
+        AiData(const AiData & o) : id1(o.id1), id2(o.id2), pos1(o.pos1) {}
+        uint32_t id1;
+        uint32_t id2;
+        Vector3D pos1;
+      };
+      AiData aiData;
+      Vector3D moveDelta;
   };
 
-  class Car : public GameObject_common, public Sprite, public OBox {
+  class CarSprite {
+    public:
+      class DoorDeltaAnimation : public Util::Animation {
+        public:
+          DoorDeltaAnimation(uint8_t dId, bool dOpen);
+          uint8_t doorId;
+          bool    opening;
+      };
+      CarSprite();
+      CarSprite(Uint16 sprN, Sint16 rem, GraphicsBase::SpriteNumbers::SpriteTypes sprT);
+      CarSprite(const CarSprite & o);
+      Uint16 sprNum;
+      Sint16 remap;
+      GraphicsBase::SpriteNumbers::SpriteTypes sprType;
+      uint32_t delta;
+      Util::Set deltaSet;
+      Util::Set animState;
+      void setDamage(uint8_t k);
+      void openDoor(uint8_t k);
+      void closeDoor(uint8_t k);
+      void setSirenAnim(bool on);
+      bool assertDeltaById(uint8_t k);
+      void update(Uint32 ticks);
+    private:
+      typedef std::list<DoorDeltaAnimation> DoorAnimList;
+      DoorAnimList doorAnims;
+      Uint32 lt_siren;
+  };
+
+  class Car : public GameObject_common, public CarSprite, public OBox {
     public:
       Car(const Car & o);
       Car(OpenGTA::Map::ObjectPosition&, uint32_t id);
+      Car(Vector3D & _pos, float _rot, uint32_t id, uint8_t _type, int16_t _remap = -1);
       uint32_t carId;
       inline uint32_t id() const { return carId; }
       GraphicsBase::CarInfo & carInfo;
       uint8_t type;
       void update(Uint32 ticks);
       Uint32 lastUpdateAt;
+      void damageAt(const Vector3D & hit, uint32_t dmg);
+      void explode();
+    private:
+      void fixSpriteType();
+      int32_t hitPoints;
   };
 
   class SpriteObject : public GameObject_common, public Sprite, public OBox {
@@ -139,6 +190,9 @@ namespace OpenGTA {
       uint32_t owner;
       void update(Uint32 ticks);
       Uint32 lastUpdateAt;
+      bool testCollideBlock(Util::CellIterator &, Vector3D & newp);
+      bool testCollideBlock_flat(Util::CellIterator &, Vector3D & newp);
+      static uint32_t damageByType(const uint8_t & k);
   };
 
 }

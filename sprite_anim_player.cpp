@@ -36,7 +36,10 @@
 extern int global_EC;
 extern int global_Done;
 std::string style_file("STYLE001.GRY");
+float screen_gamma = 1.0f;
 
+OpenGTA::Car * car = NULL;
+Vector3D _p(4, 0.01f, 4);
 OpenGTA::Pedestrian ped(Vector3D(0.5f, 0.5f, 0.5f), Vector3D(4, 0.01f, 4), 0xffffffff);
 OpenGTA::SpriteObject::Animation pedAnim(0, 0);
 
@@ -47,19 +50,43 @@ int first_offset = 0;
 int second_offset = 0;
 int now_frame = 0;
 bool play_anim = false;
+unsigned int play_anim_time = 0;
 int bbox_toggle = 0;
 int texsprite_toggle = 0;
+int c_c = 1;
+int car_model = 0;
+int car_remap = -1;
+int car_last_model_ok = 0;
+bool playWithCar = false;
+uint32_t car_delta = 0;
 
 int spr_type = (int)ped.sprType;
 namespace OpenGTA {
-void ai_step_fake(OpenGTA::Pedestrian*) {
-}
+  void ai_step_fake(OpenGTA::Pedestrian*) {
+  }
 }
 
-void on_exit() {
-  SDL_Quit();
-  PHYSFS_deinit();
-}
+  void on_exit() {
+    if (car)
+      delete car;
+    SDL_Quit();
+    PHYSFS_deinit();
+  }
+
+  void safe_try_model(uint8_t model_id) {
+    if (car)
+      delete car;
+    car = NULL;
+    try {
+      car = new OpenGTA::Car(_p, 0, 0, model_id, car_remap);
+    }
+    catch (Util::UnknownKey & uk) {
+      car = NULL;
+      ERROR << "not a model" << std::endl;
+      return;
+    }
+    car_last_model_ok = model_id;
+  }
 
 void run_init(const char*) {
   PHYSFS_init("mapview");
@@ -69,9 +96,14 @@ void run_init(const char*) {
   SDL_EnableKeyRepeat( 100, SDL_DEFAULT_REPEAT_INTERVAL );
 
   OpenGTA::StyleHolder::Instance().load(style_file);
+  OpenGTA::StyleHolder::Instance().get().setDeltaHandling(true);
+  OpenGTA::MainMsgHolder::Instance().load("ENGLISH.FXT");
 
-  m_font.loadFont("STREET1.FON");
-  m_font.setScale(2);
+  m_font.loadFont("F_MTEXT.FON");
+  m_font.setScale(1);
+  glClearColor(1, 1, 1, 1);
+  if (playWithCar)
+    car = new OpenGTA::Car(_p, 0, 0, car_model);
 }
 
 const char* spr_type_name(int t) {
@@ -122,26 +154,69 @@ const char* spr_type_name(int t) {
   return "???";
 }
 
+const char* vtype2name(int vt) {
+  switch(vt) {
+    case 0:
+      return "bus";
+    case 3:
+      return "motorcycle";
+    case 4:
+      return "car";
+    case 8:
+      return "train";
+  }
+  return "";
+}
+
 void drawScene(Uint32 ticks) {
   GL_CHECKERROR;
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
+
   OpenGL::ScreenHolder::Instance().set3DProjection();
   OpenGL::CameraHolder::Instance().update(ticks);
 
-  if (play_anim) {
-    pedAnim.firstFrameOffset = now_frame;
+  if (playWithCar) {
+    if (car) {
+      car->update(ticks);
+      OpenGTA::SpriteManagerHolder::Instance().draw(*car);
+    }
+
+    OpenGL::ScreenHolder::Instance().setFlatProjection();
+
+    glPushMatrix();
+    glTranslatef(10, 10, 0);
+    std::ostringstream sprite_info_str;
+    std::ostringstream ostr;
+    ostr << "car" << int(car_model);
+
+    if (car) {
+      sprite_info_str << vtype2name(car->carInfo.vtype)<< " model: " << int(car_model) << " name: " << 
+        OpenGTA::MainMsgHolder::Instance().get().getText(ostr.str());
+    }
+    else
+      sprite_info_str << "not a model: " << int(car_model);
+    m_font.drawString(sprite_info_str.str());
+    glPopMatrix();
   }
-  OpenGTA::SpriteManagerHolder::Instance().draw(ped);
+  else {
+    if (play_anim && ticks > play_anim_time + 200) {
+      now_frame++;
+      if (now_frame > second_offset)
+        now_frame = first_offset;
+      ped.anim.firstFrameOffset = now_frame;
+      play_anim_time = ticks;
+    }
+    OpenGTA::SpriteManagerHolder::Instance().draw(ped);
 
-  OpenGL::ScreenHolder::Instance().setFlatProjection();
+    OpenGL::ScreenHolder::Instance().setFlatProjection();
 
-  glPushMatrix();
-  glTranslatef(10, 10, 0);
-  std::ostringstream sprite_info_str;
-  sprite_info_str << spr_type_name(spr_type) << " offset " << frame_offset;
-  m_font.drawString(sprite_info_str.str());
-  glPopMatrix();
+    glPushMatrix();
+    glTranslatef(10, 10, 0);
+    std::ostringstream sprite_info_str;
+    sprite_info_str << spr_type_name(spr_type) << " offset " << frame_offset;
+    m_font.drawString(sprite_info_str.str());
+    glPopMatrix();
+  }
 
   SDL_GL_SwapBuffers();
   GL_CHECKERROR;
@@ -155,45 +230,124 @@ void handleKeyPress( SDL_keysym *keysym ) {
     case SDLK_ESCAPE:
       global_Done = 1;
       break;
+    case SDLK_TAB:
+      c_c += 1; c_c %= 2;
+      glClearColor(c_c, c_c, c_c, 0);
+      glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      break;
+    case 'k':
+      if (car_delta > 0)
+        car_delta -= 1;
+      if (car)
+        car->delta = car_delta;
+      break;
+    case 'l':
+      if (car_delta < 32)
+        car_delta += 1;
+      if (car) {
+        car->delta = car_delta;
+      }
+      break;
     case '+':
       cam.translateBy(Vector3D(0, -0.5f, 0));
       break;
     case '-':
       cam.translateBy(Vector3D(0, 0.5f, 0));
       break;
+    case '1':
+      if (playWithCar) {
+        if (car->animState.get_item(1))
+          car->closeDoor(0);
+        else
+          car->openDoor(0);
+      }
+      break;
+    case '2':
+      if (playWithCar) {
+        if (car->animState.get_item(2))
+          car->closeDoor(1);
+        else
+          car->openDoor(1);
+      }
+      break;
+    case '3':
+      if (playWithCar) {
+        if (car->animState.get_item(3))
+          car->closeDoor(2);
+        else
+          car->openDoor(2);
+      }
+      break;
+    case '4':
+      if (playWithCar) {
+        if (car->animState.get_item(4))
+          car->closeDoor(3);
+        else
+          car->openDoor(3);
+      }
+      break;
+
+
     case ',':
+      if (playWithCar) {
+        car_model -= 1;
+        if (car_model < 0)
+          car_model = 0;
+      }
       frame_offset -= 1;
       if (frame_offset < 0)
         frame_offset = 0;
       update_anim = true;
       break;
     case '.':
+      if (playWithCar) {
+        car_model += 1;
+        if (car_model > 88)
+          car_model = 88;
+      }
       frame_offset += 1;
       if (frame_offset >= style.spriteNumbers.countByType(ped.sprType))
         frame_offset -= 1;
       update_anim = true;
       break;
     case 'n':
+      if (playWithCar) {
+        car_remap -= 1;
+        if (car_remap < -1)
+          car_remap = -1;
+        INFO << "remap: " << int(car_remap) << std::endl;
+      }
       do {
         spr_type -= 1;
         if (spr_type < 0)
           spr_type = 0;
       } while (style.spriteNumbers.countByType(
-        (OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes) spr_type) == 0);
+            (OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes) spr_type) == 0);
       ped.sprType = (OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes)spr_type;
       frame_offset = 0;
       update_anim = 1;
       break;
     case 'm':
+      if (playWithCar) {
+        car_remap += 1;
+        if (car_remap > 11)
+          car_remap = 11;
+        INFO << "remap: " << int(car_remap) << std::endl;
+      }
       do {
         spr_type += 1;
         if (spr_type > 20)
           spr_type = (int)ped.sprType;
       } while (style.spriteNumbers.countByType(
-        (OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes) spr_type) == 0);
+            (OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes) spr_type) == 0);
       ped.sprType = (OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes)spr_type;
       frame_offset = 0;
       update_anim = 1;
+      break;
+    case 's':
+      if (playWithCar) {
+        car->setSirenAnim(true);
+      }
       break;
     case SDLK_F2:
       bbox_toggle = (bbox_toggle ? 0 : 1);
@@ -205,9 +359,21 @@ void handleKeyPress( SDL_keysym *keysym ) {
       break;
     case SDLK_F5:
       first_offset = frame_offset;
+      std::cout << "First frame: " << first_offset << std::endl;
       break;
     case SDLK_F6:
       second_offset = frame_offset;
+      std::cout << "Last frame: " << second_offset << std::endl;
+      break;
+    case SDLK_F7:
+      play_anim = (play_anim ? false : true);
+      if (play_anim)
+        std::cout << "Playing: " << first_offset << " .. " << second_offset << std::endl;
+      now_frame = first_offset;
+      break;
+    case SDLK_F8:
+      playWithCar = playWithCar ? false : true;
+      update_anim = true;
       break;
     default:
       break;
@@ -215,18 +381,30 @@ void handleKeyPress( SDL_keysym *keysym ) {
   if (update_anim) {
     pedAnim.firstFrameOffset = frame_offset;
     ped.anim = pedAnim;
+    if (playWithCar)
+      safe_try_model(car_model);
   }
 }
 
 void usage(const char* a0) {
   std::cout << "USAGE: " << a0 << " [style-filename]" << std::endl;
   std::cout << std::endl << "Default is: STYLE001.GRY" << std::endl <<
-  "Keys:" << std::endl <<
-  " + - : zoom in/out" << std::endl <<
-  " , . : previous/next frame offset" << std::endl <<
-  " n m : previous/next sprite-type" << std::endl <<
-  " F2  : toggle BBox drawn" << std::endl <<
-  " F3  : toggle tex-border drawn" << std::endl;
+    "Keys:" << std::endl <<
+    " + - : zoom in/out" << std::endl <<
+    " , . : previous/next frame offset" << std::endl <<
+    " n m : previous/next sprite-type" << std::endl <<
+    " tab : black/white background" << std::endl <<
+    " F2  : toggle BBox drawn" << std::endl <<
+    " F3  : toggle tex-border drawn" << std::endl <<
+    " F5  : prepare animation: first-frame = current frame" << std::endl <<
+    " F6  : prepare animation: last-frame  = current frame" << std::endl <<
+    " F7  : toggle: play frames" << std::endl <<
+    " F8  : toggle: special-car-mode" << std::endl << std::endl <<
+    "In car-mode:" << std::endl <<
+    " , . : choose model" << std::endl <<
+    " n m : choose remap" << std::endl <<
+    " 1, 2, 3, 4 : open car door (if exists)" << std::endl <<
+    " s   : toggle siren anim (if exists)" << std::endl;
 }
 
 void parse_args(int argc, char* argv[]) {
@@ -274,7 +452,7 @@ void run_main() {
           handleKeyPress(&event.key.keysym);
           break;
         case SDL_KEYUP:
-//          handleKeyUp(&event.key.keysym);
+          //          handleKeyUp(&event.key.keysym);
           break;
         case SDL_VIDEORESIZE:
           OpenGL::ScreenHolder::Instance().resize(event.resize.w, event.resize.h);

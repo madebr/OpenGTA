@@ -54,10 +54,12 @@ namespace OpenGTA {
       NavData::Sector* getCurrentSector();
       OpenGL::PagedTexture renderMap2Texture();
 
-      bool CityView::getDrawTextured();
-      bool CityView::getDrawLines();
-      void CityView::setDrawTextured(bool v);
-      void CityView::setDrawLines(bool v);
+      bool getDrawTextured();
+      bool getDrawLines();
+      bool getDrawLinesBlockColor();
+      void setDrawTextured(bool v);
+      void setDrawLines(bool v);
+      void setDrawLinesBlockColor(bool v);
 
       void resetTextures();
       const SDL_Rect & getActiveRect() { return activeRect; }
@@ -83,6 +85,9 @@ namespace OpenGTA {
       bool topDownView;
       bool drawTextured;
       bool drawLines;
+      bool drawLinesBlockType;
+      bool drawHeadingMarkers;
+      uint8_t aboveBlockType;
 
       SDL_Rect activeRect;
       SDL_Rect drawnRect;
@@ -92,7 +97,6 @@ namespace OpenGTA {
 
       GLuint scene_display_list;
       bool scene_is_dirty;
-      bool drawHeadingMarkers;
       int texFlipTest;
 
       Uint32 lastCacheEmptyTicks;

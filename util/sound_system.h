@@ -18,8 +18,8 @@ namespace Audio {
       SoundSystem();
       ~SoundSystem();
       void playFx(std::string file, size_t idx);
-      void SoundSystem::playMusic(std::string file);
-      void SoundSystem::listMusicDecoders();
+      void playMusic(std::string file);
+      void listMusicDecoders();
       bool enabled;
   };
 }

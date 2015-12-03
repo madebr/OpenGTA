@@ -41,6 +41,13 @@ namespace OpenGTA {
     rawData = v;
   }
 
+  bool ControllerWithMemory::statusChanged() {
+    bool res = (rawData != lastRawData);
+    if (res)
+      lastRawData = rawData;
+    return res; 
+  }
+
   void PedController::setTurnLeft(bool press) {
     dataSet.set_item(0, press);
   }

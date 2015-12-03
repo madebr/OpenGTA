@@ -63,6 +63,11 @@ these remain under their respective licenses.
   Copyright (C) 2000 Amir Geva
   GNU Library General Public License
 
+* Oriented bounding box derived from code originally written by
+  Jonathan Kreuzer
+  http://www.3dkingdoms.com/
+  No license given by original author; derived code under zlib license.
+
 ***************************************************************************
 Please do not redistribute the data files of the original game together
 with this software.

@@ -54,7 +54,7 @@ namespace OpenGTA {
     registerAnimation(4, SpriteObject::Animation(89, 0)); // standing, gun
     registerAnimation(5, SpriteObject::Animation(99, 7, 0.001f)); // walking, gun
     registerAnimation(6, SpriteObject::Animation(107, 7, 0.002f)); // running, gun
-    
+
     registerAnimation(7, SpriteObject::Animation(134, 0)); //standing, flamethrower
     registerAnimation(8, SpriteObject::Animation(118, 7, 0.001f)); // walking, flamethrower
     registerAnimation(9, SpriteObject::Animation(126, 7, 0.002f)); // running, flamethrower
@@ -66,9 +66,9 @@ namespace OpenGTA {
     registerAnimation(13, SpriteObject::Animation(170, 0)); //standing, rocket-launcher 
     registerAnimation(14, SpriteObject::Animation(154, 7, 0.001f)); // walking, rocket-launcher
     registerAnimation(15, SpriteObject::Animation(162, 7, 0.002f)); // running, rocket-launcher
-    
-    
-    
+
+
+
     registerAnimation(42, SpriteObject::Animation(42, 1)); // death pose; maybe just 1?
     registerAnimation(45, SpriteObject::Animation(45, 1)); // shot-in-front
 
@@ -119,25 +119,26 @@ namespace OpenGTA {
     size_t num_peds, num_cars, num_obj;
     num_peds = 0;
     for (AbstractContainer<Pedestrian>::Storage_T_Iterator i = AbstractContainer<Pedestrian>::objs.begin(); 
-      i != AbstractContainer<Pedestrian>::objs.end(); ++i) {
+        i != AbstractContainer<Pedestrian>::objs.end(); ++i) {
       Pedestrian & ped = (*i);
       ped.update(ticks);
       num_peds++;
     }
     num_cars = 0;
     for (AbstractContainer<Car>::Storage_T_Iterator i = AbstractContainer<Car>::objs.begin(); 
-      i != AbstractContainer<Car>::objs.end(); ++i) {
+        i != AbstractContainer<Car>::objs.end(); ++i) {
       Car & car = (*i);
       car.update(ticks);
       num_cars++;
     }
+    num_obj = 0;
     for (AbstractContainer<SpriteObject>::Storage_T_Iterator i = AbstractContainer<SpriteObject>::objs.begin(); 
-      i != AbstractContainer<SpriteObject>::objs.end(); ++i) {
+        i != AbstractContainer<SpriteObject>::objs.end(); ++i) {
       SpriteObject & obj = (*i);
       obj.update(ticks);
       num_obj++;
       if (obj.isActive == false)
-       AbstractContainer<SpriteObject>::toBeRemoved.push_back(i);
+        AbstractContainer<SpriteObject>::toBeRemoved.push_back(i);
     }
     for (ProjectileListType::iterator i = activeProjectiles.begin(); i != activeProjectiles.end();) {
       Projectile & pr = (*i);
@@ -152,64 +153,74 @@ namespace OpenGTA {
 
     }
     removeDeadStuff();
-    if (num_peds < 10 && num_peds > 0) {
-        //MapHelper::createPeds(5);
-        Map & map = OpenGTA::MapHolder::Instance().get();
-        while (1) {
-          Util::TupleOfUint8 tu8 = creationArea.getValidCoord();
-          int k = -1;
-          for (int i = 0; i < map.getNumBlocksAtNew(tu8.first, tu8.second); ++i) {
-            Map::BlockInfo * bi = map.getBlockAtNew(tu8.first, tu8.second, i);
-            if (bi->blockType() == 3) {
-              k = i;
-              break;
-            }
+    if (num_peds < 50 && num_peds > 2 && ticks - lastCreateTick > 100) {
+      //MapHelper::createPeds(5);
+      Map & map = OpenGTA::MapHolder::Instance().get();
+      lastCreateTick = ticks;
+      while (1) {
+        Util::TupleOfUint8 tu8 = creationArea.getValidCoord();
+        INFO << "testing: " << int(tu8.first) << ", " << int(tu8.second) << std::endl;
+        int k = -1;
+        for (int i = 0; i < map.getNumBlocksAtNew(tu8.first, tu8.second); ++i) {
+          Map::BlockInfo * bi = map.getBlockAtNew(tu8.first, tu8.second, i);
+          if (bi->blockType() == 3) {
+            k = i;
+            break;
           }
-          if (k == -1)
-            continue;
+        }
+        if (k == -1)
+          continue;
 
         INFO << int(tu8.first) << " " << int(tu8.second) << " " << k << std::endl;
-        
+
         Vector3D pos(tu8.first + 0.5f, k+1, tu8.second+0.5f);
         int id = OpenGTA::TypeIdBlackBox::requestId();
         Sint16 remap = OpenGTA::StyleHolder::Instance().get().getRandomPedRemapNumber();
         OpenGTA::Pedestrian p(Vector3D(0.3f, 0.5f, 0.3f), pos, id, remap);
+        p.rot = 360 * (rand() / (RAND_MAX + 1.0));
         OpenGTA::SpriteManagerHolder::Instance().add<Pedestrian>(p);
         break;
       }
     }
   }
 
+#define POS_INSIDE_RECT(pos, r) ((pos.x >= r.x) && \
+    (pos.x <= r.x + r.w) && (pos.z >= r.y) && (pos.z <= r.y + r.h))
+
   void SpriteManager::drawInRect(SDL_Rect & r) {
     for (AbstractContainer<Pedestrian>::Storage_T_Iterator i = AbstractContainer<Pedestrian>::objs.begin(); 
-      i != AbstractContainer<Pedestrian>::objs.end(); ++i) {
+        i != AbstractContainer<Pedestrian>::objs.end(); ++i) {
       Pedestrian & ped = (*i);
-      if ((ped.pos.x >= r.x) && (ped.pos.x <= r.x + r.w) &&
-       (ped.pos.z >= r.y) && (ped.pos.z <= r.y + r.h))
-       draw(ped);
+      if (POS_INSIDE_RECT(ped.pos, r))
+        //if ((ped.pos.x >= r.x) && (ped.pos.x <= r.x + r.w) &&
+        // (ped.pos.z >= r.y) && (ped.pos.z <= r.y + r.h))
+        draw(ped);
+      else
+        removePed(ped.id());
     }
     for (AbstractContainer<SpriteObject>::Storage_T_Iterator i = AbstractContainer<SpriteObject>::objs.begin(); 
-      i != AbstractContainer<SpriteObject>::objs.end(); ++i) {
+        i != AbstractContainer<SpriteObject>::objs.end(); ++i) {
       SpriteObject & obj = (*i);
-      if ((obj.pos.x >= r.x) && (obj.pos.x <= r.x + r.w) &&
-       (obj.pos.z >= r.y) && (obj.pos.z <= r.y + r.h))
-       draw(obj);
+      //if ((obj.pos.x >= r.x) && (obj.pos.x <= r.x + r.w) &&
+      // (obj.pos.z >= r.y) && (obj.pos.z <= r.y + r.h))
+      if (POS_INSIDE_RECT(obj.pos, r))
+        draw(obj);
     }
     for (AbstractContainer<Car>::Storage_T_Iterator i = AbstractContainer<Car>::objs.begin(); 
-      i != AbstractContainer<Car>::objs.end(); ++i) {
+        i != AbstractContainer<Car>::objs.end(); ++i) {
       Car & car = (*i);
-      if ((car.pos.x >= r.x) && (car.pos.x <= r.x + r.w) &&
-       (car.pos.z >= r.y) && (car.pos.z <= r.y + r.h))
-       draw(car);
+      // if ((car.pos.x >= r.x) && (car.pos.x <= r.x + r.w) &&
+      // (car.pos.z >= r.y) && (car.pos.z <= r.y + r.h))
+      if (POS_INSIDE_RECT(car.pos, r))
+        draw(car);
     }
 
     glColor3f(0.2f, 0.2f, 0.2f);
     typedef ProjectileListType::iterator ProjectileIterator;
     for (ProjectileIterator i = activeProjectiles.begin(); i != activeProjectiles.end(); ++i) {
       Projectile & prj = (*i);
-      if ((prj.pos.x >= r.x) && (prj.pos.x <= r.x + r.w) &&
-       (prj.pos.z >= r.y) && (prj.pos.z <= r.y + r.h))
-       draw(prj);
+      if (POS_INSIDE_RECT(prj.pos, r))
+        draw(prj);
     }
     glColor3f(1, 1, 1);
 
@@ -230,13 +241,13 @@ namespace OpenGTA {
   }
 
 #define GL_OBJ_COMMON(o) GL_CHECKERROR; \
-glPushMatrix(); \
+  glPushMatrix(); \
 glTranslatef(o.pos.x, o.pos.y, o.pos.z); \
 glRotatef(o.rot, 0, 1, 0); \
 //glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat*)o.m_M.m)
 
 #define DRAW_TEX_QUADS_OBJ(t, w, h) glBindTexture(GL_TEXTURE_2D, t.inPage); \
-glBegin(GL_QUADS); \
+  glBegin(GL_QUADS); \
 glTexCoord2f(t.coords[0].u, t.coords[1].v); \
 glVertex3f(-w/2, 0.0f, h/2); \
 glTexCoord2f(t.coords[1].u, t.coords[1].v); \
@@ -252,22 +263,29 @@ void SpriteManager::draw(Car & car) {
   GL_OBJ_COMMON(car);
   GraphicsBase & style = StyleHolder::Instance().get();
   OpenGL::PagedTexture t;
-  PHYSFS_uint16 sprNum = style.spriteNumbers.reIndex(car.sprNum + 
-      car.anim.firstFrameOffset + car.anim.currentFrame, car.sprType);
+  PHYSFS_uint16 sprNum = style.spriteNumbers.reIndex(car.sprNum, car.sprType);
+      //+ car.anim.firstFrameOffset + car.anim.currentFrame, car.sprType);
 
   GraphicsBase::SpriteInfo * info = style.getSprite(sprNum);
   assert(info);
   float w = float(info->w) / 64.0f;
   float h = float(info->h) / 64.0f;
-  if (OpenGL::SpriteCacheHolder::Instance().has(sprNum, car.remap))
-    t = OpenGL::SpriteCacheHolder::Instance().get(sprNum, car.remap);
+  OpenGL::SpriteIdentifier si(sprNum, car.remap, car.delta);
+  if (OpenGL::SpriteCacheHolder::Instance().has(si))
+    t = OpenGL::SpriteCacheHolder::Instance().get(si);
   else {
-    t = OpenGL::SpriteCacheHolder::Instance().create(car.sprNum + 
-        car.anim.firstFrameOffset + car.anim.currentFrame, 
-        car.sprType, car.remap);
+    t = OpenGL::SpriteCacheHolder::Instance().create(car.sprNum,// + 
+        //car.anim.firstFrameOffset + car.anim.currentFrame, 
+        car.sprType, car.remap, car.delta);
   }
 
   DRAW_TEX_QUADS_OBJ(t, w, h);
+
+  glDisable(GL_TEXTURE_2D);
+  glBegin(GL_POINTS);
+  glVertex3f(car.carInfo.door[0].rpx / 64.0f, 0.1f, car.carInfo.door[0].rpy / 64.0f);
+  glEnd();
+  glEnable(GL_TEXTURE_2D);
 
   if (getDrawBBox() || getDrawTexBorder())
     glDisable(GL_TEXTURE_2D);
@@ -304,11 +322,11 @@ void SpriteManager::drawBBoxOutline(const OBox & box) {
 void SpriteManager::drawTextureOutline(const float & w, const float & h) {
   glBegin(GL_LINE_STRIP);
   glColor3f(float(202)/255.0f, float(31)/255.0f, float(123)/255.0f);
-  glVertex3f(-w/2, 0.0f, h/2);
-  glVertex3f(w/2,  0.0f, h/2);
-  glVertex3f(w/2,  0.0f, -h/2);
+  glVertex3f(-w/2, 0.0f,  h/2);
+  glVertex3f( w/2, 0.0f,  h/2);
+  glVertex3f( w/2, 0.0f, -h/2);
   glVertex3f(-w/2, 0.0f, -h/2);
-  glVertex3f(-w/2, 0.0f, h/2);
+  glVertex3f(-w/2, 0.0f,  h/2);
   glEnd();
   glColor3f(1.0f, 1.0f, 1.0f);
 }
@@ -374,7 +392,7 @@ void SpriteManager::draw(Pedestrian & ped) {
         ped.anim.firstFrameOffset + ped.anim.currentFrame, 
         ped.sprType, ped.remap);
   }
-  
+
   DRAW_TEX_QUADS_OBJ(t, w, h);
 
   if (getDrawBBox() || getDrawTexBorder())
@@ -520,43 +538,43 @@ void SpriteManager::drawExplosion(SpriteObject & obj) {
 }
 
 /*
-void SpriteManager::draw(TrainSegment & train) {
-  GL_OBJ_COMMON(train);
-  GraphicsBase & style = StyleHolder::Instance().get();
+   void SpriteManager::draw(TrainSegment & train) {
+   GL_OBJ_COMMON(train);
+   GraphicsBase & style = StyleHolder::Instance().get();
 
-  OpenGL::PagedTexture t;
-  PHYSFS_uint16 sprNum = style.spriteNumbers.reIndex(train.sprNum, train.sprType);
+   OpenGL::PagedTexture t;
+   PHYSFS_uint16 sprNum = style.spriteNumbers.reIndex(train.sprNum, train.sprType);
 
-  GraphicsBase::SpriteInfo * info = style.getSprite(sprNum);
-  assert(info);
-  float w = float(info->w) / 64.0f;
-  float h = float(info->h) / 64.0f;
-
-
-  if (OpenGL::SpriteCacheHolder::Instance().has(sprNum, train.remap))
-    t = OpenGL::SpriteCacheHolder::Instance().get(sprNum, train.remap);
-  else {
-    t = OpenGL::SpriteCacheHolder::Instance().create(train.sprNum, train.sprType, -1);
-  }
-  glBindTexture(GL_TEXTURE_2D, t.inPage);
-
-  glBegin(GL_QUADS);
-  glTexCoord2f(t.coords[0].u, t.coords[1].v);
-  glVertex3f(-w/2, 0.0f, h/2);
-  glTexCoord2f(t.coords[1].u, t.coords[1].v);
-  glVertex3f(w/2,  0.0f, h/2);
-  glTexCoord2f(t.coords[1].u, t.coords[0].v);
-  glVertex3f(w/2,  0.0f, -h/2);
-  glTexCoord2f(t.coords[0].u, t.coords[0].v);
-  glVertex3f(-w/2, 0.0f, -h/2);
-
-  glEnd();
+   GraphicsBase::SpriteInfo * info = style.getSprite(sprNum);
+   assert(info);
+   float w = float(info->w) / 64.0f;
+   float h = float(info->h) / 64.0f;
 
 
-  glPopMatrix();
-  GL_CHECKERROR;
-}
-*/
+   if (OpenGL::SpriteCacheHolder::Instance().has(sprNum, train.remap))
+   t = OpenGL::SpriteCacheHolder::Instance().get(sprNum, train.remap);
+   else {
+   t = OpenGL::SpriteCacheHolder::Instance().create(train.sprNum, train.sprType, -1);
+   }
+   glBindTexture(GL_TEXTURE_2D, t.inPage);
+
+   glBegin(GL_QUADS);
+   glTexCoord2f(t.coords[0].u, t.coords[1].v);
+   glVertex3f(-w/2, 0.0f, h/2);
+   glTexCoord2f(t.coords[1].u, t.coords[1].v);
+   glVertex3f(w/2,  0.0f, h/2);
+   glTexCoord2f(t.coords[1].u, t.coords[0].v);
+   glVertex3f(w/2,  0.0f, -h/2);
+   glTexCoord2f(t.coords[0].u, t.coords[0].v);
+   glVertex3f(-w/2, 0.0f, -h/2);
+
+   glEnd();
+
+
+   glPopMatrix();
+   GL_CHECKERROR;
+   }
+   */
 
 void SpriteManager::draw(Projectile & proj) {
   //GL_OBJ_COMMON(proj); // can't use; not derived from OBox
@@ -564,12 +582,12 @@ void SpriteManager::draw(Projectile & proj) {
   const float h = 0.05f;
 
   glPushMatrix(); \
-  glTranslatef(proj.pos.x, proj.pos.y, proj.pos.z); \
-  glRotatef(proj.rot, 0, 1, 0);
+    glTranslatef(proj.pos.x, proj.pos.y, proj.pos.z); \
+    glRotatef(proj.rot, 0, 1, 0);
 
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_QUADS);
-  
+
   glVertex3f(-w/2, 0.0f, h/2);
   glVertex3f(w/2,  0.0f, h/2);
   glVertex3f(w/2,  0.0f, -h/2);
@@ -582,92 +600,21 @@ void SpriteManager::draw(Projectile & proj) {
   GL_CHECKERROR;
 }
 
-/*
-
-   void SpriteManager::addPed(Pedestrian & ped) {
-   activePeds.push_back(ped);
-   }
-
-   Pedestrian & SpriteManager::getPedById(const Uint32 & id) {
-   PedListType::iterator i = activePeds.begin();
-   while (i != activePeds.end()) {
-   if (i->pedId == id)
-   return *i;
-   ++i;
-   }
-   assert(0);
-   return *activePeds.begin();
-   }
-
-   TrainSegment & SpriteManager::getTrainById(const Uint32 & id) {
-   TrainListType::iterator i = activeTrains.begin();
-   while (i != activeTrains.end()) {
-   if (i->trainId == id)
-   return *i;
-   ++i;
-   }
-   assert(0);
-   return *activeTrains.begin();
-   }
-
-   void SpriteManager::removePedById(const Uint32 & id) {
-   PedListType::iterator i = activePeds.begin();
-   while (i != activePeds.end()) {
-   if (i->pedId == id) {
-   activePeds.erase(i);
-   return;
-   }
-   ++i;
-   }
-   WARN << "didn't find ped id " << id << " -- cannot remove"<<std::endl;
-
-   }
-
-   void SpriteManager::addCar(Car & car) {
-   activeCars.push_back(car);
-   }
-
-   Car & SpriteManager::getCarById(const Uint32 & id) {
-   CarListType::iterator i = activeCars.begin();
-   while (i != activeCars.end()) {
-   if (i->carId == id) {
-   return *i;
-   }
-   ++i;
-   }
-   assert(0);
-   return *activeCars.begin();
-   }
-
-   void SpriteManager::addObject(GameObject & go) {
-   activeObjects.push_back(go);
-   }
-
-   void SpriteManager::createExplosion(Vector3D center) {
-   GameObject exp(center, 0, GraphicsBase::SpriteNumbers::EX);
-   exp.anim = SpriteObject::Animation(getAnimationById(99));
-   exp.anim.set(Util::Animation::PLAY_FORWARD, Util::Animation::LOOP);
-   INFO << exp.anim.currentFrame << " " << exp.anim.numFrames << " " << exp.anim.delay << std::endl;
-   activeObjects.push_back(exp);
-   }
-
-   GameObject & SpriteManager::getObjectById(const Uint32 & id) {
-   ObjectListType::iterator i = activeObjects.begin();
-while (i != activeObjects.end()) {
-  if (i->objId == id) {
-    return *i;
-  }
-  ++i;
-}
-assert(0);
-return *activeObjects.begin();
-}
-*/
-
 void SpriteManager::removeDeadStuff() {
   AbstractContainer<Pedestrian>::doRealRemove();
   AbstractContainer<Car>::doRealRemove();
   AbstractContainer<SpriteObject>::doRealRemove();
+  AbstractContainer<Pedestrian>::Storage_T_Iterator i = AbstractContainer<Pedestrian>::objs.begin(); 
+  while (i != AbstractContainer<Pedestrian>::objs.end()) {
+      Pedestrian & ped = (*i);
+      if ((ped.isDead == 3) && (creationArea.isOnScreen(ped.pos) == false)) {
+        AbstractContainer<Pedestrian>::Storage_T_Iterator j = i; j++;
+        AbstractContainer<Pedestrian>::objs.erase(i);
+        i = j;
+      }
+      else
+        i++;
+  }
 }
 
 SpriteObject::Animation & SpriteManager::getAnimationById(const Uint32 & id) {

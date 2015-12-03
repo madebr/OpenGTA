@@ -31,6 +31,7 @@
 namespace Util {
   float distance(const Vector3D & p1, const Vector3D & p2);
   float xz_angle(const Vector3D & from, const Vector3D & to);
+  float xz_turn_angle(const Vector3D & from, const Vector3D & to);
 
   class CellIterator {
     public:
@@ -89,8 +90,11 @@ namespace Util {
         p.z -= 1;
         return p;
       }
+      bool isBlockType(uint8_t t) const;
+      std::pair<bool, CellIterator> findTypeInCol(uint8_t t) const;
+      std::pair<bool, CellIterator> findNeighbourWithType(uint8_t t, float angle_hint);
       int x, y, z;
-      OpenGTA::Map::BlockInfo & getBlock();
+      OpenGTA::Map::BlockInfo & getBlock() const;
     private:
       OpenGTA::Map & mapRef;
   };

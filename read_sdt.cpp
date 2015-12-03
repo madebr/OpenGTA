@@ -21,6 +21,7 @@
 * distribution.                                                         *
 ************************************************************************/
 #include <sstream>
+#include <cassert>
 #include "m_exceptions.h"
 #include "fx_sdt.h"
 

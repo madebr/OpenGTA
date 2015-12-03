@@ -100,27 +100,47 @@ namespace OpenGTA {
       return "";
     std::string n;
     if (lastSubLocation == 0)
-      n.append("Central ");
+      //n.append("Central ");
+      n.append(_c);
     else if (lastSubLocation == 1)
-      n.append("North ");
+      //n.append("North ");
+      n.append(_n);
     else if (lastSubLocation == 2)
-      n.append("South ");
+      n.append(_s);
+      //n.append("South ");
     else if (lastSubLocation == 4)
-      n.append("East ");
+      n.append(_e);
+      //n.append("East ");
     else if (lastSubLocation == 8)
-      n.append("West ");
+      n.append(_w);
+      //n.append("West ");
     else if (lastSubLocation == 9)
-      n.append("Northwest ");
+      n.append(_nw);
+      //n.append("Northwest ");
     else if (lastSubLocation == 10)
-      n.append("Southwest ");
+      n.append(_sw);
+      //n.append("Southwest ");
     else if (lastSubLocation == 5)
-      n.append("Northeast ");
+      n.append(_ne);
+      //n.append("Northeast ");
     else if (lastSubLocation == 6)
-      n.append("Southeast ");
-      
+      n.append(_se);
+      //n.append("Southeast ");
+
+    n.append(" ");
     n.append(name);
     return n.c_str();
   }
+
+  std::string NavData::_c;
+  std::string NavData::_n;
+  std::string NavData::_s;
+  std::string NavData::_w;
+  std::string NavData::_e;
+  std::string NavData::_nw;
+  std::string NavData::_ne;
+  std::string NavData::_sw;
+  std::string NavData::_se;
 
   NavData::NavData(PHYSFS_uint32 size, PHYSFS_file *fd, const size_t level_num) {
     if (size % 35) {
@@ -133,6 +153,15 @@ namespace OpenGTA {
     assert(fd);
 
     MessageDB & msg = MainMsgHolder::Instance().get();
+    _c =msg.getText("c");
+    _n = msg.getText("n");
+    _s = msg.getText("s");
+    _w = msg.getText("w");
+    _e = msg.getText("e");
+    _nw = msg.getText("nw");
+    _ne = msg.getText("ne");
+    _sw = msg.getText("sw");
+    _se = msg.getText("se");
     for (PHYSFS_uint32 i = 0; i < c; ++i) {
       Sector *sec = new Sector(fd);
       if (sec->getSize() == 0) { // workaround for 'NYC.CMP' (empty sectors)

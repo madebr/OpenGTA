@@ -93,9 +93,17 @@ void Matrix3D::Translate(const Vector3D & v)
 }
 
 void Matrix3D::RotZ(float angle) {
-  const float TO_RAD = M_PI / 180.0f;
+  const float c = cosf(angle * M_PI / 180.0f);
+  const float s = sinf(angle * M_PI / 180.0f);
+/*
   m[0][0] =  cosf(angle*TO_RAD);
   m[1][0] =  sinf(angle*TO_RAD);
   m[0][1] =  -sinf(angle*TO_RAD);
   m[1][1] =  cosf(angle*TO_RAD);
+*/
+  m[0][0] = c;
+  m[2][2] = c;
+  m[0][2] = s;
+  m[2][0] = -s;
+
 }

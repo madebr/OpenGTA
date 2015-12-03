@@ -116,6 +116,7 @@ namespace OpenGTA {
   template<> void MainMsgLookup::load(const std::string & file) {
     unload();
     try {
+      INFO << "Trying to load: " << file << std::endl;
       m_data = new MessageDB(file); 
     }
     catch (const Exception & e) {

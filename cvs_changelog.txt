@@ -1,0 +1,134 @@
+2007-06-14  skyb
+
+* fixes for win32 build
+
+* updated bugs, documentation, build system
+* preparing to change key input handling
+
+2007-05-30  skyb
+
+* added WGL swap interval feature
+* spriteplayer: try anim feature; updated docs
+* luaviewer: read config file
+* experimental parts of in-game gui
+* playing around with basic ped ai
+* environment variable influences language file
+* updated docs; added author of code fragment to license
+
+2007-05-17  skyb
+
+* derived EntityController registers state change
+* rotation fixes
+* fixes concerning weapons + moving
+* car deltas: damage, doors, lights
+* more about "shooting" (hit, damage, explode cars);
+col-det tries to find angle for peds (still always the same anim)
+* fix: choose correct sprType for non-CAR types (bike, bus, train)
+* gui: drawing a string right-to-left
+* Map::BlockInfo partial setXXX() functionality
+* choose fxt language file (not hardcoded to english anymore)
+* 'viewer' screen-gamma in game
+* updated usage & version info
+* code cleanup
+
+2007-04-30  skyb
+
+* updated bugs list; fixed image links
+* vsync options: none, sdl, glx
+* uses anisotropic texture filtering if extension is supported
+* viewer config options for above (and mipmap & scale2x)
+* playing around with car-data
+* cars block ped movement
+
+2007-04-25  skyb
+
+A number of helpers:
+* project housekeeping
+* data dumper tool for cars
+* fxt <-> txt converter (txt -> fxt partially working)
+* build_svg_rect: visually verify Rectangle operations
+* raw_image: generate information about gui 2d art
+
+* projectile-wall collisions should now work on all tiles; minus: z-info,
+non-blocking ids
+* test code for block-type; minimap nows exports several bmps, viewer
+shows colored lines
+
+2007-04-23  skyb
+
+* main feature: projectile hits walls; flat case not working correctly
+* (partially?) fixed the triangle-slope texture bug; top/bottom sides?
+* gui.h/cpp is included, moved code into image_loader for reuse
+
+2007-04-16  skyb
+
+fix: allowing 24 bit color depth
+
+really unimportant fixes
+
+contains the code release date; may not be accurate in cvs but will serve
+as a kind of version-number for actual releases.
+
+removing dependency on unused code
+
+* feature: animated block textures
+* switching from GL matrix to calculations for obj position
+* collision: projectile + pedestrian
+* unique id generator
+* other helpers (not really used so far)
+
+2007-04-12  skyb
+
+Fixes, cleanup and new helpers... little new features:
+* prototype sounds: play fx, play music
+* many peds on map, running randomly around player
+
+2007-02-25  skyb
+
+* screen: try to guess color depth from bpp
+(fixes hang on < 32 bit x11 displays)
+* missing code from last commit
+
+fix: lookup now gets level number; should work for all gta1 maps
+
+* build script should detect if SDL_GL_SWAP_CONTROL is defined (by SDL
+>= 1.2.10)
+* sdl_init & videomode: check for errors
+
+* sector name from message db
+* initial projectile support
+* minor game_object updates
+
+2007-02-17  skyb
+
+* abstract_container: return (reference to copy of) added T
+* enable weapons selection/animation
+* more screen config options
+* gui-object cleanup
+* file_helper: load vfs into mem (for Lua)
+* spriteplayer: update to new version (compiles again) + camera hack
+(gravity doubles
+as y-scroll switch)
+* build-system: config.h instead of -D defines; related changes
+* coldet/opensteer in license.txt
+
+2007-02-16  skyb
+
+* each explosion plays once and gets removed
+* FIXME: at high framerates there is a visible delay when the textures
+aren't loaded
+
+* rewrote spritemanager & game objects
+* some other fixes
+* assorted helpers; sometimes even with testcase, generally not used at
+this time
+
+A first halfway working version; some older features are broken,
+it may even compile (right now).
+
+2007-01-09  skyb
+
+Importing src release 2006-12-10
+
+Initial revision
+

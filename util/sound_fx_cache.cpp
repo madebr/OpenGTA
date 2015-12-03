@@ -46,7 +46,12 @@ namespace Audio {
     OpenGTA::SoundsDB::Entry & e = db.getEntry(idx);
     size_t si;
     unsigned char* mem = db.getBuffered(idx);
-    Uint8 *mem2 = (Uint8*)Audio::resample_new(mem, e.rawSize, si, e.sampleRate, 44100);
+    Uint8 *mem2 = NULL;
+    if (file.find("000") != std::string::npos) {
+      mem2 = (Uint8*)Audio::resample16(mem, e.rawSize, si, e.sampleRate, 44100);
+    }
+    else
+      mem2 = (Uint8*)Audio::resample_new(mem, e.rawSize, si, e.sampleRate, 44100);
     Mix_Chunk * music = Mix_QuickLoad_RAW(mem2, si);
     return ChunkData(mem2, music, 1);
   }

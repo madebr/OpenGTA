@@ -22,6 +22,70 @@
  */
 namespace OpenGTA {
 
+  void Map::BlockInfo::setBlockType(uint8_t v) {
+    switch(v) {
+      case 0:
+        typeMap &= ~(16 | 32 | 64);
+        break;
+      case 1:
+        typeMap |= 16;
+        typeMap &= ~(32 | 64);
+        break;
+      case 2:
+        typeMap |= 32;
+        typeMap &= ~(16 | 64);
+        break;
+      case 3:
+        typeMap |= (16 | 32);
+        typeMap &= ~64;
+        break;
+      case 4:
+        typeMap |= 64;
+        typeMap &= ~(16 | 32);
+        break;
+      case 5:
+        typeMap |= (16 | 64);
+        typeMap &= ~32;
+        break;
+      case 6:
+        typeMap |= (32 | 64);
+        typeMap &= ~16;
+        break;
+      case 7:
+        typeMap |= (16 | 32 | 64);
+        break;
+      default:
+        ERROR << "Invalid block-type: " << int(v) << std::endl;
+        break;
+    }
+  }
+
+  void Map::BlockInfo::setSlopeType(uint8_t v) {
+    WARN << "NOT IMPLEMENTED" << std::endl;
+  }
+
+  void Map::BlockInfo::setRotation(uint8_t v) {
+    switch(v) {
+      case 0:
+        typeMap &= ~(16384 | 32768);
+        break;
+      case 1:
+        typeMap |= 16384;
+        typeMap &= ~32768;
+        break;
+      case 2:
+        typeMap |= 32768;
+        typeMap &= ~16384;
+        break;
+      case 3:
+        typeMap |= (16384 | 32768);
+        break;
+      default:
+        ERROR << "Invalid rotation: " << int(v) << std::endl;
+        break;
+    }
+  }
+
   Map::Map(const std::string& filename) {
     nav = 0;
     fd = PHYSFS_openRead(filename.c_str());
@@ -204,6 +268,7 @@ namespace OpenGTA {
       PHYSFS_read(fd, static_cast<void*>(&loc.x), 1, 1);
       PHYSFS_read(fd, static_cast<void*>(&loc.y), 1, 1);
       PHYSFS_read(fd, static_cast<void*>(&loc.z), 1, 1);
+      // skip dummy entries at 0,0,0
       if ((loc.x == 0) && (loc.y == 0) && (loc.z == 0))
         continue;
       if (i < 6)
@@ -266,6 +331,32 @@ namespace OpenGTA {
       }
     }
   }
+  const Map::Location & Map::getNearestLocationByType(uint8_t t, uint8_t x, uint8_t y) {
+    INFO << int(t) << " at " << int(x) << " " << int(y) << std::endl;
+    LocationMap::iterator i = locations.find(t);
+    LocationMap::iterator j;
+    if (i == locations.end()) {
+      std::ostringstream o;
+      o << "location-type " << int(t) << " not found in map";
+      throw E_UNKNOWNKEY(o.str());
+    }
+    int _x(x);
+    int _y(y);
+    int min_d = 255 * 255;
+#define ABS(a) (a > 0 ? a : -a)
+
+    while (i != locations.end()) {
+    INFO << int(i->first) << ": "<< int(i->second->x) << " " << int(i->second->y) << std::endl;
+      int d = ABS((_x - i->second->x)) + ABS((_y - i->second->y));
+      if (d < min_d) {
+        min_d = d;
+        j = i;
+      }
+    }
+#undef ABS
+    return *j->second;
+  }
+
 }
     
 #if 0

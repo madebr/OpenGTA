@@ -13,7 +13,7 @@ function program_exists() {
 function print_make_file_list() {
 FOO=GL_SRC
 FOOO=GL_OBJ
-( grep -l "^namespace OpenGL" *.cpp ;echo "gl_frustum.cpp";echo "math/obox.cpp coldet/math3d.cpp util/physfsrwops.c" ) | sort | xargs echo "$FOO ="
+( grep -l "^namespace OpenGL" *.cpp ;echo "gl_frustum.cpp";echo "math/obox.cpp math/plane.cpp coldet/math3d.cpp util/physfsrwops.c" ) | sort | xargs echo "$FOO ="
 echo "$FOOO = \${$FOO:.cpp=.o}"
 FOO=OGTA_SRC
 FOOO=OGTA_OBJ
@@ -71,9 +71,9 @@ viewer${EXE_PFIX}: main2.cpp viewer.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \$(OS
     -o \$@ \$+ \\
       \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(COLDET_LIB)
 
-luaviewer${EXE_PFIX}: main2.cpp viewer.cpp \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \$(OSTEER_OBJ) \
+luaviewer${EXE_PFIX}: main2.cpp viewer.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \$(OSTEER_OBJ) \
 \$(LUA_OBJ)
-	\$(CXX) \$(CATCH_E) -DWITH_LUA \$(FLAGS) \$(DEFS) \\
+	\$(CXX) \$(CATCH_E) \$(FLAGS) \$(DEFS) \\
   \$(INC) \\
     -o \$@ \$+ \\
       \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(COLDET_LIB) \$(LUA_LIB)
@@ -88,6 +88,11 @@ spriteplayer${EXE_PFIX}: sprite_anim_player.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OB
 slopeview: main.o tools/display_slopes.o navdata.o read_cmp.o \
 \$(UTIL_OBJ) common_sdl_gl.o
 	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) -lSDL_image
+
+blockview: main2.o tools/blockview.cpp util/log.o util/m_exceptions.o \
+gl_camera.o gl_screen.o read_cmp.o dataholder.o slope_height_func.o navdata.o \
+datahelper.o read_gry.o read_g24.o util/set.o util/buffercache.o read_fxt.o blockdata.o
+	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB)
 
 g24: read_g24.cpp read_gry.o \$(UTIL_OBJ)
 	\$(CXX) -DG24_DUMPER \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB)
@@ -305,6 +310,8 @@ OPT   = $OPT
 WARN  = $WARN
 DEFS  = $DEFS
 
+LIB_RT_PATH = libs
+
 # def only for 'main' programs to let gdb handle the exception 
 #CATCH_E = -DDONT_CATCH
 
@@ -312,7 +319,7 @@ DEFS  = $DEFS
 
 # the external libraries
 PHYSFS_INC = -Iinc
-PHYSFS_LIB = -Llibs -lphysfs -lz 
+PHYSFS_LIB = -Llibs -lphysfs-1-1-0 -lzlib1 
 
 SDL_INC    = -Iinc -D_GNU_SOURCE=1 -D_REENTRANT
 SDL_LIB    = -Llibs -lSDLmain -lSDL
@@ -379,17 +386,28 @@ function print_config_h() {
 #define DEFAULT_SCREEN_WIDTH  640
 #define DEFAULT_SCREEN_HEIGHT 480
 
+// 0 - no vsync (default), 1 - try to use SDL_GL_SWAP_CONTROL,
+// 2 - try native call (GLX on linux, unsupported on win32)
+//#undef DEFAULT_SCREEN_VSYNC
+#define DEFAULT_SCREEN_VSYNC 2
+
+// default pathes; env-variables can override
 #define OGTA_DEFAULT_DATA_PATH "gtadata.zip"
 #define OGTA_DEFAULT_MOD_PATH  ""
 #define OGTA_DEFAULT_HOME_PATH PHYSFS_getBaseDir()
 
+// just for fun
 #define USED_GCC_VERSION "$GCC_VERSION"
 
 // enable features
-#define DO_SCALEX
-#undef WITH_LUA
+#define DO_SCALE2X
 $SDL_SOUND_MIXER
 $SDL_GL_SWAP_CONTROL
+
+// use escape sequences to mark Log::info/warn/error()
+#ifdef LINUX
+//#define LOG_USE_ANSI_COLORS
+#endif
 EOF
 }
 
@@ -401,6 +419,7 @@ if [[ -n "$1" && "$1" != "LINUX" ]]; then
   print_w32settings > src_list.make
   print_make_file_list >> src_list.make
   print_target_list >> src_list.make
+  SDL_GL_SWAP_CONTROL='#define HAVE_SDL_VSYNC'
 else
   OGTA_PLATFORM="LINUX"
   echo "*** LINUX ***"

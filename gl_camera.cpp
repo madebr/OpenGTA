@@ -78,12 +78,12 @@ namespace OpenGL {
       OpenGTA::Map::BlockInfo * block = map.getBlockAtNew(PHYSFS_uint8(x), PHYSFS_uint8(z), PHYSFS_uint8(y));
       if (block->blockType() > 0 && block->blockType() <= 5) {
         float bz = slope_height_offset(block->slopeType(), eye.x - x, eye.z - z);
-        if (block->slopeType() == 0 && block->blockType() != 5)
+        if (block->slopeType() == 0 && (block->blockType() != 5 && block->blockType() != 6))
           bz -= 1;
         //INFO << int(block->blockType()) << ", " << eye.y << ", " << 
         //  eye.y - y << ", " << eye.y - y - bz << ", " << bz << std::endl;
         float react_delta = 0.3f;
-        if (block->blockType() == 5)
+        if (block->blockType() == 5 || block->blockType() == 6)
           react_delta = 0.0f;
         if (eye.y - y - bz < react_delta) {
           //do_grav = 0;
@@ -109,7 +109,7 @@ namespace OpenGL {
     y -= 1;
     if (y < map.getNumBlocksAtNew(PHYSFS_uint8(x), PHYSFS_uint8(z)) && y > 0.0f) {
       OpenGTA::Map::BlockInfo * block = map.getBlockAtNew(PHYSFS_uint8(x), PHYSFS_uint8(z), PHYSFS_uint8(y));
-      if (block->blockType() == 5) {
+      if (block->blockType() == 5 || block->blockType() == 6) {
         float bz = slope_height_offset(block->slopeType(), eye.x - x, eye.z - z);
         //INFO << eye.y << ", " << y << " bz " << bz << std::endl;
         if (eye.y - y - bz < 0.4f) {

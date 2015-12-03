@@ -95,6 +95,34 @@ namespace OpenGL {
     return move;
   }
 
+  GLfloat DrawableFont::drawString_r2l(const std::string & text) {
+    assert(texCache != NULL);
+    assert(fontSource != NULL);
+    std::string::const_reverse_iterator i = text.rbegin();
+    std::string::const_reverse_iterator e = text.rend();
+    GLfloat move = 0.0f;
+    while (i != e) {
+
+      if (*i != ' ') {
+        FontQuad* character = NULL;
+        std::map<char, FontQuad*>::const_iterator j = drawables.find(*i);
+        if (j == drawables.end()) {
+          character = createDrawableCharacter(*i);
+          drawables[*i] = character;
+        }
+        else {
+          GLfloat mm = float(fontSource->getMoveWidth(*i)) * 1.1f * scale;
+          glTranslatef(-mm, 0.0f, 0.0f);
+          character = j->second;
+          move += mm; 
+        }
+        Renderer<FontQuad>::draw(*character);
+      }
+      i++;
+    }
+    return move;
+  }
+
   uint16_t DrawableFont::getHeight() {
     return scale * fontSource->getCharHeight();
   }

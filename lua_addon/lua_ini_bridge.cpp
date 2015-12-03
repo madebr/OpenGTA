@@ -1,3 +1,4 @@
+#include <cassert>
 #include "lua_ini_bridge.h"
 #include "log.h"
 

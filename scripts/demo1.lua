@@ -20,7 +20,7 @@ tick = 0
 -- every 100 ms, but it is pretty pointless at this time.
 function game_tick()
   if tick == 1 then
-    screen.makeScreenShot("test.bmp")
+    --screen.makeScreenShot("test.bmp")
   end
   tick = tick + 1
 end

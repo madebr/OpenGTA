@@ -42,10 +42,15 @@
 #include "navdata.h"
 #include "opengta.h"
 #include "spritemanager.h"
+#include "gl_spritecache.h"
 #include "timer.h"
 #ifdef WITH_LUA
 #include "lua_addon/lua_vm.h"
+#include "lua_addon/lua_stackguard.h"
 #endif
+#include "gui.h"
+#include "font_cache.h"
+#include "ai.h"
 
 #define getPedById getPed
 #define removePedById removePed
@@ -54,10 +59,12 @@
 extern SDL_Surface* screen;
 extern int global_EC;
 extern int global_Done;
+extern int global_Restart;
 GLfloat mapPos[3] = {12.0f, 12.0f, 20.0f};
 
 OpenGTA::CityView *city = NULL;
-OpenGL::DrawableFont* m_font = NULL;
+//OpenGL::DrawableFont* m_font = NULL;
+GUI::Label * fps_label = NULL;
 
 int city_num = 0;
 const char*  styles_8[3] = { "STYLE001.GRY", "STYLE002.GRY", "STYLE003.GRY" };
@@ -81,6 +88,11 @@ int ped_anim = 0;
 int bbox_toggle = 0;
 int texsprite_toggle = 0;
 int follow_toggle = 0;
+float anisotropic_filter_degree = 2.0f;
+int mipmap_textures = -1;
+int vsync_config = -1;
+int city_blocks_area = -1;
+int config_scale2x = 1;
 OpenGTA::SpriteObject::Animation pedAnim(0, 0);
 #ifdef OGTA_DEFAULT_GRAPHICS_G24
 bool highcolor_data = true;
@@ -93,6 +105,10 @@ bool player_toggle_run = false;
 const char* script_file = NULL;
 int paused = 0;
 int next_station_zoom = 0;
+bool gamma_slide = false;
+float screen_gamma = 1.0f;
+
+Vector3D test_dot(-1, -1, -1);
 
 /*
 void ERROR(const char* s) {
@@ -106,8 +122,8 @@ void on_exit() {
   SDL_Quit();
   if (city)
     delete city;
-  if (m_font)
-    delete m_font;
+  //if (m_font)
+  //  delete m_font;
   PHYSFS_deinit();
   if (global_EC)
     std::cerr << "Exiting after fatal problem - please see output above" << std::endl;
@@ -123,6 +139,17 @@ void print_usage(const char* argv0) {
   " -c k : 0 = 8bit GRY, 1 = 24bit G24" << std::endl <<
   " -f   : fullscreen on program-start" << std::endl <<
   " -V   : show version & compile-time switches" << std::endl <<
+  " -M k : texture mipmaps: 0 = disable, 1 = enable" << std::endl <<
+  " -x k : scale2x sprites: 0 = disable, 1 = enable" << std::endl <<
+  " -v k : vertical sync: 0 = disable, 1 = try with SDL" <<
+#ifdef LINUX
+  ", 2 = try with GLX" <<
+#elif WIN32
+  ", 2 = try with GLW" <<
+#endif
+    std::endl <<
+  " -a f : anisotropic texture filtering degree: 1.0 = disabled" 
+    << std::endl <<
   std::endl <<
   " -m map_file -g style_file : load specified files" << std::endl <<
   " -w width -h height        : screen dimension" << std::endl <<
@@ -132,12 +159,13 @@ void print_usage(const char* argv0) {
   "The following environment variables are used when defined:" << std::endl <<
   " OGTA_DATA : PhysicsFS source for main data file lookup" << std::endl <<
   " OGTA_HOME : unused - will be config/save dir" << std::endl <<
-  " OGTA_MOD  : PhysicsFS source to override main data files" << std::endl;
+  " OGTA_MOD  : PhysicsFS source to override main data files" << std::endl <<
+  " OGTA_LANG : defines the fxt language file to load" << std::endl;
 }
 
 void print_version_info() {
 #define PRINT_FORMATED(spaces) std::setw(spaces) << std::left <<
-#define PRINT_OFFSET PRINT_FORMATED(18)
+#define PRINT_OFFSET PRINT_FORMATED(19)
   std::cout << PRINT_OFFSET "OpenGTA version:" << OGTA_VERSION_INFO << std::endl <<
   PRINT_OFFSET "platform:" << OGTA_PLATFORM_INFO << std::endl << 
 
@@ -155,8 +183,23 @@ void print_version_info() {
   "no" <<
 #endif
   std::endl <<
+  PRINT_OFFSET "SDL_image support:" <<
+#ifdef WITH_SDL_IMAGE
+  "yes" <<
+#else
+  "no" <<
+#endif
+  std::endl <<
+
   PRINT_OFFSET "vsync support:" <<
 #ifdef HAVE_SDL_VSYNC
+  "yes" <<
+#else
+  "no" <<
+#endif
+  std::endl <<
+  PRINT_OFFSET "scale2x support:" <<
+#ifdef DO_SCALE2X
   "yes" <<
 #else
   "no" <<
@@ -188,23 +231,29 @@ void parse_args(int argc, char* argv[]) {
   opterr = 0;
 
 #ifdef WITH_LUA
-#define VIEWER_FLAGS "s:w:h:c:m:g:l:fV"
+#define VIEWER_FLAGS "a:s:w:h:c:m:M:g:l:v:x:fV"
 #else
-#define VIEWER_FLAGS "w:h:c:m:g:l:fV"
+#define VIEWER_FLAGS "a:w:h:c:m:M:g:l:v:x:fV"
 #endif
   while ((c = getopt (argc, argv, VIEWER_FLAGS)) != -1)
     switch (c)
     {
 #ifdef WITH_LUA
       case 's':
-        script_file = std::string(optarg);
+        script_file = optarg;
         break;
 #endif
+      case 'a':
+        anisotropic_filter_degree = atof(optarg);
+        break;
       case 'c':
         highcolor_data = atoi(optarg); 
         break;
       case 'm':
         specific_map = std::string(optarg);
+        break;
+      case 'M':
+        mipmap_textures = atoi(optarg);
         break;
       case 'g':
         specific_style = std::string(optarg);
@@ -221,9 +270,15 @@ void parse_args(int argc, char* argv[]) {
       case 'f':
         full_screen = true;
         break;
+      case 'v':
+        vsync_config = atoi(optarg);
+        break;
       case 'V':
         print_version_info();
         exit(0);
+        break;
+      case 'x':
+        config_scale2x = atoi(optarg);
         break;
       default:
         if (optopt == '?') {
@@ -254,7 +309,7 @@ void run_init(const char* prg_name) {
   // physfs-ogta
   Util::FileHelper & fh = GET_FILE_HELPER;
   if (fh.existsInSystemFS(fh.getBaseDataPath())) {
-    PHYSFS_addToSearchPath(GET_FILE_HELPER.getBaseDataPath().c_str(), 1);
+    PHYSFS_addToSearchPath(fh.getBaseDataPath().c_str(), 1);
   }
   else {
     WARN << "Could not load data-source: " << fh.getBaseDataPath() << std::endl;
@@ -263,10 +318,12 @@ void run_init(const char* prg_name) {
   PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
 
   if (fh.existsInSystemFS(fh.getModDataPath()))
-    PHYSFS_addToSearchPath(GET_FILE_HELPER.getModDataPath().c_str(), 0);
+    PHYSFS_addToSearchPath(fh.getModDataPath().c_str(), 0);
 
-
+  // screen, no window yet
   OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
+
+  // check for a configfile
 #ifdef WITH_LUA
   if (fh.existsInVFS("config")) {
     char* config_as_string = (char*)fh.bufferFromVFS(
@@ -274,7 +331,17 @@ void run_init(const char* prg_name) {
     
     OpenGTA::Script::LuaVM & vm = OpenGTA::Script::LuaVMHolder::Instance();
     try {
-      vm.runString(config_as_string);
+      //vm.runString(config_as_string);
+      lua_State *L = vm.getInternalState();
+      Util::LGUARD(L);
+      if (luaL_loadbuffer(L, config_as_string, strlen(config_as_string), "config"))
+        throw E_SCRIPTERROR("Error running string: " + std::string(lua_tostring(L, -1)));
+      lua_newtable(L);
+      lua_pushvalue(L, -1);
+      lua_setglobal(L, "config");
+      lua_setfenv(L, -2);
+      if (lua_pcall(L, 0, 0, 0))
+        throw E_SCRIPTERROR("Error running string: " + std::string(lua_tostring(L, -1)));
     }
     catch (const Util::ScriptError & e) {
       std::cerr << "Error in config-file: " << e.what() << std::endl;
@@ -282,54 +349,147 @@ void run_init(const char* prg_name) {
       exit(1);
     }
 
-    try {
-      Uint32 sw = vm.getGlobalInt("screen_width");
-      if (!arg_screen_w)
-        arg_screen_w = sw;
-    }
-    catch (const Util::ScriptError & e) {}
-    try {
-      Uint32 sh = vm.getGlobalInt("screen_height");
-      if (!arg_screen_h)
-        arg_screen_h = sh;
-    }
-    catch (const Util::ScriptError & e) {}
-    try {
-      Uint32 sh = vm.getGlobalInt("full_screen");
-      if (!full_screen)
-        full_screen = sh;
-    }
-    catch (const Util::ScriptError & e) {}
+    lua_State *L = vm.getInternalState();
+    lua_getglobal(L, "config");
+    if (lua_type(L, 1) == LUA_TTABLE) {
+      try {
+        bool sh = vm.getBool("use_g24_graphics");
+        highcolor_data = sh;
+      }
+      catch (const Util::ScriptError & e) {}
+      try {
+        Uint32 sw = vm.getInt("screen_width");
+        if (!arg_screen_w)
+          arg_screen_w = sw;
+      }
+      catch (const Util::ScriptError & e) {}
+      try {
+        Uint32 sh = vm.getInt("screen_height");
+        if (!arg_screen_h)
+          arg_screen_h = sh;
+      }
+      catch (const Util::ScriptError & e) {}
+      try {
+        int sh = vm.getInt("screen_vsync");
+        screen.setupVsync(sh);
+      }
+      catch (const Util::ScriptError & e) {}
+      try {
+        bool sh = vm.getBool("full_screen");
+        if (!full_screen)
+          full_screen = sh;
+      }
+      catch (const Util::ScriptError & e) {}
 
-    float fov = screen.getFieldOfView();
-    float np = screen.getNearPlane();
-    float fp = screen.getFarPlane();
-    try {
-      fov = vm.getGlobalFloat("field_of_view");
+      float fov = screen.getFieldOfView();
+      float np = screen.getNearPlane();
+      float fp = screen.getFarPlane();
+      try {
+        fov = vm.getFloat("gl_field_of_view");
+      }
+      catch (const Util::ScriptError & e) {}
+      try {
+        np = vm.getFloat("gl_near_plane");
+      }
+      catch (const Util::ScriptError & e) {}
+      try {
+        fp = vm.getFloat("gl_far_plane");
+      }
+      catch (const Util::ScriptError & e) {}
+      screen.setupGlVars(fov, np, fp);
+
+      try {
+        bool sh = vm.getBool("gl_mipmap_textures");
+        ImageUtil::mipmapTextures = sh;
+      }
+      catch (const Util::ScriptError & e) {}
+
+      try {
+        bool sh = vm.getBool("scale2x_sprites");
+        OpenGL::SpriteCacheHolder::Instance().setScale2x(sh);
+      }
+      catch (const Util::ScriptError & e) {}
+
+      try {
+        int sh = vm.getInt("active_area_size");
+        city_blocks_area = sh;
+      }
+      catch (const Util::ScriptError & e) {}
     }
-    catch (const Util::ScriptError & e) {}
-    try {
-      np = vm.getGlobalFloat("near_plane");
-    }
-    catch (const Util::ScriptError & e) {}
-    try {
-      fp = vm.getGlobalFloat("far_plane");
-    }
-    catch (const Util::ScriptError & e) {}
-    screen.setupGlVars(fov, np, fp);
+    // can't check for gl-extensions now
 
   }
 #endif
+  //INFO << "AREA:: " << city_blocks_area << std::endl;
 
+
+  // check both width & height defined
   if ((arg_screen_h && !arg_screen_w) || (!arg_screen_h && arg_screen_w)) {
     WARN << "Invalid screen specified: " << arg_screen_w << "x" <<
       arg_screen_h << " - using default" << std::endl;
     arg_screen_h = 0; arg_screen_w = 0;
   }
   
+  // fullscreen before first video init; only chance to set it on win32
   screen.setFullScreenFlag(full_screen);
+  if (vsync_config != -1)
+    screen.setupVsync(vsync_config);
+
+  // create screen
   screen.activate(arg_screen_w, arg_screen_h);
-  SDL_EnableKeyRepeat( 100, SDL_DEFAULT_REPEAT_INTERVAL );
+
+  SDL_EnableKeyRepeat( 0, 0 ); 
+  //SDL_EnableKeyRepeat( 100, SDL_DEFAULT_REPEAT_INTERVAL );
+
+  // more setup; that requires an active screen
+#ifdef WITH_LUA
+  OpenGTA::Script::LuaVM & vm = OpenGTA::Script::LuaVMHolder::Instance();
+  lua_State *L = vm.getInternalState();
+  if (lua_type(L, 1) == LUA_TTABLE) {
+    try {
+      float v = vm.getFloat("gl_anisotropic_textures");
+      if (ImageUtil::supportedMaxAnisoDegree >= v)
+        ImageUtil::supportedMaxAnisoDegree = v;
+    }
+    catch (const Util::ScriptError & e) {}
+    try {
+      float v = (highcolor_data ? vm.getFloat("screen_gamma_g24") :
+        vm.getFloat("screen_gamma_gry"));
+      screen_gamma = v;
+      SDL_SetGamma(v, v, v);
+    }
+    catch (const Util::ScriptError & e) {}
+  }
+  lua_settop(L, 0);
+#endif
+  if (ImageUtil::supportedMaxAnisoDegree >= anisotropic_filter_degree)
+    ImageUtil::supportedMaxAnisoDegree = anisotropic_filter_degree;
+  else
+    WARN << "Using filter degree " << ImageUtil::supportedMaxAnisoDegree <<
+    ", requested " << anisotropic_filter_degree << " not supported" << std::endl;
+
+  switch(mipmap_textures) {
+    case -1:
+      break;
+    case 0:
+      ImageUtil::mipmapTextures = false;
+      break;
+    default:
+      ImageUtil::mipmapTextures = true;
+      break;
+  }
+  
+  // before any graphics are loaded
+  OpenGL::SpriteCacheHolder::Instance().setScale2x(config_scale2x);
+
+  // FIXME: basic gui setup; should not be here
+  GUI::Manager & gm = GUI::ManagerHolder::Instance();
+  SDL_Rect rect;
+  rect.x = 5;
+  rect.y = 50;
+  fps_label = new GUI::Label(rect, "", "F_MTEXT.FON", 1);
+  //fps_label->borderColor.r = fps_label->borderColor.unused = 200;
+  gm.add(fps_label, 5);
 }
 
 
@@ -338,7 +498,7 @@ void print_position() {
   Vector3D & e = OpenGL::CameraHolder::Instance().getEye();
   Vector3D & u = OpenGL::CameraHolder::Instance().getUp();
   if (!city->getViewMode()) {
-  INFO << cities[city_num] << ": " << city->getCurrentSector()->getFullName() << std::endl <<
+  std::cout << cities[city_num] << ": " << city->getCurrentSector()->getFullName() << std::endl <<
   "camera.setCenter(" << v.x << ", " << v.y << ", " << v.z << ")" << std::endl <<
   "camera.setEye(" << e.x << ", " << e.y << ", " << e.z << ")" << std::endl <<
   "camera.setUp(" << u.x << ", " << u.y << ", " << u.z << ")" << std::endl <<
@@ -347,7 +507,7 @@ void print_position() {
   }
   else {
     GLfloat* cp = city->getCamPos();
-    INFO << cities[city_num] << ": " << city->getCurrentSector()->getFullName() << std::endl <<
+    std::cout << cities[city_num] << ": " << city->getCurrentSector()->getFullName() << std::endl <<
     "city_view:setCamPosition(" << cp[0] << ", " << cp[1] << ", " << cp[2] << ")" << std::endl <<
     "city_view:setVisibleRange(" << city->getVisibleRange() << ")" << std::endl <<
     "city_view:setTopDownView( true )" << std::endl;
@@ -389,12 +549,13 @@ void handleKeyUp( SDL_keysym *keysym) {
 void draw_mapmode();
 
 void create_ped_at(const Vector3D v) {
-  OpenGTA::Pedestrian p(Vector3D(0.3f, 0.5f, 0.3f), v, 0xffffffff);
+  OpenGTA::Pedestrian p(Vector3D(0.2f, 0.5f, 0.2f), v, 0xffffffff);
   p.remap = OpenGTA::StyleHolder::Instance().get().getRandomPedRemapNumber();
   INFO << "using remap: "  << p.remap << std::endl;
   OpenGTA::Pedestrian & pr = OpenGTA::SpriteManagerHolder::Instance().addPed(p);
   pr.switchToAnim(1);
   OpenGTA::LocalPlayer::Instance().setCtrl(pr.m_control);
+  GUI::create_ingame_gui(1);
   //pr.m_control = &OpenGTA::LocalPlayer::Instance();
   //OpenGTA::SpriteManagerHolder::Instance().getPedById(0xffffffff).giveItem(1, 255);
 }
@@ -471,7 +632,7 @@ void add_auto_ped() {
   v.y += 0.9f;
   //INFO << v.x << " " << v.y << " " << v.z << std::endl;
   Sint16 remap = OpenGTA::StyleHolder::Instance().get().getRandomPedRemapNumber();
-  OpenGTA::Pedestrian p(Vector3D(0.3f, 0.5f, 0.3f), v, id, remap);
+  OpenGTA::Pedestrian p(Vector3D(0.2f, 0.5f, 0.2f), v, id, remap);
   OpenGTA::SpriteManagerHolder::Instance().addPed(p);
   OpenGTA::Pedestrian & pr2 = OpenGTA::SpriteManagerHolder::Instance().getPedById(id);
   pr2.switchToAnim(1);
@@ -486,6 +647,7 @@ void add_auto_ped() {
 
 void toggle_player_run() {
   OpenGTA::PedController * pc = &OpenGTA::LocalPlayer::Instance().getCtrl();
+  INFO << std::endl;
 
   if (!pc) {
     WARN << "no player yet!" << std::endl;
@@ -495,6 +657,69 @@ void toggle_player_run() {
     pc->setRunning(true);
   else
     pc->setRunning(false);
+}
+
+void show_gamma_config() {
+  OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
+  GUI::Manager & gm = GUI::ManagerHolder::Instance();
+  if (gamma_slide) {
+  SDL_Rect r;
+
+  r.x = screen.getWidth() / 2;
+  r.y = screen.getHeight() / 2;
+  r.w = 200;
+  r.h = 30;
+
+  GUI::ScrollBar * sb = new GUI::ScrollBar(GUI::GAMMA_SCROLLBAR_ID, r);
+  sb->color.r = sb->color.g = sb->color.b = 180;
+  sb->color.unused = 255;
+  sb->innerColor.r = 250;
+  sb->value = screen_gamma/2;
+  sb->changeCB = GUI::ScrollBar::SC_Functor(GUI::screen_gamma_callback);
+  gm.add(sb, 90);
+
+  r.y += 40;
+  std::ostringstream os;
+  os << "Gamma: " << screen_gamma;
+  GUI::Label * l = new GUI::Label(GUI::GAMMA_LABEL_ID, r, os.str(), "F_MTEXT.FON", 1);
+  gm.add(l, 80);
+
+  screen.setSystemMouseCursor(true);
+
+  }
+  else {
+    gm.removeById(GUI::GAMMA_SCROLLBAR_ID);
+    gm.removeById(GUI::GAMMA_LABEL_ID);
+    screen.setSystemMouseCursor(false);
+  }
+}
+
+void car_toggle() {
+  OpenGTA::Pedestrian & pped = OpenGTA::LocalPlayer::Instance().getPed();
+  Vector3D pos = pped.pos;
+  std::list<OpenGTA::Car> & list = OpenGTA::SpriteManagerHolder::Instance().getList<OpenGTA::Car>();
+  float min_dist = 360;
+  float _d;
+  std::list<OpenGTA::Car>::iterator j = list.end();
+  for (std::list<OpenGTA::Car>::iterator i = list.begin(); i != list.end(); i++) {
+    if ((_d = Util::distance(pos, i->pos)) < min_dist) {
+      j = i;
+      min_dist = _d; 
+    }
+  }
+  assert(j != list.end());
+  std::cout << j->id() << " " << j->pos.x << ", " << j->pos.y << ", " << j->pos.z << std::endl;
+  Vector3D p_door(j->carInfo.door[0].rpx / 64.0f, 0, 
+    j->carInfo.door[0].rpy / 64.0f);
+
+  Vector3D p_door_global = Transform(p_door, j->m_M);
+  p_door_global.y += 0.2f;
+  std::cout << p_door_global.x << ", " << p_door_global.y << ", " << p_door_global.z << std::endl;
+  test_dot = p_door_global;
+  //pped.aiMode = 1;
+  //pped.aiData.pos1 = p_door_global;
+  OpenGTA::AI::Pedestrian::walk_pavement(&pped);
+
 }
 
 void handleKeyPress( SDL_keysym *keysym ) {
@@ -530,6 +755,13 @@ void handleKeyPress( SDL_keysym *keysym ) {
       //zoomToTrain(next_station_zoom++);
       //if (next_station_zoom >= OpenGTA::SpriteManagerHolder::Instance().trainSystem.getNumTrains())
       //  next_station_zoom = 0;
+      global_Restart = 1;
+      global_Done = 1;
+      return;
+      {
+        Vector3D p(cam.getEye());
+        OpenGTA::MapHolder::Instance().get().getNearestLocationByType(0, p.x, p.z);
+      }
       break;
     case SDLK_F2:
       bbox_toggle = (bbox_toggle ? 0 : 1);
@@ -558,7 +790,11 @@ void handleKeyPress( SDL_keysym *keysym ) {
         cam.releaseFollowMode();
         OpenGTA::SpriteManagerHolder::Instance().removePedById(0xffffffff);
         OpenGTA::SpriteManagerHolder::Instance().removeDeadStuff();
+        GUI::remove_ingame_gui();
       }
+      break;
+    case SDLK_RETURN:
+      car_toggle();
       break;
     case SDLK_F5:
       draw_arrows = (draw_arrows ? 0 : 1);
@@ -578,6 +814,10 @@ void handleKeyPress( SDL_keysym *keysym ) {
       break;
     case SDLK_F10:
       city->setDrawLines(city->getDrawLines() ? 0 : 1);
+      break;
+    case SDLK_F12:
+      gamma_slide = (gamma_slide ? 0 : 1);
+      show_gamma_config();
       break;
     case SDLK_LSHIFT:
       toggle_player_run();
@@ -658,11 +898,16 @@ void handleKeyPress( SDL_keysym *keysym ) {
       OpenGTA::LocalPlayer::Instance().getCtrl().setMoveBack();
       break;
     case 'f':
+//FIXME: simply ignored on windows for now
+#ifndef WIN32
       OpenGL::ScreenHolder::Instance().toggleFullscreen();
+#endif
+#if 0
 #ifdef WIN32
       city->resetTextures();
-      m_font->resetTextures();
+      //m_font->resetTextures();
       OpenGL::SpriteCacheHolder::Instance().clearAll();
+#endif
 #endif
       break;
     case 'r':
@@ -723,20 +968,35 @@ void drawScene(Uint32 ticks) {
   OpenGL::ScreenHolder::Instance().set3DProjection();
   city->draw(ticks);
 
-  OpenGL::ScreenHolder::Instance().setFlatProjection();
+  glColor3f(1, 0, 0);
+  glDisable(GL_TEXTURE_2D);
+  glBegin(GL_POINTS);
+  glVertex3f(test_dot.x, test_dot.y, test_dot.z);
+  glEnd();
+  glEnable(GL_TEXTURE_2D);
+  glColor3f(1, 1, 1);
 
+
+  OpenGL::ScreenHolder::Instance().setFlatProjection();
+  glDisable(GL_DEPTH_TEST);
+  
   glPushMatrix();
   glTranslatef(10, 10, 0);
-  m_font->drawString(city->getCurrentSector()->getFullName());
+  OpenGL::DrawableFont & m_font = OpenGTA::FontCacheHolder::Instance().getFont("F_MTEXT.FON", 1);
+  m_font.drawString(city->getCurrentSector()->getFullName());
   glPopMatrix();
-  glPushMatrix();
+  
+  /*glPushMatrix();
   glTranslatef(5, 50, 0);
   std::ostringstream strstr;
   strstr << fps << " fps";
   m_font->drawString(strstr.str());
-  glPopMatrix();
+  glPopMatrix();*/
 
+  GUI::ManagerHolder::Instance().draw();
+ 
   num_frames_drawn += 1;
+  glEnable(GL_DEPTH_TEST);
 
   SDL_GL_SwapBuffers();
 }
@@ -747,9 +1007,9 @@ void draw_mapmode() {
   bool done_map = false;
   OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
   screen.setSystemMouseCursor(true);
-  GLfloat _scale = 1;
-  GLfloat dx = 0;
-  GLfloat dy = 0;
+  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glDisable(GL_DEPTH_TEST);
+  INFO << map_tex.coords[1].u << std::endl;
   while(!done_map) {
     while (SDL_PollEvent(&event)) {
       switch(event.type) {
@@ -761,31 +1021,20 @@ void draw_mapmode() {
             case SDLK_ESCAPE:
               done_map = true;
               break;
-            case '-':
-              _scale += 0.1f;
-              break;
-            case '+':
-              _scale -= 0.1f;
-              break;
-            case SDLK_LEFT:
-              dx -= 0.1f;
-              break;
-            case SDLK_RIGHT:
-              dx += 0.1f;
-              break;
-            case SDLK_UP:
-              dy += 0.1f;
-              break;
-            case SDLK_DOWN:
-              dy -= 0.1f;
-              break;
             default:
               break;
           }
           break;
+        case SDL_MOUSEBUTTONDOWN:
+          INFO << event.button.x  / 600.0f * 255<< " " << event.button.y / 600.0f * 255 << std::endl;
+          mapPos[0] = event.button.x  / 600.0f * 255;
+          mapPos[2] = event.button.y / 600.0f * 255;
+          //mapPos[1] = 10;
+          done_map = true;
+          break;
         case SDL_MOUSEMOTION:
-//          std::cout << "Mouse move: x " << event.motion.x << " y " << 
-//            event.motion.y << std::endl;
+          std::cout << "Mouse move: x " << event.motion.x << " y " << 
+            event.motion.y << std::endl;
           break;
         default:
           break;
@@ -796,119 +1045,71 @@ void draw_mapmode() {
 
     screen.setFlatProjection();
     glBindTexture(GL_TEXTURE_2D, map_tex.inPage);
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
-    glScalef(_scale, _scale, 1);
-    glTranslatef(dx, dy, 0);
+    //glMatrixMode(GL_TEXTURE);
+    //if (_scale < 1)
+    //  glScalef(_scale, _scale, 1);
 
+
+    uint32_t h = screen.getHeight();
     glBegin(GL_QUADS);
-    glTexCoord2f(map_tex.coords[0].u, map_tex.coords[0].v);
+    glTexCoord2f(0, 0);
     glVertex2i(0, 0);
-    glTexCoord2f(map_tex.coords[1].u, map_tex.coords[0].v);
-    glVertex2i(screen.getWidth(), 0);
+    glTexCoord2f(map_tex.coords[1].u, 0);
+    glVertex2i(h, 0);
     glTexCoord2f(map_tex.coords[1].u, map_tex.coords[1].v);
-    glVertex2i(screen.getWidth(), screen.getHeight());
-    glTexCoord2f(map_tex.coords[0].u, map_tex.coords[1].v);
-    glVertex2i(0, screen.getHeight());
+    glVertex2i(h, h);
+    glTexCoord2f(0, map_tex.coords[1].v);
+    glVertex2i(0, h);
     glEnd();
 
+    const OpenGTA::Map::LocationMap & lmap = OpenGTA::MapHolder::Instance().get().getLocationMap();
+    OpenGTA::Map::LocationMap::const_iterator i = lmap.begin();
+    glDisable(GL_TEXTURE_2D);
+    while (i != lmap.end()) {
+      if (i->first == 2) {
+        i++;
+        continue;
+      }
+      uint8_t l_type = i->first;
+      float l_x, l_y;
+      l_x = i->second->x / 255.0f * h;// *  map_tex.coords[1].u;
+      l_y = i->second->y / 255.0f * h;// * map_tex.coords[1].u;
+      //INFO << int(l_type) << ": " << l_x << " " << l_y << std::endl;
+      glBegin(GL_LINE_STRIP);
+      glVertex2f(l_x - 5, l_y - 5);
+      glVertex2f(l_x + 5, l_y - 5);
+      glVertex2f(l_x + 5, l_y + 5);
+      glVertex2f(l_x - 5, l_y + 5);
+
+      glEnd();
+      ++i;
+    }
+    
+    glEnable(GL_TEXTURE_2D);
     SDL_GL_SwapBuffers();
     SDL_Delay(20);
 
   }
   screen.setSystemMouseCursor(false);
+  glEnable(GL_DEPTH_TEST);
   glMatrixMode(GL_TEXTURE);
   glLoadIdentity();
   // the texture class doesn't cleanup!
   glDeleteTextures(1, &map_tex.inPage); 
 }
 
-#if 0
-void parse_args(int argc, char* argv[]) {
-  int index;
-  int c;
-
-  opterr = 0;
-
-#ifdef WITH_LUA
-#define VIEWER_FLAGS "s:w:h:c:m:g:l:f"
-#else
-#define VIEWER_FLAGS "w:h:c:m:g:l:f"
-#endif
-  while ((c = getopt (argc, argv, VIEWER_FLAGS)) != -1)
-    switch (c)
-    {
-#ifdef WITH_LUA
-      case 's':
-        script_file = optarg;
-        break;
-#endif
-      case 'c':
-        highcolor_data = atoi(optarg); 
-        break;
-      case 'm':
-        specific_map = std::string(optarg);
-        break;
-      case 'g':
-        specific_style = std::string(optarg);
-        break;
-      case 'w':
-        arg_screen_w = atoi(optarg);
-        break;
-      case 'h':
-        arg_screen_h = atoi(optarg);
-        break;
-      case 'l':
-        Util::Log::setOutputLevel(atoi(optarg));
-        break;
-      case 'f':
-        full_screen = true;
-        break;
-      case '?':
-        if (isprint (optopt))
-          ERROR << "Unknown option `-" << char(optopt) << "'" << std::endl;
-        else
-          ERROR << "Unknown option character `" << optopt << "'" << std::endl;
-      default:
-        abort ();
-    }
-
-  for (index = optind; index < argc; index++)
-    city_num = atoi(argv[index]);
-
-  if (city_num > 2) {
-    ERROR << "Invalid city number: " << city_num << std::endl;
-    exit(1);
-  }
-}
-
-void run_init(const char* prgname) {
-  PHYSFS_init("mapview");
-  //PHYSFS_addToSearchPath("gtadata.zip", 1);
-  Util::FileHelper & fh = GET_FILE_HELPER;
-  if (fh.existsInSystemFS(fh.getBaseDataPath()))
-    PHYSFS_addToSearchPath(GET_FILE_HELPER.getBaseDataPath().c_str(), 1);
-  else {
-    WARN << "Could not load data-source: " << fh.getBaseDataPath() <<" -- fallback to current directory"<< std::endl;
-    PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
-  }
-  if (fh.existsInSystemFS(fh.getModDataPath()))
-    PHYSFS_addToSearchPath(GET_FILE_HELPER.getModDataPath().c_str(), 0);
-  
-  OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
-  screen.setFullScreenFlag(full_screen);
-  screen.activate(arg_screen_w, arg_screen_h);
-  //SDL_EnableKeyRepeat( 100, SDL_DEFAULT_REPEAT_INTERVAL );
-}
-#endif
-
 void run_main() {
   SDL_Event event;
-  OpenGTA::MainMsgHolder::Instance().load("ENGLISH.FXT");
+  const char * lang = getenv("OGTA_LANG");
+  if (!lang)
+    lang = getenv("LANG");
+  if (!lang)
+    lang = "en";
+  OpenGTA::MainMsgHolder::Instance().load(Util::FileHelper::lang2MsgFilename(lang));
 
-  m_font = new OpenGL::DrawableFont();
-  m_font->loadFont("F_MTEXT.FON");
-  m_font->setScale(1);
+  //m_font = new OpenGL::DrawableFont();
+  //m_font->loadFont("F_MTEXT.FON");
+  //m_font->setScale(1);
 
   glEnable(GL_TEXTURE_2D);
   glPolygonMode(GL_FRONT, GL_FILL);
@@ -917,7 +1118,7 @@ void run_main() {
   //glEnable(GL_BLEND);
   //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
   glEnable(GL_ALPHA_TEST);
-  glAlphaFunc(GL_GREATER, 0);
+  glAlphaFunc(GL_GREATER, 2/255.0f);//0);
 
   city = new OpenGTA::CityView();
   if (specific_map.size() > 0 && specific_style.size() > 0) {
@@ -929,13 +1130,14 @@ void run_main() {
     else
       city->loadMap(cities[city_num], styles_8[city_num]);
   }
+  if (city_blocks_area > -1)
+    city->setVisibleRange(city_blocks_area);
   city->setPosition(mapPos[0], mapPos[1], mapPos[2]);
 
   OpenGL::Camera & cam = OpenGL::CameraHolder::Instance(); 
   //cam.setVectors( Vector3D(4, 10, 4), Vector3D(4, 0.0f, 4.0f), Vector3D(0, 0, -1) );
   cam.setVectors( Vector3D(12, 20, 12), Vector3D(13.0f, 19.0f, 13.0f), Vector3D(0, 1, 0) );
 
-  
 #ifdef TIMER_OPENSTEER_CLOCK
   Timer & timer = TimerHolder::Instance();
   timer.update();
@@ -948,13 +1150,14 @@ void run_main() {
 #ifdef WITH_LUA
   OpenGTA::Script::LuaVM & vm = OpenGTA::Script::LuaVMHolder::Instance();
   vm.setCityView(*city);
+  vm.setMap(OpenGTA::MapHolder::Instance().get());
   if (script_file)
     vm.runFile(script_file);
-  //vm.runString("function game_tick() print('tick...') end");
   bool vm_tick_ok = true;
   script_last_tick = last_tick;
 #endif
-
+  
+  GUI::Manager & guiManager = GUI::ManagerHolder::Instance();
 
   while(!global_Done && !global_EC) {
     while (SDL_PollEvent(&event)) {
@@ -980,6 +1183,9 @@ void run_main() {
         case SDL_MOUSEMOTION:
           //std::cout << "Mouse move: x " << float(event.motion.x)/screen->w << " y " << float(event.motion.y)/screen->h << std::endl;
           break;
+        case SDL_MOUSEBUTTONDOWN:
+          guiManager.receive(event.button);
+          break;
         default:
           break;
       }
@@ -992,6 +1198,8 @@ void run_main() {
 #endif
     OpenGTA::SpriteManagerHolder::Instance().update(now_ticks);
     city->blockAnims->update(now_ticks);
+    GUI::ManagerHolder::Instance().update(now_ticks);
+    GUI::update_ingame_gui_values();
     if (!paused) {
       drawScene(now_ticks - last_tick);
     last_tick = now_ticks;
@@ -1018,9 +1226,19 @@ void run_main() {
       fps = num_frames_drawn / 2;
       num_frames_drawn = 0;
       fps_last_tick = now_ticks;
+      std::ostringstream os;
+      os << fps << " fps";
+      fps_label->text = os.str();
+#ifdef WITH_LUA
+      vm.setGlobalInt("current_fps", fps);
+#endif
     }
 //#endif
 //    SDL_Delay(10);
   }
+
+#ifdef WITH_LUA
+  vm.runFile("scripts/dump_config.lua");
+#endif
 
 }

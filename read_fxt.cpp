@@ -77,6 +77,9 @@ namespace OpenGTA {
           //std::cout << tmp << " : " << buff << std::endl;
           /*else
             std::cout << "Skipping: " << tmp << ": " << buff << std::endl;*/
+#ifdef FXT_TEST
+          std::cout << tmp << " : " << buff << std::endl;
+#endif
         }
         else {
           buff[i] = v;
@@ -122,11 +125,19 @@ namespace OpenGTA {
 }
 
 #if FXT_TEST
+#include "file_helper.h"
 
 int main(int argc, char* argv[]) {
   PHYSFS_init(argv[0]);
   PHYSFS_addToSearchPath("gtadata.zip", 1);
-  OpenGTA::MessageDB* strings = new OpenGTA::MessageDB();
+  const char* lang = getenv("OGTA_LANG");
+  if (!lang)
+    lang = getenv("LANG");
+  if (!lang)
+    lang = "en";
+  OpenGTA::MessageDB* strings = new OpenGTA::MessageDB(
+    Util::FileHelper::lang2MsgFilename(lang)
+  );
   std::cout << strings->getText(1001) << std::endl;
   
   delete strings;

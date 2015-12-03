@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <unistd.h>
 #include "m_exceptions.h"
 #include "log.h"
 
@@ -11,6 +12,7 @@ extern void run_main();
 
 int global_EC = 0;
 int global_Done = 0;
+int global_Restart = 0;
 
 #ifndef DONT_CATCH 
 bool catch_exceptions = true;
@@ -54,5 +56,10 @@ int main(int argc, char* argv[]) {
     }
 
   }
+  if (global_Restart) {
+    on_exit();
+    execvp(argv[0], argv);
+  }
+
   std::exit(0);
 }

@@ -28,7 +28,7 @@ namespace Audio
 {
   Sint16 *resample_new (Uint8 * sourcedata, size_t sourcelen,
       size_t & destlen, int current_rate, int wanted_rate);
-  Sint16 *resample_new_mono (Uint8 * sourcedata, size_t sourcelen,
+  Sint16 *resample16 (Uint8 * sourcedata, size_t sourcelen,
       size_t & destlen, int current_rate,
       int wanted_rate);
 }

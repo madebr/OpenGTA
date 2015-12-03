@@ -278,6 +278,15 @@ namespace OpenGTA {
     ERROR << "not implemented"<< std::endl;
     return _type;
   }
+  
+  uint8_t GraphicsBase::getFormat() {
+    if (_topHeaderSize == 52)
+      return 0;
+    else if (_topHeaderSize == 64)
+      return 1;
+    throw E_INVALIDFORMAT("graphics-base header size");
+    return 255;
+  }    
 
   Graphics8Bit::Graphics8Bit(const std::string& style) : GraphicsBase() {
     fd = PHYSFS_openRead(style.c_str());
@@ -343,8 +352,6 @@ namespace OpenGTA {
     spriteNumbers.GTA_SPRITE_FERRY << " ferries"<< std::endl <<
     "#object-info: " << objectInfos.size() << " #car-info: " << carInfos.size() << std::endl;
   }
-
-    
 
   void Graphics8Bit::loadHeader() {
     PHYSFS_uint32 vc;
@@ -600,8 +607,8 @@ namespace OpenGTA {
       }
 
       for (int i=0; i < car->numDoors; i++) {
-        PHYSFS_readSLE16(fd, &car->door[i].rpx);
         PHYSFS_readSLE16(fd, &car->door[i].rpy);
+        PHYSFS_readSLE16(fd, &car->door[i].rpx);
         PHYSFS_readSLE16(fd, &car->door[i].object);
         PHYSFS_readSLE16(fd, &car->door[i].delta);
         bytes_read += 4 * 2;
@@ -777,14 +784,26 @@ namespace OpenGTA {
     const unsigned int b_offset = 256 * info.yoffset + info.xoffset;
     if (delta_is_a_set) {
       Util::Set delta_set(32, (unsigned char*)&delta);
-      for (int i = 0; i < 32; ++i) {
+      for (int i = 0; i < 20; ++i) {
         if (delta_set.get_item(i)) {
           assert(i < info.deltaCount);
           const DeltaInfo & di = info.delta[i];
           applyDelta(info, buffer, b_offset, di);
         }
       }
-      assert(0);
+      for (int i=20; i < 24; i++) {
+        if (delta_set.get_item(i)) {
+          const DeltaInfo & di = info.delta[i - 20 + 6];
+          applyDelta(info, buffer, b_offset, di, true);
+        }
+      }
+      for (int i=24; i < 28; i++) {
+        if (delta_set.get_item(i)) {
+          const DeltaInfo & di = info.delta[i - 24 + 11];
+          applyDelta(info, buffer, b_offset, di, true);
+        }
+      }
+      //assert(0);
     }
     else {
       // delta is only an index; one to big
@@ -1006,6 +1025,13 @@ namespace OpenGTA {
   
   int Graphics8Bit::RGBPalette::loadFromFile(PHYSFS_file* fd) {
     PHYSFS_read(fd, static_cast<void*>(&data), 1, 256*3);
+    /*
+    int max_sum = 0;
+    for (int i = 1; i < 256; i+=3) {
+      int sum = int(data[i]) + int(data[i+1]) + int(data[i+2]);
+      if (sum > max_sum)
+        max_sum = sum;
+    }*/
     return 0;
   }
   

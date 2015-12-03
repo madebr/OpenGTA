@@ -27,6 +27,7 @@ namespace OpenGTA {
     public:  
       GraphicsBase();
       virtual ~GraphicsBase();
+      uint8_t getFormat();
 
       typedef struct ObjectInfo {
         PHYSFS_uint32 width, height, depth;
@@ -395,15 +396,19 @@ namespace OpenGTA {
         PHYSFS_uint8 typeMapExt;
         PHYSFS_uint8 left, right, top, bottom, lid;
 
-        inline bool    upOk() { return (typeMap & 1); }
-        inline bool    downOk() { return (typeMap & 2); }
-        inline bool    leftOk() { return (typeMap & 4); }
-        inline bool    rightOk() { return (typeMap & 8); }
-        inline uint8_t blockType() { return ((typeMap & 16 ? 1 : 0) + (typeMap & 32 ? 2 : 0) + (typeMap & 64 ? 4 : 0)); }
-        inline bool    isFlat() { return (typeMap & 128); }
-        inline uint8_t slopeType() { return ((typeMap & 256 ? 1 : 0) + (typeMap & 512 ? 2 : 0) + 
-            (typeMap & 1024 ? 4 : 0) + (typeMap & 2048 ? 8 : 0) + (typeMap & 4096 ? 16 : 0)  + (typeMap & 8192 ? 32 : 0));}
-        inline uint8_t rotation() { return ((typeMap & 16384 ? 1 : 0) + (typeMap & 32768 ? 2 : 0)); }
+        inline bool    upOk()      { return (typeMap & 1); }
+        inline bool    downOk()    { return (typeMap & 2); }
+        inline bool    leftOk()    { return (typeMap & 4); }
+        inline bool    rightOk()   { return (typeMap & 8); }
+        inline uint8_t blockType() { return ((typeMap & 16 ? 1 : 0) + 
+          (typeMap & 32 ? 2 : 0) + (typeMap & 64 ? 4 : 0)); }
+        inline bool    isFlat()    { return (typeMap & 128); }
+        inline uint8_t slopeType() { return ((typeMap & 256 ? 1 : 0) + 
+          (typeMap & 512 ? 2 : 0) + (typeMap & 1024 ? 4 : 0) + 
+          (typeMap & 2048 ? 8 : 0) + (typeMap & 4096 ? 16 : 0)  + 
+          (typeMap & 8192 ? 32 : 0)); }
+        inline uint8_t rotation()  { return ((typeMap & 16384 ? 1 : 0) +
+          (typeMap & 32768 ? 2 : 0)); }
         /* m1win seems to indicate:
          * 000 - Nothing
          * 001 - traffic lights
@@ -414,12 +419,22 @@ namespace OpenGTA {
          * 110 - railway station
          * 111 - railway station train
          */
+        
+        inline void setUpOk(bool v)    { if (v) typeMap |= 1; else typeMap &= ~1; }
+        inline void setDownOk(bool v)  { if (v) typeMap |= 2; else typeMap &= ~2; }
+        inline void setLeftOk(bool v)  { if (v) typeMap |= 4; else typeMap &= ~4; }
+        inline void setRightOk(bool v) { if (v) typeMap |= 8; else typeMap &= ~8; }
+        inline void setIsFlat(bool v)  { if (v) typeMap |= 128; else typeMap &= ~128; }
+        void setBlockType(uint8_t v);
+        void setSlopeType(uint8_t v);
+        void setRotation(uint8_t v);
+        
         inline bool    trafficLights() { return (typeMapExt & 1); }
-        inline bool    railEndTurn() { return (typeMapExt & 4); }
+        inline bool    railEndTurn()   { return (typeMapExt & 4); }
         inline bool    railStartTurn() { return ((typeMapExt & 4) && (typeMapExt &1)); }
-        inline bool    railStation() { return ((typeMapExt & 4) && (typeMapExt & 2));}
+        inline bool    railStation()   { return ((typeMapExt & 4) && (typeMapExt & 2));}
         inline bool    railStationTrain() { return ((typeMapExt & 4) && (typeMapExt & 2) && (typeMapExt & 1)); }
-        inline uint8_t remapIndex() { return ((typeMapExt & 8 ? 1 : 0) + (typeMapExt & 16 ? 2 : 0));}
+        inline uint8_t remapIndex()    { return ((typeMapExt & 8 ? 1 : 0) + (typeMapExt & 16 ? 2 : 0));}
         inline bool    flipTopBottom() { return (typeMapExt & 32); }
         inline bool    flipLeftRight() { return (typeMapExt & 64); }
         inline bool    railway() { return (typeMapExt & 128); }
@@ -450,6 +465,8 @@ namespace OpenGTA {
       NavData         *nav;
       ObjectPosition  *objects;
       PHYSFS_uint16   numObjects;
+      const Location & getNearestLocationByType(uint8_t t, uint8_t x, uint8_t y);
+      const LocationMap & getLocationMap() { return locations; }
     protected:
 
       PHYSFS_uint32   base[GTA_MAP_MAXDIMENSION][GTA_MAP_MAXDIMENSION];

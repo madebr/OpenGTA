@@ -1,0 +1,26 @@
+style001.g24
+231 - 293
+
+style002.g24
+238 - 300
+
+style003.g24
+219 - 281
+-------------
+1.g24
+75 - 131
+HK 93
+PRIESTS 94
+idx: 660
+
+2.g24
+79 - 135
+HARE KRISHNAS 97
+DOCTOR/PRIESTS 98
+idx: 662
+
+3.g24
+60 - 116
+HK 78
+PRIESTS 79
+idx: 675

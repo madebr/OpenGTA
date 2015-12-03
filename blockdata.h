@@ -39,9 +39,9 @@ namespace OpenGTA {
           Loki::DefaultLifetime, Loki::SingleThreaded> BlockDataHolder;
 }
 
-#define SLOPE_RAW_DATA  BlockDataHolder::Instance().slope_raw_data
-#define SLOPE_TEX_DATA  BlockDataHolder::Instance().slope_tex_data
-#define LID_NORMAL_DATA BlockDataHolder::Instance().lid_normal_data
+#define SLOPE_RAW_DATA  OpenGTA::BlockDataHolder::Instance().slope_raw_data
+#define SLOPE_TEX_DATA  OpenGTA::BlockDataHolder::Instance().slope_tex_data
+#define LID_NORMAL_DATA OpenGTA::BlockDataHolder::Instance().lid_normal_data
 
 
 #endif

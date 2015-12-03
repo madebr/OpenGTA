@@ -34,17 +34,31 @@ namespace OpenGTA {
       void zero();
       typedef uint32_t Storage_T;
       void setRaw(Storage_T v); 
+      inline const Storage_T & getRaw() { return rawData; }
     protected:
       EntityController(const EntityController & other);
       Storage_T rawData;
       Util::Set    dataSet;
   };
 
+  class ControllerWithMemory : public EntityController {
+    public:
+      ControllerWithMemory() : EntityController(),
+        lastRawData(rawData) {}
+      ControllerWithMemory(const ControllerWithMemory & o) : 
+        EntityController(o), lastRawData(o.lastRawData) {}
+      bool statusChanged(); 
+    protected:
+      Storage_T lastRawData;
+  };
+
   class Pedestrian;
-  class PedController : public EntityController {
+//  class PedController : public EntityController {
+  class PedController : public ControllerWithMemory {
     public:
       PedController() {}
-      PedController(const PedController & other) : EntityController(other) {}
+//      PedController(const PedController & other) : EntityController(other) {}
+      PedController(const PedController & other) : ControllerWithMemory(other) {}
       void setTurnLeft(bool press = true);
       inline void releaseTurnLeft() { setTurnLeft(false); }
       void setTurnRight(bool press = true);

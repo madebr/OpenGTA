@@ -1,0 +1,27 @@
+Mods can (in theory) be downloaded and used directly
+as the ZIP file.
+
+The install procedure in readme.txt is slightly dated,
+'viewer' actually does the following:
+
+* look for environment variable "OGTA_DATA"; if it exists
+  this is used as the base-data source.
+  By default this is the file 'gtadata.zip' searched in
+  the current directory (at viewer runtime).
+  
+  If this source is not valid the directory where viewer
+  is installed is checked before giving up.
+
+* look for environment variable "OGTA_MOD"; if it exists
+  and is a valid data-source all files contained within
+  will overlay files in the base data source.
+  This is not used by default.
+
+To load a mod I use something like this:
+OGTA_MOD=mods/a_mod.zip ./viewer [...] -m map_filename -g style_filename
+
+In this case you have to use -m & -g and use the filenames
+contained in the zip (note upper/lower case).
+
+Similiar to gtadata.zip the files have to be in the 'root' of
+the ZIP file, not in sub-directory.

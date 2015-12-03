@@ -93,11 +93,14 @@ struct Matrix3
   };
   static const Matrix3 Identity;
 
-  Vector3D& baseRow(int i) { return *((Vector3D*)m[i]); }
+  //Vector3D& baseRow(int i) { return *((Vector3D*)m[i]); }
   float  operator() (int i, int j) const { return m[i][j]; }
   float& operator() (int i, int j)       { return m[i][j]; }
 };
 
+Matrix3D PitchMatrix3D(const float theta);
+Matrix3D YawMatrix3D(const float theta);
+Matrix3D RollMatrix3D(const float theta);
 struct Matrix3D
 {
   union {
@@ -127,9 +130,11 @@ struct Matrix3D
     return *this = *this * m;
   }
 
+/*
   friend Matrix3D PitchMatrix3D(const float theta);
   friend Matrix3D YawMatrix3D(const float theta);
   friend Matrix3D RollMatrix3D(const float theta);
+*/
   void rotate(const Vector3D& v);
 
   Matrix3D Inverse() const;

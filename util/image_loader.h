@@ -29,8 +29,8 @@
 
 namespace ImageUtil {
 
-  typedef std::pair<uint16_t, uint16_t> WidthHeightPair;
-
+  /** Helper to calculate 2^k texture sizes.
+   */
   struct NextPowerOfTwo {
     NextPowerOfTwo(uint32_t _w, uint32_t _h) {
       w = 1; h = 1;
@@ -41,22 +41,41 @@ namespace ImageUtil {
     uint32_t h;
   };
 
+  /** Run scale2x on 32bit input image.
+   *
+   * \note Uses Util::BufferCache for dst memory; lock 'src' before calling
+   * if it also is a BufferCache buffer.
+   */
+  uint8_t* scale2x_32bit(const uint8_t* src, const int src_width, const int src_height);
+
+  uint8_t* scale2x_24bit(const uint8_t* src, const int src_width, const int src_height);
+
+  typedef std::pair<uint16_t, uint16_t> WidthHeightPair;
   // hardcoded data for known images
   WidthHeightPair lookupImageSize(const std::string & name, const uint32_t size);
   // load a rgb image
   OpenGL::PagedTexture loadImageRAW(const std::string & name);
   // load a palette image and guess the palette filename
-  OpenGL::PagedTexture loadImageRAT(const std::string & name);
+  //OpenGL::PagedTexture loadImageRAT(const std::string & name);
   // load a palette image using palette file
   OpenGL::PagedTexture loadImageRATWithPalette(const std::string & name,
       const std::string & palette_file);
-  // plain simple garden-variety create-a-texture; needs to be ^2
-  GLuint createGLTexture(GLsizei w, GLsizei h, bool rgba, const void* pixels);
+#ifdef WITH_SDL_IMAGE
+  OpenGL::PagedTexture loadImageSDL(const std::string & name);
+#endif
 
-  // blitting a buffer into another; they should exist!
+  extern bool    mipmapTextures;
+  extern GLfloat supportedMaxAnisoDegree;
+
+  // plain simple garden-variety create-a-texture; needs to be 2^k
+  GLuint createGLTexture(GLsizei w, GLsizei h, bool rgba,
+    const void* pixels);
+
+  // blitting a buffer into another; no checks done! 
   void copyImage2Image(uint8_t *dest, const uint8_t *src, const uint16_t
     srcWidth, const uint16_t srcHeight, const uint16_t destWidth);
 
+  // texture-class instance from pixel data; does transform to 2^k if required
   OpenGL::PagedTexture createEmbeddedTexture(GLsizei w, GLsizei h, bool rgba, 
     const void *pixels);
 }

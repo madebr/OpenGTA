@@ -48,6 +48,9 @@ namespace OpenGL {
       inline float getNearPlane() { return nearPlane; }
       inline float getFarPlane() { return farPlane; }
       void setupGlVars( float fov, float near_p, float far_p);
+      void setupVsync( size_t enabled );
+
+      static GLboolean queryExtension(const char *extName);
 
     private:
       void initGL();
@@ -55,6 +58,7 @@ namespace OpenGL {
       Uint32 width, height;
       Uint32 bpp;
       Uint32 videoFlags;
+      size_t useVsync;
       float  fieldOfView;
       float  nearPlane;
       float  farPlane;
