@@ -31,7 +31,7 @@ namespace Util {
    */
   template <typename T>
     struct lt_pair {
-      bool operator() (const T & a, const T & b) {
+      bool operator() (const T & a, const T & b) const {
         if (a.first < b.first)
           return true;
         if (a.first > b.first)
