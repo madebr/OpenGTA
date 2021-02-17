@@ -9,6 +9,7 @@
  * This notice may not be removed or altered.                            *
  ************************************************************************/
 #include <iostream>
+#include <cstring>
 #include "log.h"
 #include "read_ini.h"
 
@@ -174,7 +175,9 @@ namespace OpenGTA {
           break;
       }
       //std::cout << uint32(line_start) - uint32(buffer) << std::endl; 
-      PHYSFS_uint32 begin_rest = PHYSFS_uint32(line_start) - PHYSFS_uint32(buffer);
+      auto start_casted = reinterpret_cast<uintptr_t>(line_start);
+      auto buffer_casted = reinterpret_cast<uintptr_t>(buffer);
+      PHYSFS_uint32 begin_rest = static_cast<PHYSFS_uint32>(start_casted - buffer_casted);
       offset = buf_len - begin_rest;
       memmove(buffer, &buffer[begin_rest], buf_len - begin_rest);
       read_bytes = buf_len - offset;

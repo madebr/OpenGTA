@@ -39,8 +39,7 @@ namespace OpenGTA {
     if (i == loadedFonts.end()) {
       OpenGL::DrawableFont* fnt = createFont(file, scale);
       assert(fnt);
-      loadedFonts.insert(std::make_pair<FontIdentifier, OpenGL::DrawableFont*>(
-        FontIdentifier(file, scale), fnt));
+      loadedFonts.insert(std::make_pair(FontIdentifier(file, scale), fnt));
       return *fnt;
     }
     return *i->second;

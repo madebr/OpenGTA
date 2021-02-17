@@ -8,6 +8,7 @@
 *                                                                       *
 * This notice may not be removed or altered.                            *
 ************************************************************************/
+#include <algorithm>
 #include <stdio.h>
 #include <iostream>
 #include "opengta.h"
@@ -29,7 +30,7 @@ namespace OpenGTA {
     PHYSFS_file* f = PHYSFS_openRead(file.c_str());
     if (f == NULL) {
       std::string f2(file);
-      transform(f2.begin(), f2.end(), f2.begin(), tolower);
+      std::transform(f2.begin(), f2.end(), f2.begin(), tolower);
       f = PHYSFS_openRead(f2.c_str());
     }
     if (f == NULL) {

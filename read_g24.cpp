@@ -249,10 +249,10 @@ namespace OpenGTA {
     while (i != end) {
       SpriteInfo *info = *i;
       for (uint8_t k = 0; k < info->deltaCount; ++k) {
-        PHYSFS_uint32 offset = reinterpret_cast<PHYSFS_uint32>(info->delta[k].ptr);
-        PHYSFS_uint32 page = offset / 65536;
-        PHYSFS_uint32 y = (offset % 65536) / 256;
-        PHYSFS_uint32 x = (offset % 65536) % 256;
+        const auto offset = reinterpret_cast<uintptr_t>(info->delta[k].ptr);
+        const auto page = offset / 65536;
+        const auto y = (offset % 65536) / 256;
+        const auto x = (offset % 65536) % 256;
         info->delta[k].ptr = rawSprites + page * _pagewise + 256 * y + x;
       }
       i++;

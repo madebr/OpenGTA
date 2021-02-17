@@ -46,7 +46,7 @@ namespace GUI {
     glDisable(GL_BLEND);
   }
   void Object::draw_border() {
-    glColor4ub(borderColor.r, borderColor.g, borderColor.b, 
+    glColor4ub(borderColor.r, borderColor.g, borderColor.b,
       borderColor.unused);
     glBegin(GL_LINE_LOOP);
     glVertex2i(rect.x, rect.y);
@@ -138,7 +138,7 @@ namespace GUI {
        glVertex2i(rect.x, rect.y);
        glEnd();
        */
-    glDisable(GL_TEXTURE_2D); 
+    glDisable(GL_TEXTURE_2D);
     if (drawBorder)
       draw_border();
   }
@@ -189,7 +189,7 @@ namespace GUI {
 
   void Manager::draw() {
     GuiObjectListMap::iterator layer_it = guiLayers.begin();
-    
+
     while (layer_it != guiLayers.end()) {
       GuiObjectList & inThisLayer = layer_it->second;
       for (GuiObjectList::iterator obj_it = inThisLayer.begin();
@@ -254,11 +254,11 @@ namespace GUI {
   }
 
   void Manager::cacheImageRAW(const std::string & file, size_t k) {
-    texCache.insert(std::make_pair<size_t, OpenGL::PagedTexture>(k, ImageUtil::loadImageRAW(file)));
+    texCache.insert(std::make_pair(k, ImageUtil::loadImageRAW(file)));
   }
 
   void Manager::cacheImageRAT(const std::string & file, const std::string & palette, size_t k) {
-    texCache.insert(std::make_pair<size_t, OpenGL::PagedTexture>(k, 
+    texCache.insert(std::make_pair(k,
           ImageUtil::loadImageRATWithPalette(file, palette)));
   }
 
@@ -266,7 +266,7 @@ namespace GUI {
     OpenGTA::GraphicsBase & graphics = OpenGTA::StyleHolder::Instance().get();
     PHYSFS_uint16 t = graphics.spriteNumbers.reIndex(id, OpenGTA::GraphicsBase::SpriteNumbers::ARROW);
     OpenGTA::GraphicsBase::SpriteInfo * info = graphics.getSprite(t);
-    texCache.insert(std::make_pair<size_t, OpenGL::PagedTexture>(
+    texCache.insert(std::make_pair(
           id, OpenGL::SpriteCacheHolder::Instance().createSprite(size_t(t), remap, 0, info)
           ));
     return ImageUtil::WidthHeightPair(info->w, info->h);
@@ -274,7 +274,7 @@ namespace GUI {
 
 #ifdef WITH_SDL_IMAGE
   void Manager::cacheImageSDL(const std::string & file, size_t k) {
-    texCache.insert(std::make_pair<size_t, OpenGL::PagedTexture>(k, 
+    texCache.insert(std::make_pair<size_t, OpenGL::PagedTexture>(k,
           ImageUtil::loadImageSDL(file)));
   }
 #endif
@@ -284,7 +284,7 @@ namespace GUI {
     if (l == guiLayers.end()) {
       GuiObjectList list;
       list.push_back(obj);
-      guiLayers.insert(std::make_pair<uint8_t, GuiObjectList>(onLevel, list));
+      guiLayers.insert(std::make_pair(onLevel, list));
       return;
     }
     GuiObjectList & list = l->second;
@@ -375,7 +375,7 @@ namespace GUI {
   }
   void Manager::createAnimation(const std::vector<uint16_t> & indices, uint16_t fps, size_t k) {
     Animation * anim = new Animation(indices, fps);
-    guiAnimations.insert(std::make_pair<size_t, Animation*>(k, anim));
+    guiAnimations.insert(std::make_pair(k, anim));
     anim->set(Util::Animation::PLAY_FORWARD, Util::Animation::LOOP);
   }
 
@@ -409,7 +409,7 @@ namespace GUI {
       return 0;
     if (wt < 5)
       return 1000 + wt;
-    
+
     return 0;
   }
 
@@ -437,7 +437,7 @@ namespace GUI {
 
   void ScrollBar::receive(SDL_MouseButtonEvent & mb_event) {
     value = (mb_event.x - rect.x) / float(rect.w - 4);
-    INFO << value << std::endl; 
+    INFO << value << std::endl;
     if (changeCB)
       changeCB(value * 2);
     else
@@ -527,7 +527,7 @@ namespace GUI {
       cashLabel->align = 1;
       gm.add(cashLabel, 50);
     }
-    
+
   }
 
   void update_ingame_gui_values() {
@@ -556,4 +556,3 @@ namespace GUI {
   }
 
 }
-

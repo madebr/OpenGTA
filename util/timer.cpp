@@ -134,16 +134,16 @@ void Timer::checkSimEvents() {
 
 void Timer::registerCallback(bool simTime, CallbackType & c, const uint32_t & b, const uint32_t & e) {
   if (simTime)
-    simTimeEvents.insert(std::make_pair<uint32_t, TimeEvent>(b, TimeEvent(b, e, c)));
+    simTimeEvents.insert(std::make_pair(b, TimeEvent(b, e, c)));
   else
-    realTimeEvents.insert(std::make_pair<uint32_t, TimeEvent>(b, TimeEvent(b, e, c)));
+    realTimeEvents.insert(std::make_pair(b, TimeEvent(b, e, c)));
 }
 
 void Timer::registerCallback(bool simTime, CallbackType & c, const uint32_t & b) {
   if (simTime)
-    simTimeEvents.insert(std::make_pair<uint32_t, TimeEvent>(b, TimeEvent(b, c)));
+    simTimeEvents.insert(std::make_pair(b, TimeEvent(b, c)));
   else
-    realTimeEvents.insert(std::make_pair<uint32_t, TimeEvent>(b, TimeEvent(b, c)));
+    realTimeEvents.insert(std::make_pair(b, TimeEvent(b, c)));
 }
 
 void Timer::clearAllEvents() {
@@ -190,7 +190,7 @@ int main() {
   while (t->getRealTime() < target + 200) {
     t->update();
     std::cout << "now: " << t->getRealTime() << std::endl;
-    
+
     SDL_Delay(10);
   }
 */

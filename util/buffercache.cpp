@@ -24,6 +24,7 @@
 #include <string>
 #include <sstream>
 #include <cassert>
+#include <cstring>
 #include "buffercache.h"
 #include "log.h"
 #include "m_exceptions.h"
@@ -64,7 +65,7 @@ namespace Util {
     else {
       result = i->second;
     }
-    std::memset(result, 0, len);
+    memset(result, 0, len);
     return result;
   }
 

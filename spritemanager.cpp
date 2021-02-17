@@ -628,7 +628,7 @@ SpriteObject::Animation & SpriteManager::getAnimationById(const Uint32 & id) {
 
 void SpriteManager::registerAnimation(const Uint32 & id, 
     const SpriteObject::Animation & anim) {
-  animations.insert(std::make_pair<Uint32, SpriteObject::Animation>(id, anim));
+  animations.insert(std::make_pair(id, anim));
 }
 
   void SpriteManager::setDrawBBox(bool v) {

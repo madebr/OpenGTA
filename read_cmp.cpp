@@ -8,6 +8,7 @@
 *                                                                       *
 * This notice may not be removed or altered.                            *
 ************************************************************************/
+#include <algorithm>
 #include <iostream>
 #include <cassert>
 #include <sstream>
@@ -91,7 +92,7 @@ namespace OpenGTA {
     fd = PHYSFS_openRead(filename.c_str());
     if (fd == NULL) {
       std::string f2(filename);
-      transform(f2.begin(), f2.end(), f2.begin(), tolower);
+      std::transform(f2.begin(), f2.end(), f2.begin(), tolower);
       fd = PHYSFS_openRead(f2.c_str());
     }
     if (!fd) {

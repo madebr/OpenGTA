@@ -29,6 +29,14 @@
 extern "C" {
 #endif
 
+#if (defined _MSC_VER)
+#define __EXPORT__ __declspec(dllexport)
+#elif (__GNUC__ >= 3)
+#define __EXPORT__ __attribute__((visibility("default")))
+#else
+#define __EXPORT__
+#endif
+
 /**
  * Open a platform-independent filename for reading, and make it accessible
  *  via an SDL_RWops structure. The file will be closed in PhysicsFS when the
@@ -84,4 +92,3 @@ __EXPORT__ SDL_RWops *PHYSFSRWOPS_makeRWops(PHYSFS_file *handle);
 #endif /* include-once blocker */
 
 /* end of physfsrwops.h ... */
-

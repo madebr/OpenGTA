@@ -41,7 +41,7 @@ using OpenGL::PagedTexture;
     uint16_t height = 0;
     uint32_t bpp = 0;
 
-    // m4 tools/raw_images.m4 
+    // m4 tools/raw_images.m4
     if ((iname.find("CUT") == 0) && (iname.find(".RA") == 4)) {
       width = 640; height = 480;
     }
@@ -76,7 +76,7 @@ using OpenGL::PagedTexture;
 
     if (!(bpp && bpp * width * height == size))
       ERROR << "could not identify image: " << name << " size: " << size << std::endl;
-    return std::make_pair<uint16_t, uint16_t>(width, height);
+    return std::make_pair(width, height);
   }
 
 
@@ -103,13 +103,13 @@ using OpenGL::PagedTexture;
     PHYSFS_read(fd, buffer, 1, nbytes);
     PHYSFS_close(fd);
 
-    return createEmbeddedTexture(whp.first, whp.second, false, buffer); 
+    return createEmbeddedTexture(whp.first, whp.second, false, buffer);
   }
 
-  
+
   OpenGL::PagedTexture loadImageRATWithPalette(const std::string & name,
       const std::string & palette_file) {
-    
+
     Util::FileHelper & fh = GET_FILE_HELPER;
 
     PHYSFS_file * fd = fh.openReadVFS(name);
@@ -153,7 +153,7 @@ using OpenGL::PagedTexture;
     SDL_FreeSurface(surface);
 
     GLuint texture = createGLTexture(npot.w, npot.h, (bpp == 4) ? true : false, buffer);
-    return OpenGL::PagedTexture(texture, 0, 0, GLfloat(surface->w)/npot.w, 
+    return OpenGL::PagedTexture(texture, 0, 0, GLfloat(surface->w)/npot.w,
       GLfloat(surface->h)/npot.h);
   }
 #endif
@@ -187,7 +187,7 @@ using OpenGL::PagedTexture;
     GL_CHECKERROR;
     return tex;
   }
-  
+
   void copyImage2Image(uint8_t *dest, const uint8_t *src, const uint16_t
     srcWidth, const uint16_t srcHeight, const uint16_t destWidth) {
     uint8_t *d = dest;
@@ -199,9 +199,9 @@ using OpenGL::PagedTexture;
     }
   }
 
-  OpenGL::PagedTexture createEmbeddedTexture(GLsizei w, GLsizei h, 
+  OpenGL::PagedTexture createEmbeddedTexture(GLsizei w, GLsizei h,
       bool rgba, const void* pixels) {
-    
+
     NextPowerOfTwo npot(w, h);
     uint8_t* buff = (uint8_t*)pixels;
 
@@ -218,7 +218,7 @@ using OpenGL::PagedTexture;
 
 #define MAX(a,b)    (((a) > (b)) ? (a) : (b))
 #define MIN(a,b)    (((a) < (b)) ? (a) : (b))
-#define READINT24(x)      ((x)[0]<<16 | (x)[1]<<8 | (x)[2]) 
+#define READINT24(x)      ((x)[0]<<16 | (x)[1]<<8 | (x)[2])
 #define WRITEINT24(x, i)  {(x)[0]=i>>16; (x)[1]=(i>>8)&0xff; x[2]=i&0xff; }
 
   uint8_t* scale2x_24bit(const uint8_t* src, const int src_width, const int src_height) {
@@ -256,7 +256,7 @@ using OpenGL::PagedTexture;
     const int srcpitch = src_width * 4;
     const int dstpitch = src_width * 8;
 
-    uint8_t* dstpix = Util::BufferCacheHolder::Instance().requestBuffer(src_width * 
+    uint8_t* dstpix = Util::BufferCacheHolder::Instance().requestBuffer(src_width *
         src_height * 4 * 4);
     Uint32 E0, E1, E2, E3, B, D, E, F, H;
     for(int looph = 0; looph < src_height; ++looph)

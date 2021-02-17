@@ -8,6 +8,7 @@
 *                                                                       *
 * This notice may not be removed or altered.                            *
 ************************************************************************/
+#include <algorithm>
 #include <iostream>
 #include <cassert>
 #include "cistring.h"
@@ -20,7 +21,7 @@ namespace OpenGTA {
     PHYSFS_file *fd = PHYSFS_openRead(file.c_str());
     if (fd == NULL) {
       std::string f2(file);
-      transform(f2.begin(), f2.end(), f2.begin(), tolower);
+      std::transform(f2.begin(), f2.end(), f2.begin(), tolower);
       fd = PHYSFS_openRead(f2.c_str());
     }
     if (!fd)

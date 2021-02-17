@@ -46,7 +46,7 @@ namespace Util {
     double res = atan(rel_to.x / rel_to.z) * 180.0f / M_PI;
     return res;
   }
-  
+
   bool CellIterator::isValid() const {
     if (x < 0 || x > 255)
       return false;
@@ -75,20 +75,20 @@ namespace Util {
 
   std::pair<bool, CellIterator> CellIterator::findTypeInCol(uint8_t t) const {
     if (isBlockType(t))
-      return std::make_pair<bool, CellIterator>(true, *this);
+      return std::make_pair(true, *this);
     CellIterator below = down();
     while (below.isValid()) {
       if (below.isBlockType(t))
-        return std::make_pair<bool, CellIterator>(true, below);
+        return std::make_pair(true, below);
       below = below.down();
     }
     CellIterator above = up();
     while (above.isValid()) {
       if (above.isBlockType(t))
-        return std::make_pair<bool, CellIterator>(true, above);
+        return std::make_pair(true, above);
       above = above.up();
     }
-    return std::make_pair<bool, CellIterator>(false, *this);
+    return std::make_pair(false, *this);
   }
 
   std::pair<bool, CellIterator> CellIterator::findNeighbourWithType(
@@ -135,7 +135,7 @@ namespace Util {
 //      if (p.first) INFO << p.second.x << " " << p.second.y << " " << p.second.z << std::endl;
       if (p.first) return p;
     }
-    return std::make_pair<bool, CellIterator>(false, *this);
+    return std::make_pair(false, *this);
 
   }
 

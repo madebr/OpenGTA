@@ -145,12 +145,12 @@ namespace OpenGL {
 
   void SpriteCache::add(PHYSFS_uint16 sprNum, PHYSFS_sint16 remap, PagedTexture & t) {
     loadedSprites.insert(
-      std::make_pair<SpriteIdentifier, PagedTexture>(
+      std::make_pair(
         SpriteIdentifier(sprNum, remap, 0), t));
   }
 
   void SpriteCache::add(const SpriteIdentifier & si, PagedTexture & t) {
-    loadedSprites.insert(std::make_pair<SpriteIdentifier, PagedTexture>(si, t));
+    loadedSprites.insert(std::make_pair(si, t));
   }
 
   PagedTexture SpriteCache::create(PHYSFS_uint16 sprNum, 

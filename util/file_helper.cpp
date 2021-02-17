@@ -21,6 +21,7 @@
 * distribution.                                                         *
 ************************************************************************/
 #include <cstdlib>
+#include <unistd.h>
 #include <physfs.h>
 #include <sstream>
 #include "m_exceptions.h"
@@ -39,7 +40,7 @@
 //#ifdef LINUX
 //#define OGTA_DEFAULT_HOME_PATH PHYSFS_getUserDir()
 //#elif WIN32
-//#define OGTA_DEFAULT_HOME_PATH "config" 
+//#define OGTA_DEFAULT_HOME_PATH "config"
 //#endif
 #define OGTA_DEFAULT_HOME_PATH PHYSFS_getBaseDir()
 #endif
@@ -116,7 +117,7 @@ namespace Util {
     unsigned char* buffer = BufferCacheHolder::Instance().requestBuffer(size+1);
     size = PHYSFS_read(fd, buffer, 1, size);
     PHYSFS_close(fd);
-    return buffer; 
+    return buffer;
   }
 
   const std::string FileHelper::lang2MsgFilename(const char *l) {
