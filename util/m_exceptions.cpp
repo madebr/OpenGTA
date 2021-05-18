@@ -3,18 +3,17 @@
 
 namespace Util {
 
-  LocalException::LocalException(const char *f, const size_t l, const char* n) :
-    inFile(f), typeName(n), msg(""), inLine(l) {}
+  LocalException::LocalException(const char *f, const size_t l, const char *n)
+      : msg { std::string { n } + " (" + f + ":" + std::to_string(l) }
+  {}
 
-  LocalException::LocalException(const char *f, const size_t l, const char* n,
-      const std::string _msg) :
-    inFile(f), typeName(n), msg(_msg), inLine(l) {}
-
-  const char* LocalException::what() const throw() {
-    std::ostringstream o;
-    o << typeName << " (" << inFile << ":" << inLine << "): " << msg;
-    return o.str().c_str();
-  }
+  LocalException::LocalException(const char *f,
+                                 const size_t l,
+                                 const char *n,
+                                 const std::string _msg)
+      : msg { std::string { n } + " (" + f + ":" + std::to_string(l)
+              + "): " + msg }
+  {}
 
   FileNotFound::FileNotFound(const char* f, const size_t l, const std::string _msg) :
     LocalException(f, l, "FileNotFound", _msg) {}

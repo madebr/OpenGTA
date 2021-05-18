@@ -82,7 +82,7 @@ namespace OpenGTA {
         std::string  name;
         /** Returns the name prefixed with sub-area location.
          */
-        const char*  getFullName();
+        std::string  getFullName() const;
         private:
           bool isADummy;
       };

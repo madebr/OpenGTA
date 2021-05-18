@@ -8,14 +8,11 @@ namespace Util {
 
   struct LocalException : public std::exception {
     LocalException(const char *f, const size_t l, const char* n);
-    LocalException(const char *f, const size_t l, const char* n, 
-        const std::string _msg);
-    virtual ~LocalException() throw() {}
-    const char * what() const throw();
-    std::string inFile;
-    std::string typeName;
+    LocalException(const char *f, const size_t l, const char* n,
+        const std::string msg);
+    virtual ~LocalException() noexcept = default;
+    const char * what() const noexcept { return msg.c_str(); }
     std::string msg;
-    size_t      inLine;
   };
 
   /* Actually I wouldn't make the derived destructors virtual,
