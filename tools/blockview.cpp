@@ -79,8 +79,8 @@ void handleKeyPress( SDL_keysym *keysym ) {
 
 void drawScene() {
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  OpenGL::ScreenHolder::Instance().set3DProjection();
-  OpenGL::CameraHolder::Instance().update(1);
+  OpenGL::Screen::Instance().set3DProjection();
+  OpenGL::Camera::Instance().update(1);
 
   glRotatef(r, 0, 1, 0);
   glColor3f(0.5f, 1, 0.2f);
@@ -185,14 +185,14 @@ void run_init(const char* prg) {
   PHYSFS_addToSearchPath("gtadata.zip", 1);
   PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
 
-  OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
+  OpenGL::Screen & screen = OpenGL::Screen::Instance();
   screen.activate(arg_screen_w, arg_screen_h);
   SDL_EnableKeyRepeat( 100, SDL_DEFAULT_REPEAT_INTERVAL );
 
-  OpenGTA::MainMsgHolder::Instance().load("ENGLISH.FXT");
-  OpenGTA::MapHolder::Instance().load(map_file);
+  OpenGTA::MainMsgLookup::Instance().load("ENGLISH.FXT");
+  OpenGTA::ActiveMap::Instance().load(map_file);
 
-  OpenGL::CameraHolder::Instance().setVectors(e, c, u);
+  OpenGL::Camera::Instance().setVectors(e, c, u);
 
 }
 

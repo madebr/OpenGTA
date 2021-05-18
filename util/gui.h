@@ -26,7 +26,6 @@
 #include <list>
 #include <map>
 #include <SDL.h>
-#include "Singleton.h"
 #include "animation.h"
 #include "gl_pagedtexture.h"
 #include "image_loader.h"
@@ -49,9 +48,19 @@ namespace GUI {
    * load/access images/animations.
    */
   class Manager {
-    public:
-      Manager() {}
+    private:
+      Manager() = default;
       ~Manager();
+    public:
+      Manager(const Manager& copy) = delete;
+      Manager& operator=(const Manager& copy) = delete;
+
+      static Manager& Instance()
+      {
+        static Manager instance;
+        return instance;
+      }
+
       void add(Object * obj, uint8_t onLevel);
       void remove(Object * obj);
       void removeById(size_t id);
@@ -84,9 +93,6 @@ namespace GUI {
       GuiTextureCache texCache;
 
   };
-
-  typedef Loki::SingletonHolder<Manager, Loki::CreateUsingNew, Loki::DefaultLifetime,
-          Loki::SingleThreaded> ManagerHolder;
 
   class Animation : public Util::Animation {
     public:
@@ -146,12 +152,12 @@ namespace GUI {
   struct Label : public Object {
     Label(const SDL_Rect & r, const std::string & s, 
         const std::string & fontFile, const size_t fontScale) : Object(r), text(s) {
-      OpenGL::DrawableFont & fnt = OpenGTA::FontCacheHolder::Instance().getFont(fontFile, fontScale);
+      OpenGL::DrawableFont & fnt = OpenGTA::FontCache::Instance().getFont(fontFile, fontScale);
       font = &fnt;
     }
     Label(const size_t Id, const SDL_Rect & r, const std::string & s, 
         const std::string & fontFile, const size_t fontScale) : Object(Id, r), text(s) {
-      OpenGL::DrawableFont & fnt = OpenGTA::FontCacheHolder::Instance().getFont(fontFile, fontScale);
+      OpenGL::DrawableFont & fnt = OpenGTA::FontCache::Instance().getFont(fontFile, fontScale);
       font = &fnt;
       align = 0;
     }
@@ -164,7 +170,7 @@ namespace GUI {
   struct Pager : public Object {
     Pager(const size_t Id, const SDL_Rect & r, const size_t texid,
       const std::string & fontFile, const size_t fontScale) : Object(Id, r) {
-      OpenGL::DrawableFont & fnt = OpenGTA::FontCacheHolder::Instance().getFont(fontFile, fontScale);
+      OpenGL::DrawableFont & fnt = OpenGTA::FontCache::Instance().getFont(fontFile, fontScale);
       font = &fnt;
       texId = texid;
       offset = r.w-5;
@@ -196,7 +202,7 @@ namespace GUI {
     void receive(SDL_MouseButtonEvent & mb_event);
     SDL_Color innerColor;
     float value;
-    typedef Loki::Functor<void, LOKI_TYPELIST_1(float)> SC_Functor;
+    using SC_Functor = std::function<void(float)>;
     SC_Functor changeCB;
   };
 

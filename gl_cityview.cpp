@@ -107,7 +107,7 @@ namespace OpenGTA {
     /*
     Pedestrian p(Vector3D(0.5f, 0.5f, 0.5f), Vector3D(4, 5.01f, 4), 0xffffffff);
     p.m_control = &LocalPlayer::Instance();
-    SpriteManagerHolder::Instance().addPed(p);
+    SpriteManager::Instance().addPed(p);
     */
   }
   void CityView::setNull() {
@@ -174,10 +174,10 @@ namespace OpenGTA {
   void CityView::loadMap(const std::string &map, const std::string &style_f) {
     cleanup();
     //loadedMap = new Map(map);
-    MapHolder::Instance().load(map);
-    loadedMap = &MapHolder::Instance().get();
-    StyleHolder::Instance().load(style_f);
-    style = &StyleHolder::Instance().get();
+    ActiveMap::Instance().load(map);
+    loadedMap = &ActiveMap::Instance().get();
+    ActiveStyle::Instance().load(style_f);
+    style = &ActiveStyle::Instance().get();
     style->setDeltaHandling(true);
     /*
     for (size_t i = 0; i < style->carInfos.size(); ++i) {
@@ -198,7 +198,7 @@ namespace OpenGTA {
 
     scene_display_list = glGenLists(1);
 
-    SpriteManagerHolder::Instance().clear();
+    SpriteManager::Instance().clear();
 
     // safeguard against double car entries (in nyc.cmp)
     Util::MapOfPair2Int d_car_map;
@@ -212,12 +212,12 @@ namespace OpenGTA {
       }      
       createLevelObject(&loadedMap->objects[oc]);
     }
-    //SpriteManagerHolder::Instance().trainSystem.loadStations(*loadedMap);
+    //SpriteManager::Instance().trainSystem.loadStations(*loadedMap);
     activeRect.x = activeRect.y = 0;
     activeRect.w = activeRect.h = 0;
   }
   void CityView::createLevelObject(OpenGTA::Map::ObjectPosition *obj) {
-    SpriteManager & s_man = SpriteManagerHolder::Instance();
+    SpriteManager & s_man = SpriteManager::Instance();
     uint32_t id = TypeIdBlackBox::requestId();
     if (obj->remap >= 128) {
       Car car(*obj, id);
@@ -294,7 +294,7 @@ namespace OpenGTA {
   }
 
   OpenGL::PagedTexture CityView::renderMap2Texture() {
-    OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
+    OpenGL::Screen & screen = OpenGL::Screen::Instance();
     uint32_t width = screen.getWidth();
     uint32_t height = screen.getHeight();
 
@@ -309,7 +309,7 @@ namespace OpenGTA {
     int persp_find_done = 0;
     int break_loop_safe = 500;
     while (persp_find_done != 3) {
-      OpenGL::ScreenHolder::Instance().set3DProjection();
+      OpenGL::Screen::Instance().set3DProjection();
       glRotatef(180, 0, 0, 1);
 
       gluLookAt(128+v_off.x, 230, 128+v_off.y, 128+v_off.x, 0, 128+v_off.y, 0.0f, 0.0f, 1.0f);
@@ -374,7 +374,7 @@ namespace OpenGTA {
     return OpenGL::PagedTexture(txtnumber, 0, 0, 1, 1);
 */
     uint32_t img_size = gl_h * gl_h * 3; 
-    uint8_t *img_buf = Util::BufferCacheHolder::Instance().requestBuffer(img_size);
+    uint8_t *img_buf = Util::BufferCache::Instance().requestBuffer(img_size);
 
     glReadBuffer(GL_BACK);
     //for (uint32_t i = 0; i < gl_h; i++) {
@@ -435,7 +435,7 @@ namespace OpenGTA {
 
     }
     else {
-      OpenGL::Camera & cam = OpenGL::CameraHolder::Instance();
+      OpenGL::Camera & cam = OpenGL::Camera::Instance();
       //gluLookAt(camPos[0], camPos[1], camPos[2], camPos[0]+5, 0, (camPos[2])+5, camVec[0], camVec[1], camVec[2]);
       cam.update(ticks);
       Vector3D & e = cam.getEye();
@@ -552,7 +552,7 @@ namespace OpenGTA {
         drawObject(&loadedMap->objects[oc]);
     }*/
     GL_CHECKERROR;
-    SpriteManagerHolder::Instance().drawInRect(activeRect);
+    SpriteManager::Instance().drawInRect(activeRect);
     
     lastCacheEmptyTicks += ticks;
     if (lastCacheEmptyTicks > 4000) {
@@ -578,8 +578,8 @@ namespace OpenGTA {
       glwidth <<= 1;
     while(glheight < info->h)
       glheight <<= 1;
-    unsigned char* dst = Util::BufferCacheHolder::Instance().requestBuffer(glwidth * glheight * 4);
-    Util::BufferCacheHolder::Instance().unlockBuffer(src);
+    unsigned char* dst = Util::BufferCache::Instance().requestBuffer(glwidth * glheight * 4);
+    Util::BufferCache::Instance().unlockBuffer(src);
     assert(dst != NULL);
     unsigned char * t = dst;
     unsigned char * r = src;
@@ -631,12 +631,12 @@ namespace OpenGTA {
     }
     
     OpenGL::PagedTexture t;
-    if (OpenGL::SpriteCacheHolder::Instance().has(spriteNumAbs))
-      t = OpenGL::SpriteCacheHolder::Instance().get(spriteNumAbs);
+    if (OpenGL::SpriteCache::Instance().has(spriteNumAbs))
+      t = OpenGL::SpriteCache::Instance().get(spriteNumAbs);
     else {
       //t = createSprite(spriteNum, info);
-      //OpenGL::SpriteCacheHolder::Instance().add(spriteNum, t);
-      t = OpenGL::SpriteCacheHolder::Instance().create(sprNum, st, -1);
+      //OpenGL::SpriteCache::Instance().add(spriteNum, t);
+      t = OpenGL::SpriteCache::Instance().create(sprNum, st, -1);
     }
 
     glPushMatrix();

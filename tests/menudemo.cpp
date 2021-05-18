@@ -25,19 +25,19 @@ Uint32 arg_screen_h = 600;
 namespace GUI {
   Object::Object(const SDL_Rect & r) :
     id(0), rect(), color(),
-    manager(ManagerHolder::Instance()) {
+    manager(Manager::Instance()) {
     copyRect(r);
     color.r = 255; color.g = 255; color.b = 255; color.unused = 255;
   }
   Object::Object(const size_t Id, const SDL_Rect & r) :
     id(Id), rect(), color(),
-    manager(ManagerHolder::Instance()) {
+    manager(Manager::Instance()) {
     copyRect(r);
     color.r = 255; color.g = 255; color.b = 255; color.unused = 255;
   }
   Object::Object(const size_t Id, const SDL_Rect & r, const SDL_Color & c) :
     id(Id), rect(), color(),
-    manager(ManagerHolder::Instance()) {
+    manager(Manager::Instance()) {
     copyRect(r);
     copyColor(c);
   }
@@ -251,7 +251,7 @@ namespace GUI {
     ImageUtil::NextPowerOfTwo npot(surface->w, surface->h);
     uint16_t bpp = surface->format->BytesPerPixel;
 
-    uint8_t * buffer = Util::BufferCacheHolder::Instance().requestBuffer(npot.w * npot.h * bpp);
+    uint8_t * buffer = Util::BufferCache::Instance().requestBuffer(npot.w * npot.h * bpp);
     SDL_LockSurface(surface);
     ImageUtil::copyImage2Image(buffer, (uint8_t*)surface->pixels, surface->pitch, surface->h,
         npot.w * bpp);
@@ -264,11 +264,11 @@ namespace GUI {
   }
 
   ImageUtil::WidthHeightPair Manager::cacheStyleArrowSprite(const size_t id, int remap) {
-    OpenGTA::GraphicsBase & graphics = OpenGTA::StyleHolder::Instance().get();
+    OpenGTA::GraphicsBase & graphics = OpenGTA::ActiveStyle::Instance().get();
     PHYSFS_uint16 t = graphics.spriteNumbers.reIndex(id, OpenGTA::GraphicsBase::SpriteNumbers::ARROW);
     OpenGTA::GraphicsBase::SpriteInfo * info = graphics.getSprite(t);
     texCache.insert(std::make_pair<size_t, OpenGL::PagedTexture>(
-      id, OpenGL::SpriteCacheHolder::Instance().createSprite(size_t(t), remap, 0, info)
+      id, OpenGL::SpriteCache::Instance().createSprite(size_t(t), remap, 0, info)
     ));
     return ImageUtil::WidthHeightPair(info->w, info->h);
   }
@@ -332,7 +332,7 @@ namespace GUI {
   }
 
   void Manager::receive(SDL_MouseButtonEvent & mb_event) {
-    Uint32 sh = OpenGL::ScreenHolder::Instance().getHeight();
+    Uint32 sh = OpenGL::Screen::Instance().getHeight();
     GuiObjectListMap::reverse_iterator l = guiLayers.rbegin();
     while (l != guiLayers.rend()) {
       std::cout << int(l->first) << std::endl;
@@ -415,13 +415,13 @@ void run_init() {
   PHYSFS_addToSearchPath("gtadata.zip", 1);
   if (getenv("OGTA_MOD"))
     PHYSFS_addToSearchPath(getenv("OGTA_MOD"), 0);
-  OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
+  OpenGL::Screen & screen = OpenGL::Screen::Instance();
   screen.activate(arg_screen_w, arg_screen_h);
   screen.setSystemMouseCursor(true);
   glEnable(GL_ALPHA_TEST);
   glAlphaFunc(GL_GREATER, 0);
 
-  OpenGTA::StyleHolder::Instance().load("STYLE001.G24");
+  OpenGTA::ActiveStyle::Instance().load("STYLE001.G24");
 
   SDL_EnableKeyRepeat( 100, SDL_DEFAULT_REPEAT_INTERVAL );
 
@@ -445,7 +445,7 @@ void run_init() {
   GUI::AnimatedTextureObject * b3 = new GUI::AnimatedTextureObject(2, r, 1);
   guiManager.add(b3, 2);
 
-  Timer & t = TimerHolder::Instance();
+  Timer & t = Timer::Instance();
 
 
   ImageUtil::WidthHeightPair whp = guiManager.cacheStyleArrowSprite(16, -1);
@@ -487,7 +487,7 @@ void handleKeyPress( SDL_keysym *keysym ) {
 
 void draw_menu() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
+  OpenGL::Screen & screen = OpenGL::Screen::Instance();
   screen.setFlatProjection();
   glDisable(GL_DEPTH_TEST);
 
@@ -501,7 +501,7 @@ void draw_menu() {
 
 void run_main() {
   SDL_Event event;
-  Timer & t = TimerHolder::Instance();
+  Timer & t = Timer::Instance();
   t.update();
   //Uint32 now_ticks = SDL_GetTicks();
   Uint32 now_ticks = t.getRealTime();
@@ -518,7 +518,7 @@ void run_main() {
             handleKeyUp(&event.key.keysym);
             break;*/
         case SDL_VIDEORESIZE:
-          OpenGL::ScreenHolder::Instance().resize(event.resize.w, event.resize.h);
+          OpenGL::Screen::Instance().resize(event.resize.w, event.resize.h);
           break;
         case SDL_QUIT:
           global_Done = 1;
@@ -536,7 +536,7 @@ void run_main() {
   }
   // otherwise only at exit, which... troubles loki::smallobject
   guiManager.clearCache();
-  TimerHolder::Instance().clearAllEvents();
+  Timer::Instance().clearAllEvents();
 }
 
 #endif

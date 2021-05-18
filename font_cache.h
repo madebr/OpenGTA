@@ -25,17 +25,25 @@
 #include <string>
 #include <map>
 #include "gl_font.h"
-#include "Singleton.h"
 
 namespace OpenGTA {
   
   class FontCache {
     public:
-      FontCache();
-      ~FontCache();
+      FontCache(const FontCache& copy) = delete;
+      FontCache& operator=(const FontCache& copy) = delete;
+
       OpenGL::DrawableFont & getFont(const std::string & file, const uint32_t scale);
 
+      static FontCache& Instance()
+      {
+        static FontCache instance;
+        return instance;
+      }
+
     private:
+      FontCache() {}
+      ~FontCache();
       struct FontIdentifier {
         FontIdentifier(const std::string & f, const uint32_t s) : filename(f), scale(s) {}
         const std::string filename;
@@ -58,9 +66,6 @@ namespace OpenGTA {
       FontMap::iterator findFont(const std::string & file, const uint32_t & scale);
       OpenGL::DrawableFont* createFont(const std::string & file, const uint32_t & scale);
   };
-
-  typedef Loki::SingletonHolder<FontCache, Loki::CreateUsingNew, 
-    Loki::DefaultLifetime, Loki::SingleThreaded> FontCacheHolder;
 }
 
 #endif

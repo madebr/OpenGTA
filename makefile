@@ -1,7 +1,7 @@
 include src_list.make
 
 INC_EX_LIBS = $(PHYSFS_INC) $(SDL_INC) $(LUA_INC)
-INC_INTERN = -I. -Iloki/include/loki -Iutil -Icoldet -Imath -Iopensteer/include
+INC_INTERN = -I. -Iutil -Icoldet -Imath -Iopensteer/include
 
 INC = $(INC_INTERN) $(INC_EX_LIBS)
 
@@ -11,7 +11,6 @@ BUILD_FOR = $(shell if [ -n "$(HOST)" ]; then echo $(HOST) ; else echo "LINUX"; 
 
 #SDL_GL_LIB = -lGL -lGLU
 
-LOKI_LIB = -Wl,-Rloki/lib -Lloki/lib -lloki
 #COLDET_LIB = -Wl,-Rcoldet -Lcoldet -lcoldet
 
 CXXFLAGS=$(FLAGS) $(DEFS) \
@@ -30,12 +29,6 @@ src_list.make: prepare_build.sh
 	$(CC) $(CCFLAGS) \
 	-c -o $@ $<
 
-loki:
-ifeq ($(BUILD_FOR), LINUX)
-	make -f loki.make
-else
-	make -f loki.make.w32_cross
-endif
 
 ctags:
 	ctags *.cpp util/*.cpp
@@ -71,12 +64,9 @@ rclean:
 
 libclean:
 	make -C coldet -f makefile.g++ clean
-	make -c loki clean
-	rm -f loki/lib/libloki.*
 	rm -f $(OSTEER_OBJ)
 	
 
-depend: loki src_list.make
+depend: src_list.make
 	$(RM) depend
 	$(CXX) $(CXXFLAGS) -E -MM $(GL_SRC) $(OGTA_SRC) $(UTIL_SRC) > depend
-

@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
   PHYSFS_addToSearchPath("gtadata.zip", 1);
 
   std::string map_filename(argv[1]);
-  OpenGTA::MainMsgHolder::Instance().load("ENGLISH.FXT");
+  OpenGTA::MainMsgLookup::Instance().load("ENGLISH.FXT");
   OpenGTA::Map map(map_filename);
 
 

@@ -56,34 +56,34 @@ cat <<EOF
 
 TARGETS = viewer${EXE_PFIX}
 LUA_TARGETS = luaviewer${EXE_PFIX}
-all: loki \${TARGETS}
+all: \${TARGETS}
 
 gfxextract${EXE_PFIX}: gfx_extract.cpp read_gry.o read_g24.o read_cmp.o navdata.o dataholder.o \
 \$(UTIL_OBJ)
 	\$(CXX) \$(CATCH_E) \$(GFX_DDUMP) \$(FLAGS) \$(DEFS) \$(LINK_LAZY) \\
   \$(INC) \\
     -o \$@ \$+ \\
-      \$(SDL_LIB) \$(SDL_GL_LIB) \$(SDL_IMG_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB)
+      \$(SDL_LIB) \$(SDL_GL_LIB) \$(SDL_IMG_LIB) \$(PHYSFS_LIB)
 
 viewer${EXE_PFIX}: main2.cpp viewer.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \$(OSTEER_OBJ)
 	\$(CXX) \$(CATCH_E) \$(FLAGS) \$(DEFS) \\
   \$(INC) \\
     -o \$@ \$+ \\
-      \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(COLDET_LIB)
+      \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(COLDET_LIB)
 
 luaviewer${EXE_PFIX}: main2.cpp viewer.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \$(OSTEER_OBJ) \
 \$(LUA_OBJ)
 	\$(CXX) \$(CATCH_E) \$(FLAGS) \$(DEFS) \\
   \$(INC) \\
     -o \$@ \$+ \\
-      \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(COLDET_LIB) \$(LUA_LIB)
+      \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(COLDET_LIB) \$(LUA_LIB)
 
 
 spriteplayer${EXE_PFIX}: sprite_anim_player.o \$(OGTA_OBJ) \$(GL_OBJ) \$(UTIL_OBJ) \$(OSTEER_OBJ) main2.cpp
 	\$(CXX) \$(CATCH_E) \$(FLAGS) \$(DEFS) \\
   \$(INC) \\
     -o \$@ \$+ \\
-      \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(COLDET_LIB)
+      \$(SDL_LIB) \$(SDL_GL_LIB) \$(PHYSFS_LIB) \$(COLDET_LIB)
 
 slopeview: main.o tools/display_slopes.o navdata.o read_cmp.o \
 \$(UTIL_OBJ) common_sdl_gl.o
@@ -105,24 +105,24 @@ objdump_map: tools/obj_dump.cpp read_gry.o \$(UTIL_OBJ) main2.o read_cmp.o navda
 
 car_dump: tools/car_dump.cpp dataholder.o read_gry.o read_cmp.o read_g24.o navdata.o \
 main2.o read_fxt.o util/set.o util/buffercache.o util/log.o util/m_exceptions.o
-	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB)
+	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB)
 
 plane_test: tests/test_plane.cpp math/line_intersect.o util/log.o \
 util/m_exceptions.o util/cell_iterator.o util/set.o util/buffercache.o \
 read_cmp.o datahelper.o navdata.o read_fxt.o read_gry.o read_g24.o \
 dataholder.o
-	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB)
+	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB)
 
 lua_map_test: tests/lua_map_test.o util/file_helper.o util/log.o \
 util/m_exceptions.o  util/buffercache.o  util/set.o navdata.o \
 dataholder.o read_cmp.o read_gry.o read_g24.o read_fxt.o datahelper.o \
 main2.o lua_addon/lua_map.o lua_addon/lua_vm.o lua_addon/lua_stackguard.o
-	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(LUA_LIB)
+	\$(CXX) \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(LUA_LIB)
 
 sound_test: read_sdt.o util/m_exceptions.o util/sound_resample2.o \
 util/sound_device.o util/sound_system.cpp util/sound_fx_cache.o \
 util/sound_music_player.o util/physfsrwops.c util/log.o
-	\$(CXX) -DSOUND_TEST \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(LOKI_LIB) \$(AUDIO_LIB)
+	\$(CXX) -DSOUND_TEST \$(CXXFLAGS) -o \$@ \$+ \$(SDL_LIB) \$(PHYSFS_LIB) \$(AUDIO_LIB)
 EOF
 }
 
@@ -364,9 +364,6 @@ function print_config_h() {
 #ifndef $OGTA_PLATFORM
 #define $OGTA_PLATFORM
 #endif
-
-// to avoid some errors on prg-exit
-#define LOKI_FUNCTOR_IS_NOT_A_SMALLOBJECT
 
 // platform specific switches
 #ifdef LINUX

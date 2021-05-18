@@ -92,12 +92,12 @@ void run_init(const char*) {
   PHYSFS_init("mapview");
   PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
   PHYSFS_addToSearchPath("gtadata.zip", 1);
-  OpenGL::ScreenHolder::Instance().activate(640, 480);
+  OpenGL::Screen::Instance().activate(640, 480);
   SDL_EnableKeyRepeat( 100, SDL_DEFAULT_REPEAT_INTERVAL );
 
-  OpenGTA::StyleHolder::Instance().load(style_file);
-  OpenGTA::StyleHolder::Instance().get().setDeltaHandling(true);
-  OpenGTA::MainMsgHolder::Instance().load("ENGLISH.FXT");
+  OpenGTA::ActiveStyle::Instance().load(style_file);
+  OpenGTA::ActiveStyle::Instance().get().setDeltaHandling(true);
+  OpenGTA::MainMsgLookup::Instance().load("ENGLISH.FXT");
 
   m_font.loadFont("F_MTEXT.FON");
   m_font.setScale(1);
@@ -172,16 +172,16 @@ void drawScene(Uint32 ticks) {
   GL_CHECKERROR;
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  OpenGL::ScreenHolder::Instance().set3DProjection();
-  OpenGL::CameraHolder::Instance().update(ticks);
+  OpenGL::Screen::Instance().set3DProjection();
+  OpenGL::Camera::Instance().update(ticks);
 
   if (playWithCar) {
     if (car) {
       car->update(ticks);
-      OpenGTA::SpriteManagerHolder::Instance().draw(*car);
+      OpenGTA::SpriteManager::Instance().draw(*car);
     }
 
-    OpenGL::ScreenHolder::Instance().setFlatProjection();
+    OpenGL::Screen::Instance().setFlatProjection();
 
     glPushMatrix();
     glTranslatef(10, 10, 0);
@@ -191,7 +191,7 @@ void drawScene(Uint32 ticks) {
 
     if (car) {
       sprite_info_str << vtype2name(car->carInfo.vtype)<< " model: " << int(car_model) << " name: " << 
-        OpenGTA::MainMsgHolder::Instance().get().getText(ostr.str());
+        OpenGTA::MainMsgLookup::Instance().get().getText(ostr.str());
     }
     else
       sprite_info_str << "not a model: " << int(car_model);
@@ -206,9 +206,9 @@ void drawScene(Uint32 ticks) {
       ped.anim.firstFrameOffset = now_frame;
       play_anim_time = ticks;
     }
-    OpenGTA::SpriteManagerHolder::Instance().draw(ped);
+    OpenGTA::SpriteManager::Instance().draw(ped);
 
-    OpenGL::ScreenHolder::Instance().setFlatProjection();
+    OpenGL::Screen::Instance().setFlatProjection();
 
     glPushMatrix();
     glTranslatef(10, 10, 0);
@@ -223,8 +223,8 @@ void drawScene(Uint32 ticks) {
 }
 
 void handleKeyPress( SDL_keysym *keysym ) {
-  OpenGL::Camera & cam = OpenGL::CameraHolder::Instance();
-  OpenGTA::GraphicsBase & style = OpenGTA::StyleHolder::Instance().get();
+  OpenGL::Camera & cam = OpenGL::Camera::Instance();
+  OpenGTA::GraphicsBase & style = OpenGTA::ActiveStyle::Instance().get();
   bool update_anim = false;
   switch ( keysym->sym ) {
     case SDLK_ESCAPE:
@@ -351,11 +351,11 @@ void handleKeyPress( SDL_keysym *keysym ) {
       break;
     case SDLK_F2:
       bbox_toggle = (bbox_toggle ? 0 : 1);
-      OpenGTA::SpriteManagerHolder::Instance().setDrawBBox(bbox_toggle);
+      OpenGTA::SpriteManager::Instance().setDrawBBox(bbox_toggle);
       break;
     case SDLK_F3:
       texsprite_toggle = (texsprite_toggle ? 0 : 1);
-      OpenGTA::SpriteManagerHolder::Instance().setDrawTexBorder(texsprite_toggle);
+      OpenGTA::SpriteManager::Instance().setDrawTexBorder(texsprite_toggle);
       break;
     case SDLK_F5:
       first_offset = frame_offset;
@@ -442,7 +442,7 @@ void run_main() {
   glEnable(GL_ALPHA_TEST);
   glAlphaFunc(GL_GREATER, 0);
 
-  OpenGL::Camera & cam = OpenGL::CameraHolder::Instance();
+  OpenGL::Camera & cam = OpenGL::Camera::Instance();
   cam.setVectors( Vector3D(4, 5, 4), Vector3D(4, 0.0f, 4.0f), Vector3D(0, 0, -1) );
   cam.setFollowMode(ped.pos);
   while(!global_Done && !global_EC) {
@@ -455,7 +455,7 @@ void run_main() {
           //          handleKeyUp(&event.key.keysym);
           break;
         case SDL_VIDEORESIZE:
-          OpenGL::ScreenHolder::Instance().resize(event.resize.w, event.resize.h);
+          OpenGL::Screen::Instance().resize(event.resize.w, event.resize.h);
           break;
         case SDL_QUIT:
           global_Done = 1;

@@ -20,6 +20,8 @@
 * 3. This notice may not be removed or altered from any source          *
 * distribution.                                                         *
 ************************************************************************/
+#include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <unistd.h>
 #include <physfs.h>
@@ -100,7 +102,7 @@ namespace Util {
       return fd;
     // try lower case
     std::string name2(file);
-    transform(name2.begin(), name2.end(), name2.begin(), tolower);
+    std::transform(name2.begin(), name2.end(), name2.begin(), tolower);
     fd = PHYSFS_openRead(name2.c_str());
     if (!fd) { // still no joy, give up
       std::ostringstream o;
@@ -114,7 +116,7 @@ namespace Util {
   unsigned char* FileHelper::bufferFromVFS(PHYSFS_file *fd) const {
     assert(fd);
     unsigned int size = PHYSFS_fileLength(fd);
-    unsigned char* buffer = BufferCacheHolder::Instance().requestBuffer(size+1);
+    unsigned char* buffer = BufferCache::Instance().requestBuffer(size+1);
     size = PHYSFS_read(fd, buffer, 1, size);
     PHYSFS_close(fd);
     return buffer;

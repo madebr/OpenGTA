@@ -25,7 +25,6 @@
 #include "dataholder.h"
 #include "cell_iterator.h"
 #include "timer.h"
-#include "Functor.h"
 #include "plane.h"
 #include "ai.h"
 #include "localplayer.h"
@@ -64,7 +63,7 @@ namespace OpenGTA {
       INFO << x << " " << z << std::endl;
       y = 20;
     }
-    OpenGTA::Map & map = OpenGTA::MapHolder::Instance().get();
+    OpenGTA::Map & map = OpenGTA::ActiveMap::Instance().get();
     while (y >= map.getNumBlocksAtNew(x_b, z_b) && y > 0.0f)
       y -= 1.0f;
     while (y < map.getNumBlocksAtNew(x_b, z_b) && y > 0.0f) {
@@ -121,7 +120,7 @@ namespace OpenGTA {
 
   Sprite::Sprite() :
     sprNum(0), remap(-1), 
-    //anim(SpriteManagerHolder::Instance().getAnimationById(0)),
+    //anim(SpriteManager::Instance().getAnimationById(0)),
     anim(), animId(),
     sprType(GraphicsBase::SpriteNumbers::ARROW) {
     }
@@ -138,7 +137,7 @@ namespace OpenGTA {
 
   void Sprite::switchToAnim(const Uint32 & newId) {
     INFO << "switching to anim " << newId << std::endl;
-    anim = Animation(SpriteManagerHolder::Instance().getAnimationById(newId));
+    anim = Animation(SpriteManager::Instance().getAnimationById(newId));
     anim.set(Util::Animation::PLAY_FORWARD, Util::Animation::LOOP);
     animId = newId;
   }
@@ -158,7 +157,7 @@ namespace OpenGTA {
       pedId = id;
       animId = 0;
       isDead = 0;
-      lastUpdateAt = TimerHolder::Instance().getRealTime();
+      lastUpdateAt = Timer::Instance().getRealTime();
       inGroundContact = 0;
     }
 
@@ -288,7 +287,7 @@ activeWeapon = chooseWeapon;
           //Vector3D(-cos(rot * M_PI/180.0f), 0, sin(rot * M_PI/180.0f)).Normalized() * 0.05f 
           Vector3D(sin(rot * M_PI/180.0f), 0, cos(rot * M_PI/180.0f)).Normalized() * 0.01f 
           ); 
-      SpriteManagerHolder::Instance().createProjectile(0, rot, pos, d1, ticks, pedId);
+      SpriteManager::Instance().createProjectile(0, rot, pos, d1, ticks, pedId);
       lastWeaponTick = ticks;
     }
     /*
@@ -306,8 +305,8 @@ activeWeapon = chooseWeapon;
     x = floor(nPos.x);
     y = floor(nPos.y);
     z = floor(nPos.z);
-    OpenGTA::Map & map = OpenGTA::MapHolder::Instance().get();
-    OpenGTA::GraphicsBase & graphics = OpenGTA::StyleHolder::Instance().get();
+    OpenGTA::Map & map = OpenGTA::ActiveMap::Instance().get();
+    OpenGTA::GraphicsBase & graphics = OpenGTA::ActiveStyle::Instance().get();
     //INFO << heightOverTerrain(nPos) << std::endl;
     float hot = heightOverTerrain(nPos);
     if (hot > 0.3f)
@@ -445,7 +444,7 @@ activeWeapon = chooseWeapon;
       //  pos = nPos;
     }
     bool obj_blocked = false;
-    std::list<Car> & list = SpriteManagerHolder::Instance().getList<Car>();
+    std::list<Car> & list = SpriteManager::Instance().getList<Car>();
     for (std::list<Car>::iterator i = list.begin(); i != list.end(); i++) {
       if (isBoxInBox(*i)) {
         if (Util::distance(pos, i->pos) > Util::distance(nPos, i->pos))
@@ -467,8 +466,7 @@ activeWeapon = chooseWeapon;
       return;
     }
     anim.set(Util::Animation::PLAY_FORWARD, Util::Animation::FCALLBACK);
-    Loki::Functor<void> cmd(this, &Pedestrian::die);
-    anim.setCallback(cmd);
+    anim.setCallback([this]() { die(); });
     isDead++;
   }
 
@@ -476,8 +474,7 @@ activeWeapon = chooseWeapon;
     isDead = 1;
     switchToAnim(45);
     anim.set(Util::Animation::PLAY_FORWARD, Util::Animation::FCALLBACK);
-    Loki::Functor<void> cmd(this, &Pedestrian::die);
-    anim.setCallback(cmd);
+    anim.setCallback([this]() { die(); });
   }
 
   CarSprite::CarSprite() : sprNum(0), remap(-1), 
@@ -501,7 +498,7 @@ activeWeapon = chooseWeapon;
   }
 
   bool CarSprite::assertDeltaById(uint8_t k) {
-    GraphicsBase & style = StyleHolder::Instance().get();
+    GraphicsBase & style = ActiveStyle::Instance().get();
     PHYSFS_uint16 absNum = style.spriteNumbers.reIndex(sprNum, sprType);
     GraphicsBase::SpriteInfo * info = style.getSprite(absNum);
     if (k >= info->deltaCount)
@@ -629,11 +626,11 @@ activeWeapon = chooseWeapon;
   Car::Car(Vector3D & _pos, float _rot, uint32_t id, uint8_t _type, int16_t _remap) :
     GameObject_common(_pos, _rot),
     CarSprite(0, -1, GraphicsBase::SpriteNumbers::CAR), OBox(),
-    carInfo(*StyleHolder::Instance().get().findCarByModel(_type)) {
+    carInfo(*ActiveStyle::Instance().get().findCarByModel(_type)) {
       type = _type;
       carId = id;
       sprNum = carInfo.sprNum;
-      if ((_remap > -1) && (StyleHolder::Instance().get().getFormat() == 0))
+      if ((_remap > -1) && (ActiveStyle::Instance().get().getFormat() == 0))
         remap = carInfo.remap8[_remap];
       fixSpriteType();
       m_Extent = Vector3D(INT2F_DIV128(carInfo.width),
@@ -656,11 +653,11 @@ activeWeapon = chooseWeapon;
   Car::Car(OpenGTA::Map::ObjectPosition& op, uint32_t id) :
     GameObject_common(Vector3D(INT2FLOAT_WRLD(op.x), 6.05f-INT2FLOAT_WRLD(op.z), INT2FLOAT_WRLD(op.y))),
     CarSprite(0, -1, GraphicsBase::SpriteNumbers::CAR), OBox(),
-    carInfo(*StyleHolder::Instance().get().findCarByModel(op.type)){
+    carInfo(*ActiveStyle::Instance().get().findCarByModel(op.type)){
       carId = id;
       type = op.type;
       if (op.remap - 128 > 0) {
-        if (StyleHolder::Instance().get().getFormat() == 0)
+        if (ActiveStyle::Instance().get().getFormat() == 0)
           remap = carInfo.remap8[op.remap-129];
         else
           WARN << "remap " << int(op.remap-129) << 
@@ -680,7 +677,7 @@ activeWeapon = chooseWeapon;
 
   Car::Car(const Car & other) :
     GameObject_common(other), CarSprite(other), OBox(other),
-    carInfo(*StyleHolder::Instance().get().findCarByModel(other.type)) {
+    carInfo(*ActiveStyle::Instance().get().findCarByModel(other.type)) {
       type = other.type;
       m_M = TranslateMatrix3D(pos);
       m_M.RotZ(-rot);
@@ -743,11 +740,11 @@ activeWeapon = chooseWeapon;
   }
 
   void Car::explode() {
-    //SpriteManagerHolder::Instance().removeCar(carId);
+    //SpriteManager::Instance().removeCar(carId);
     //return;
     Vector3D exp_pos(pos);
     exp_pos.y += 0.1f;
-    SpriteManagerHolder::Instance().createExplosion(exp_pos);
+    SpriteManager::Instance().createExplosion(exp_pos);
     sprNum = 0;
     remap = -1;
     sprType = GraphicsBase::SpriteNumbers::WCAR;
@@ -758,7 +755,7 @@ activeWeapon = chooseWeapon;
     GameObject_common(Vector3D(INT2FLOAT_WRLD(op.x), 6.05f-INT2FLOAT_WRLD(op.z), INT2FLOAT_WRLD(op.y))),
     Sprite(0, -1, GraphicsBase::SpriteNumbers::OBJECT), OBox() {
       objId = id;
-      GraphicsBase & style = StyleHolder::Instance().get();
+      GraphicsBase & style = ActiveStyle::Instance().get();
       sprNum = style.objectInfos[op.type]->sprNum;
       m_Extent = Vector3D(INT2F_DIV128(style.objectInfos[op.type]->width),
           INT2F_DIV128(style.objectInfos[op.type]->depth),
@@ -888,7 +885,7 @@ activeWeapon = chooseWeapon;
     /*INFO << "p-m " << pos.x << " " << pos.y << " " << pos.z << 
       " to " << new_pos.x << " " << new_pos.y << " " << new_pos.z << std::endl;
       */
-    std::list<Pedestrian> & list = SpriteManagerHolder::Instance().getList<Pedestrian>();
+    std::list<Pedestrian> & list = SpriteManager::Instance().getList<Pedestrian>();
     for (std::list<Pedestrian>::iterator i = list.begin(); i != list.end(); ++i) {
       Pedestrian & ped = *i;
       if (ped.id() == owner)
@@ -906,7 +903,7 @@ activeWeapon = chooseWeapon;
         else
           INFO << "BACK" << std::endl;
         ped.getShot(owner, Projectile::damageByType(typeId), true);
-        PlayerController & pc = LocalPlayer::Instance();
+        LocalPlayer & pc = LocalPlayer::Instance();
         if (owner == pc.getId()) {
           pc.addCash(10);
           pc.addWanted(1);
@@ -914,7 +911,7 @@ activeWeapon = chooseWeapon;
         endsAtTick = 0;
       }
     }
-    std::list<Car> & clist = SpriteManagerHolder::Instance().getList<Car>();
+    std::list<Car> & clist = SpriteManager::Instance().getList<Car>();
     for (std::list<Car>::iterator i = clist.begin(); i != clist.end(); i++) {
       Car & car = *i;
 

@@ -28,7 +28,6 @@
 #include "abstract_container.h"
 //#include "pedestrian.h"
 #include "game_objects.h"
-#include "Singleton.h"
 #include "train_system.h"
 #include "map_helper.h"
 
@@ -103,9 +102,20 @@ namespace OpenGTA {
     public AbstractContainer<Car>,
     public AbstractContainer<SpriteObject> { //,
     //public AbstractContainer<TrainSegment> {
-      public:
-
+      private:
+        SpriteManager();
         ~SpriteManager();
+
+      public:
+        SpriteManager(const SpriteManager& copy) = delete;
+        SpriteManager& operator=(const SpriteManager& copy) = delete;
+
+        static SpriteManager& Instance()
+        {
+          static SpriteManager instance;
+          return instance;
+        }
+
         void drawInRect(SDL_Rect & r);
         void clear();
         void removeDeadStuff();
@@ -169,7 +179,6 @@ namespace OpenGTA {
 
       public:
         //TrainSystem   trainSystem;
-        SpriteManager();
         Util::SpriteCreationArea creationArea;
       protected:
         typedef std::map<Uint32, SpriteObject::Animation> AnimLookupType;
@@ -180,14 +189,7 @@ namespace OpenGTA {
       private:
         Uint32 drawMode;
         Uint32 lastCreateTick;
-
-        //SpriteManager(const SpriteManager & o) : trainSystem(AbstractContainer<TrainSegment>::objs) {assert(0);}
-        SpriteManager(const SpriteManager & o) {assert(0);}
-
     };
-
-  typedef Loki::SingletonHolder<SpriteManager, Loki::CreateUsingNew, 
-          Loki::DefaultLifetime, Loki::SingleThreaded> SpriteManagerHolder; 
 }
 
 #endif

@@ -187,8 +187,8 @@ int main(int argc, char* argv[]) {
   }
   try {
     // exception handling of the constructor doesn't work here; urgh...
-    OpenGTA::StyleHolder::Instance().load(file);
-    OpenGTA::GraphicsBase & graphics = OpenGTA::StyleHolder::Instance().get();
+    OpenGTA::ActiveStyle::Instance().load(file);
+    OpenGTA::GraphicsBase & graphics = OpenGTA::ActiveStyle::Instance().get();
     if (delta_set)
       graphics.setDeltaHandling(true);
 

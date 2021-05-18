@@ -152,7 +152,7 @@ namespace OpenGTA {
     PHYSFS_uint32 c = size / 35;
     assert(fd);
 
-    MessageDB & msg = MainMsgHolder::Instance().get();
+    MessageDB & msg = MainMsgLookup::Instance().get();
     _c =msg.getText("c");
     _n = msg.getText("n");
     _s = msg.getText("s");

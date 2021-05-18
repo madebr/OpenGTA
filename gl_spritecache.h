@@ -24,7 +24,6 @@
 #define SPRITE_CACHE_H
 #include <cstddef>
 #include <physfs.h>
-#include "Singleton.h"
 #include "gl_pagedtexture.h"
 #include "gl_texturecache.h"
 #include "opengta.h"
@@ -44,9 +43,18 @@ namespace OpenGL {
   };
   
   class SpriteCache {
-    public:
+    private:
       SpriteCache();
       ~SpriteCache();
+    public:
+      SpriteCache(const SpriteCache& copy) = delete;
+      SpriteCache& operator=(const SpriteCache& copy) = delete;
+
+      static SpriteCache& Instance()
+      {
+        static SpriteCache instance;
+        return instance;
+      }
 
       void           clearAll();
       bool           getScale2x();
@@ -74,9 +82,6 @@ namespace OpenGL {
       SpriteMapType  loadedSprites;
       bool           doScale2x;
   };
-
-  typedef Loki::SingletonHolder<SpriteCache, Loki::CreateUsingNew, 
-          Loki::DefaultLifetime, Loki::SingleThreaded> SpriteCacheHolder;
 }
 
 #endif

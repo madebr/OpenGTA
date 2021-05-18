@@ -26,13 +26,22 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 
-#include "Singleton.h"
 
 namespace OpenGL {
   class Screen {
-    public:
+    private:
       Screen();
       ~Screen();
+    public:
+      Screen(const Screen& copy) = delete;
+      Screen& operator=(const Screen& copy) = delete;
+
+      static Screen& Instance()
+      {
+        static Screen instance;
+        return instance;
+      }
+
       void set3DProjection();
       void setFlatProjection();
       void setFullScreenFlag(bool v);
@@ -68,9 +77,6 @@ namespace OpenGL {
 
       SDL_Surface *surface;
   };
-
-  using namespace Loki;
-  typedef SingletonHolder<Screen, CreateUsingNew, DefaultLifetime, SingleThreaded> ScreenHolder;
 }
 
 #endif

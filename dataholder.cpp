@@ -24,6 +24,8 @@
 #include "log.h"
 #include "cistring.h"
 
+#include <cassert>
+
 namespace OpenGTA {
   template<> ActiveStyle::ActiveData() {
     m_data = 0;

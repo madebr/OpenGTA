@@ -25,7 +25,6 @@
 #include <string>
 #include "opengta.h"
 #include "m_exceptions.h"
-#include "Singleton.h"
 
 namespace OpenGTA {
   /** Wrapper around resource-holding classes.
@@ -36,39 +35,32 @@ namespace OpenGTA {
   template <class T>
     class ActiveData {
       public:
-        ActiveData();
-        ~ActiveData();
+        ActiveData(const ActiveData<T>& copy) = delete;
+        ActiveData<T>& operator=(const ActiveData<T>& copy) = delete;
         T & get();
         void load(const std::string & file);
+
+        static ActiveData<T>& Instance()
+        {
+          static ActiveData<T> instance;
+          return instance;
+        }
       private:
+        ActiveData();
+        ~ActiveData();
         void unload();
         T* m_data;
     };
 
   /** The wrapper around the GRY/G24 data interface.
    */
-  typedef ActiveData< GraphicsBase > ActiveStyle;
+  using ActiveStyle = ActiveData<GraphicsBase>;
   /** The wrapper around the map data interface.
    */
-  typedef ActiveData< Map > ActiveMap;
+  using ActiveMap = ActiveData<Map>;
   /** The wrapper around the message-string data interface.
    */
-  typedef ActiveData< MessageDB > MainMsgLookup;
-
-  /** Singleton: Graphics
-   */
-  typedef Loki::SingletonHolder< ActiveStyle, Loki::CreateUsingNew, Loki::DefaultLifetime,
-          Loki::SingleThreaded> StyleHolder;
-  /** Singleton: Map
-   */
-  typedef Loki::SingletonHolder< ActiveMap, Loki::CreateUsingNew, Loki::DefaultLifetime,
-          Loki::SingleThreaded> MapHolder;
-  /** Singleton: Message strings
-   */
-  typedef Loki::SingletonHolder< MainMsgLookup, Loki::CreateUsingNew, Loki::DefaultLifetime,
-          Loki::SingleThreaded> MainMsgHolder;
-
-
+  using MainMsgLookup = ActiveData<MessageDB>;
 }
 
 #endif

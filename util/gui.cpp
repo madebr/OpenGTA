@@ -13,19 +13,19 @@ extern float screen_gamma;
 namespace GUI {
   Object::Object(const SDL_Rect & r) :
     id(0), rect(), color(), borderColor(), drawBorder(false),
-    manager(ManagerHolder::Instance()) {
+    manager(Manager::Instance()) {
       copyRect(r);
       color.r = 255; color.g = 255; color.b = 255; color.unused = 255;
     }
   Object::Object(const size_t Id, const SDL_Rect & r) :
     id(Id), rect(), color(), borderColor(), drawBorder(false),
-    manager(ManagerHolder::Instance()) {
+    manager(Manager::Instance()) {
       copyRect(r);
       color.r = 255; color.g = 255; color.b = 255; color.unused = 255;
     }
   Object::Object(const size_t Id, const SDL_Rect & r, const SDL_Color & c) :
     id(Id), rect(), color(),  borderColor(), drawBorder(false),
-    manager(ManagerHolder::Instance()) {
+    manager(Manager::Instance()) {
       copyRect(r);
       copyColor(c);
     }
@@ -263,11 +263,11 @@ namespace GUI {
   }
 
   ImageUtil::WidthHeightPair Manager::cacheStyleArrowSprite(const size_t id, int remap) {
-    OpenGTA::GraphicsBase & graphics = OpenGTA::StyleHolder::Instance().get();
+    OpenGTA::GraphicsBase & graphics = OpenGTA::ActiveStyle::Instance().get();
     PHYSFS_uint16 t = graphics.spriteNumbers.reIndex(id, OpenGTA::GraphicsBase::SpriteNumbers::ARROW);
     OpenGTA::GraphicsBase::SpriteInfo * info = graphics.getSprite(t);
     texCache.insert(std::make_pair(
-          id, OpenGL::SpriteCacheHolder::Instance().createSprite(size_t(t), remap, 0, info)
+          id, OpenGL::SpriteCache::Instance().createSprite(size_t(t), remap, 0, info)
           ));
     return ImageUtil::WidthHeightPair(info->w, info->h);
   }
@@ -337,7 +337,7 @@ namespace GUI {
     return false;
   }
   void Manager::receive(SDL_MouseButtonEvent & mb_event) {
-    Uint32 sh = OpenGL::ScreenHolder::Instance().getHeight();
+    Uint32 sh = OpenGL::Screen::Instance().getHeight();
     GuiObjectListMap::reverse_iterator l = guiLayers.rbegin();
     while (l != guiLayers.rend()) {
       GuiObjectList & list = l->second;
@@ -445,7 +445,7 @@ namespace GUI {
         std::endl;
     /*
     SDL_SetGamma(value * 2, value * 2, value * 2);
-    Object * o = ManagerHolder::Instance().findObject(101);
+    Object * o = Manager::Instance().findObject(101);
     if (o) {
       std::ostringstream os;
       os << "Gamma: " << value * 2;
@@ -458,7 +458,7 @@ namespace GUI {
     screen_gamma = v;
     SDL_SetGamma(v, v, v);
 #ifdef WITH_LUA
-    OpenGTA::Script::LuaVM & vm = OpenGTA::Script::LuaVMHolder::Instance();
+    OpenGTA::Script::LuaVM & vm = OpenGTA::Script::LuaVM::Instance();
     lua_State *L = vm.getInternalState();
     int top = lua_gettop(L);
     lua_getglobal(L, "config");
@@ -468,21 +468,21 @@ namespace GUI {
       lua_pushvalue(L, -1);
       lua_setglobal(L, "config");
     }
-    uint8_t sf = OpenGTA::StyleHolder::Instance().get().getFormat();
+    uint8_t sf = OpenGTA::ActiveStyle::Instance().get().getFormat();
     if (sf)
       vm.setFloat("screen_gamma_g24", v);
     else
       vm.setFloat("screen_gamma_gry", v);
     lua_settop(L, top);
 #endif
-    Object * o = ManagerHolder::Instance().findObject(GAMMA_LABEL_ID);
+    Object * o = Manager::Instance().findObject(GAMMA_LABEL_ID);
     if (o) {
       std::ostringstream os;
       os << "Gamma: " << v;
       static_cast<Label*>(o)->text = os.str();
     }
     /*
-    Object * o2 = ManagerHolder::Instance().findObject(1001);
+    Object * o2 = Manager::Instance().findObject(1001);
     if (o2) {
       static_cast<ImageStatusDisplay*>(o2)->number = screen_gamma * 3;
     }*/
@@ -493,8 +493,8 @@ namespace GUI {
   Label*             cashLabel   = NULL;
 
   void create_ingame_gui(bool is32bit) {
-    OpenGL::Screen & screen = OpenGL::ScreenHolder::Instance();
-    GUI::Manager & gm = ManagerHolder::Instance();
+    OpenGL::Screen & screen = OpenGL::Screen::Instance();
+    GUI::Manager & gm = Manager::Instance();
     assert(!wantedLevel);
     {
       SDL_Rect r;
@@ -531,7 +531,7 @@ namespace GUI {
   }
 
   void update_ingame_gui_values() {
-    OpenGTA::PlayerController & pc = OpenGTA::LocalPlayer::Instance();
+    OpenGTA::LocalPlayer & pc = OpenGTA::LocalPlayer::Instance();
 
     if (wantedLevel)
       wantedLevel->number = pc.getWantedLevel();
@@ -544,7 +544,7 @@ namespace GUI {
   }
 
   void remove_ingame_gui() {
-    GUI::Manager & gm = ManagerHolder::Instance();
+    GUI::Manager & gm = Manager::Instance();
 
     if (wantedLevel)
       gm.remove(wantedLevel);

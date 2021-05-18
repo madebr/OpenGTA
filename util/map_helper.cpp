@@ -1,7 +1,29 @@
 #include "map_helper.h"
 #include "log.h"
 
+#include <chrono>
+
+namespace {
+
+std::mt19937::result_type get_seed()
+{
+  const auto secs = std::chrono::duration_cast<std::chrono::seconds>(
+    std::chrono::system_clock::now().time_since_epoch()
+  ).count();
+  const auto msecs = std::chrono::duration_cast<std::chrono::microseconds>(
+    std::chrono::high_resolution_clock::now().time_since_epoch()
+  ).count();
+  return std::mt19937::result_type(secs + msecs);
+}
+
+}
+
 namespace Util {
+  SpriteCreationArea::SpriteCreationArea()
+    : rng_ { std::random_device {}() ^ get_seed() }
+  {
+  }
+
   void SpriteCreationArea::setRects(const SDL_Rect & allowed, const SDL_Rect & denied) {
     validRects = std::make_pair(allowed, denied);
     onScreen = denied;
@@ -23,8 +45,10 @@ namespace Util {
   }
 
   TupleOfUint8 SpriteCreationArea::getValidCoord() {
-    uint32_t x = rnd.nextUint(validRects.first.w) + validRects.first.x;
-    uint32_t y = rnd.nextUint(validRects.first.h) + validRects.first.y;
+    std::uniform_int_distribution<unsigned> distrW { 0, validRects.first.w };
+    std::uniform_int_distribution<unsigned> distrH { 0, validRects.first.h };
+    uint32_t x = distrW(rng_) + validRects.first.x;
+    uint32_t y = distrH(rng_) + validRects.first.y;
     return std::make_pair(x, y);
   }
 

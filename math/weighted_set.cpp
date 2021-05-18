@@ -3,7 +3,7 @@
 namespace Math {
   WeightedSet::WeightedSet(unsigned int seed) :
     elements(),
-    rng(seed) {
+    rng_{seed} {
     }
 
   void WeightedSet::add(unsigned int w, unsigned int e) {
@@ -15,8 +15,8 @@ namespace Math {
 
   unsigned int WeightedSet::getRandom() {
     //unsigned int rnd = (int) (totalWeight * (rand() / (RAND_MAX + 1.0)));
-    unsigned int rnd = rng.nextUint(elements.size());
-    return elements[rnd];
+    std::uniform_int_distribution<unsigned> distrib { 0, elements.size() };
+    return elements[distrib(rng_)];
   }
 }
 

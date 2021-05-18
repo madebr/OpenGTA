@@ -38,11 +38,11 @@ void run_init(const char* prg_name) {
 }
 
 void run_main() {
-  OpenGTA::Script::LuaVM & vm = OpenGTA::Script::LuaVMHolder::Instance();
+  OpenGTA::Script::LuaVM & vm = OpenGTA::Script::LuaVM::Instance();
 
-  OpenGTA::MainMsgHolder::Instance().load("ENGLISH.FXT");
-  OpenGTA::MapHolder::Instance().load(map_filename);
-  OpenGTA::Map & loadedMap = OpenGTA::MapHolder::Instance().get();
+  OpenGTA::MainMsgLookup::Instance().load("ENGLISH.FXT");
+  OpenGTA::ActiveMap::Instance().load(map_filename);
+  OpenGTA::Map & loadedMap = OpenGTA::ActiveMap::Instance().get();
   vm.setMap(loadedMap);
 
   vm.runFile(script_file);

@@ -138,11 +138,11 @@ namespace Util {
   }
 
   BufferCache::LockedBuffer::LockedBuffer(unsigned int len) {
-    buf_p = BufferCacheHolder::Instance().requestLockedBuffer(len);
+    buf_p = BufferCache::Instance().requestLockedBuffer(len);
   }
 
   BufferCache::LockedBuffer::~LockedBuffer() {
-    BufferCacheHolder::Instance().unlockBuffer(buf_p);
+    BufferCache::Instance().unlockBuffer(buf_p);
   }
 
 }

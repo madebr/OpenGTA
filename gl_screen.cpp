@@ -285,7 +285,7 @@ namespace OpenGL {
 
   void Screen::makeScreenshot(const char* filename) {
     INFO << "saving screen as: " << filename << std::endl;
-    uint8_t *pixels = Util::BufferCacheHolder::Instance().requestBuffer(width * height * 3);
+    uint8_t *pixels = Util::BufferCache::Instance().requestBuffer(width * height * 3);
 
     glReadBuffer(GL_FRONT);
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, reinterpret_cast<GLvoid*>(pixels));

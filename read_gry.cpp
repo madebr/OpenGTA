@@ -8,6 +8,7 @@
 *                                                                       *
 * This notice may not be removed or altered.                            *
 ************************************************************************/
+#include <algorithm>
 #include <iostream>
 #include <cassert>
 #include <sstream>
@@ -826,7 +827,7 @@ namespace OpenGTA {
     unsigned char * page_start = rawSprites + info->page * page_size;// + 256 * y + x;
     assert(page_start != NULL);
     
-    BufferCache & bcache = BufferCacheHolder::Instance();
+    BufferCache & bcache = BufferCache::Instance();
     unsigned char * dest = bcache.requestBuffer(page_size);
     bcache.lockBuffer(dest);
 
@@ -1009,7 +1010,7 @@ namespace OpenGTA {
     PHYSFS_file* fd = PHYSFS_openRead(palette.c_str());
     if (fd == NULL) {
       std::string pal2(palette);
-      transform(pal2.begin(), pal2.end(), pal2.begin(), tolower);
+      std::transform(pal2.begin(), pal2.end(), pal2.begin(), tolower);
       fd = PHYSFS_openRead(pal2.c_str());
     }
     if (!fd) {

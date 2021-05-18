@@ -3,13 +3,23 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include "math3d.h"
-#include "Singleton.h"
 
 namespace OpenGL {
 
   class Camera {
-    public:
+    private:
       Camera();
+      ~Camera() = default;
+    public:
+      Camera(const Camera& copy) = delete;
+      Camera& operator=(const Camera& copy) = delete;
+
+      static Camera& Instance()
+      {
+        static Camera instance;
+        return instance;
+      }
+
       void setSpeed(float forward_is_positive);
       void setRotating(bool demo);
       void setCamGravity(bool demo);
@@ -43,9 +53,5 @@ namespace OpenGL {
       Uint32 interpolateStart;
       Uint32 interpolateEnd;
   };
-
-  using namespace Loki;
-  typedef SingletonHolder<Camera, CreateUsingNew, DefaultLifetime,
-          SingleThreaded> CameraHolder;
 }
 #endif

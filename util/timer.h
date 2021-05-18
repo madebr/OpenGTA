@@ -22,9 +22,8 @@
 ************************************************************************/
 #ifndef OGTA_TIMER_H
 #define OGTA_TIMER_H
+#include <functional>
 #include <map>
-#include "Singleton.h"
-#include "Functor.h"
 
 // instead of SDL_GetTicks()
 #define TIMER_OPENSTEER_CLOCK
@@ -34,8 +33,20 @@
 #endif
 
 class Timer {
+  private:
+    Timer();
+    ~Timer();
   public:
-    typedef Loki::Functor<void, LOKI_TYPELIST_1(float)> CallbackType;
+    Timer(const Timer& copy) = delete;
+    Timer& operator=(const Timer& copy) = delete;
+
+    static Timer& Instance()
+    {
+      static Timer instance;
+      return instance;
+    }
+
+    using CallbackType = std::function<void(float)>;
     struct TimeEvent {
       TimeEvent(const uint32_t & b, const uint32_t e, CallbackType & c);
       TimeEvent(const uint32_t & b, CallbackType & c);
@@ -44,8 +55,6 @@ class Timer {
       const uint32_t end;
       CallbackType callback;
     };
-    Timer();
-    ~Timer();
     // simulation time in ticks
     inline const uint32_t & getTime() const { return simTicks; }
     // time since SDL_Init
@@ -72,8 +81,5 @@ class Timer {
     typedef RealTimeMap SimTimeMap;
     SimTimeMap simTimeEvents;
 };
-
-typedef Loki::SingletonHolder<Timer, Loki::CreateUsingNew, 
-  Loki::DefaultLifetime, Loki::SingleThreaded> TimerHolder;
 
 #endif

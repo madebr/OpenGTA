@@ -37,7 +37,7 @@ namespace Util {
     public:
       CellIterator(const Vector3D & p) :
         x(int(floor(p.x))), y(int(floor(p.z))), z(int(floor(p.y))),
-        mapRef(OpenGTA::MapHolder::Instance().get()) {}
+        mapRef(OpenGTA::ActiveMap::Instance().get()) {}
 
       CellIterator(OpenGTA::Map & map, int _x, int _y, int _z) :
         x(_x), y(_y), z(_z), mapRef(map) {}

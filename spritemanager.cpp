@@ -155,7 +155,7 @@ namespace OpenGTA {
     removeDeadStuff();
     if (num_peds < 50 && num_peds > 2 && ticks - lastCreateTick > 100) {
       //MapHelper::createPeds(5);
-      Map & map = OpenGTA::MapHolder::Instance().get();
+      Map & map = OpenGTA::ActiveMap::Instance().get();
       lastCreateTick = ticks;
       while (1) {
         Util::TupleOfUint8 tu8 = creationArea.getValidCoord();
@@ -175,10 +175,10 @@ namespace OpenGTA {
 
         Vector3D pos(tu8.first + 0.5f, k+1, tu8.second+0.5f);
         int id = OpenGTA::TypeIdBlackBox::requestId();
-        Sint16 remap = OpenGTA::StyleHolder::Instance().get().getRandomPedRemapNumber();
+        Sint16 remap = OpenGTA::ActiveStyle::Instance().get().getRandomPedRemapNumber();
         OpenGTA::Pedestrian p(Vector3D(0.3f, 0.5f, 0.3f), pos, id, remap);
         p.rot = 360 * (rand() / (RAND_MAX + 1.0));
-        OpenGTA::SpriteManagerHolder::Instance().add<Pedestrian>(p);
+        OpenGTA::SpriteManager::Instance().add<Pedestrian>(p);
         break;
       }
     }
@@ -261,7 +261,7 @@ glEnd()
 
 void SpriteManager::draw(Car & car) {
   GL_OBJ_COMMON(car);
-  GraphicsBase & style = StyleHolder::Instance().get();
+  GraphicsBase & style = ActiveStyle::Instance().get();
   OpenGL::PagedTexture t;
   PHYSFS_uint16 sprNum = style.spriteNumbers.reIndex(car.sprNum, car.sprType);
       //+ car.anim.firstFrameOffset + car.anim.currentFrame, car.sprType);
@@ -271,10 +271,10 @@ void SpriteManager::draw(Car & car) {
   float w = float(info->w) / 64.0f;
   float h = float(info->h) / 64.0f;
   OpenGL::SpriteIdentifier si(sprNum, car.remap, car.delta);
-  if (OpenGL::SpriteCacheHolder::Instance().has(si))
-    t = OpenGL::SpriteCacheHolder::Instance().get(si);
+  if (OpenGL::SpriteCache::Instance().has(si))
+    t = OpenGL::SpriteCache::Instance().get(si);
   else {
-    t = OpenGL::SpriteCacheHolder::Instance().create(car.sprNum,// + 
+    t = OpenGL::SpriteCache::Instance().create(car.sprNum,// + 
         //car.anim.firstFrameOffset + car.anim.currentFrame, 
         car.sprType, car.remap, car.delta);
   }
@@ -336,7 +336,7 @@ void SpriteManager::draw(SpriteObject & obj) {
     return drawExplosion(obj);
   }
   GL_OBJ_COMMON(obj);
-  GraphicsBase & style = StyleHolder::Instance().get();
+  GraphicsBase & style = ActiveStyle::Instance().get();
   OpenGL::PagedTexture t;
   PHYSFS_uint16 sprNum = style.spriteNumbers.reIndex(obj.sprNum + 
       obj.anim.firstFrameOffset + obj.anim.currentFrame, obj.sprType);
@@ -345,10 +345,10 @@ void SpriteManager::draw(SpriteObject & obj) {
   assert(info);
   float w = float(info->w) / 64.0f;
   float h = float(info->h) / 64.0f;
-  if (OpenGL::SpriteCacheHolder::Instance().has(sprNum, obj.remap))
-    t = OpenGL::SpriteCacheHolder::Instance().get(sprNum, obj.remap);
+  if (OpenGL::SpriteCache::Instance().has(sprNum, obj.remap))
+    t = OpenGL::SpriteCache::Instance().get(sprNum, obj.remap);
   else {
-    t = OpenGL::SpriteCacheHolder::Instance().create(obj.sprNum + 
+    t = OpenGL::SpriteCache::Instance().create(obj.sprNum + 
         obj.anim.firstFrameOffset + obj.anim.currentFrame, 
         obj.sprType, obj.remap);
   }
@@ -375,7 +375,7 @@ void SpriteManager::draw(SpriteObject & obj) {
 void SpriteManager::draw(Pedestrian & ped) {
   GL_OBJ_COMMON(ped);
 
-  GraphicsBase & style = StyleHolder::Instance().get();
+  GraphicsBase & style = ActiveStyle::Instance().get();
   OpenGL::PagedTexture t;
   PHYSFS_uint16 sprNum = style.spriteNumbers.reIndex(ped.sprNum + 
       ped.anim.firstFrameOffset + ped.anim.currentFrame, ped.sprType);
@@ -385,10 +385,10 @@ void SpriteManager::draw(Pedestrian & ped) {
   float w = float(info->w) / 64.0f;
   float h = float(info->h) / 64.0f;
 
-  if (OpenGL::SpriteCacheHolder::Instance().has(sprNum, ped.remap))
-    t = OpenGL::SpriteCacheHolder::Instance().get(sprNum, ped.remap);
+  if (OpenGL::SpriteCache::Instance().has(sprNum, ped.remap))
+    t = OpenGL::SpriteCache::Instance().get(sprNum, ped.remap);
   else {
-    t = OpenGL::SpriteCacheHolder::Instance().create(ped.sprNum + 
+    t = OpenGL::SpriteCache::Instance().create(ped.sprNum + 
         ped.anim.firstFrameOffset + ped.anim.currentFrame, 
         ped.sprType, ped.remap);
   }
@@ -422,7 +422,7 @@ void SpriteManager::drawExplosion(SpriteObject & obj) {
   //glRotatef(obj.rot, 0, 1, 0);
   glGetFloatv(GL_MODELVIEW_MATRIX, *obj.m_M.m);
 
-  GraphicsBase & style = StyleHolder::Instance().get();
+  GraphicsBase & style = ActiveStyle::Instance().get();
 
   PHYSFS_uint16 sprNum = style.spriteNumbers.reIndex(obj.sprNum + 
       obj.anim.firstFrameOffset + obj.anim.currentFrame, obj.sprType);
@@ -432,10 +432,10 @@ void SpriteManager::drawExplosion(SpriteObject & obj) {
   float w = float(info->w) / 64.0f;
   float h = float(info->h) / 64.0f;
   OpenGL::PagedTexture t;
-  if (OpenGL::SpriteCacheHolder::Instance().has(sprNum))
-    t = OpenGL::SpriteCacheHolder::Instance().get(sprNum);
+  if (OpenGL::SpriteCache::Instance().has(sprNum))
+    t = OpenGL::SpriteCache::Instance().get(sprNum);
   else
-    t = OpenGL::SpriteCacheHolder::Instance().create(obj.sprNum +
+    t = OpenGL::SpriteCache::Instance().create(obj.sprNum +
         obj.anim.firstFrameOffset + obj.anim.currentFrame, obj.sprType, -1);
 
   glBindTexture(GL_TEXTURE_2D, t.inPage);
@@ -458,10 +458,10 @@ void SpriteManager::drawExplosion(SpriteObject & obj) {
   assert(info);
   w = float(info->w) / 64.0f;
   h = float(info->h) / 64.0f;
-  if (OpenGL::SpriteCacheHolder::Instance().has(sprNum))
-    t = OpenGL::SpriteCacheHolder::Instance().get(sprNum);
+  if (OpenGL::SpriteCache::Instance().has(sprNum))
+    t = OpenGL::SpriteCache::Instance().get(sprNum);
   else
-    t = OpenGL::SpriteCacheHolder::Instance().create(obj.sprNum +
+    t = OpenGL::SpriteCache::Instance().create(obj.sprNum +
         obj.anim.firstFrameOffset + obj.anim.currentFrame+12, obj.sprType, -1);
 
   glBindTexture(GL_TEXTURE_2D, t.inPage);
@@ -484,10 +484,10 @@ void SpriteManager::drawExplosion(SpriteObject & obj) {
   assert(info);
   w = float(info->w) / 64.0f;
   h = float(info->h) / 64.0f;
-  if (OpenGL::SpriteCacheHolder::Instance().has(sprNum))
-    t = OpenGL::SpriteCacheHolder::Instance().get(sprNum);
+  if (OpenGL::SpriteCache::Instance().has(sprNum))
+    t = OpenGL::SpriteCache::Instance().get(sprNum);
   else
-    t = OpenGL::SpriteCacheHolder::Instance().create(obj.sprNum +
+    t = OpenGL::SpriteCache::Instance().create(obj.sprNum +
         obj.anim.firstFrameOffset + obj.anim.currentFrame+24, obj.sprType, -1);
 
   glBindTexture(GL_TEXTURE_2D, t.inPage);
@@ -511,10 +511,10 @@ void SpriteManager::drawExplosion(SpriteObject & obj) {
   assert(info);
   w = float(info->w) / 64.0f;
   h = float(info->h) / 64.0f;
-  if (OpenGL::SpriteCacheHolder::Instance().has(sprNum))
-    t = OpenGL::SpriteCacheHolder::Instance().get(sprNum);
+  if (OpenGL::SpriteCache::Instance().has(sprNum))
+    t = OpenGL::SpriteCache::Instance().get(sprNum);
   else
-    t = OpenGL::SpriteCacheHolder::Instance().create(obj.sprNum +
+    t = OpenGL::SpriteCache::Instance().create(obj.sprNum +
         obj.anim.firstFrameOffset + obj.anim.currentFrame+36, obj.sprType, -1);
 
   glBindTexture(GL_TEXTURE_2D, t.inPage);
@@ -540,7 +540,7 @@ void SpriteManager::drawExplosion(SpriteObject & obj) {
 /*
    void SpriteManager::draw(TrainSegment & train) {
    GL_OBJ_COMMON(train);
-   GraphicsBase & style = StyleHolder::Instance().get();
+   GraphicsBase & style = ActiveStyle::Instance().get();
 
    OpenGL::PagedTexture t;
    PHYSFS_uint16 sprNum = style.spriteNumbers.reIndex(train.sprNum, train.sprType);
@@ -551,10 +551,10 @@ void SpriteManager::drawExplosion(SpriteObject & obj) {
    float h = float(info->h) / 64.0f;
 
 
-   if (OpenGL::SpriteCacheHolder::Instance().has(sprNum, train.remap))
-   t = OpenGL::SpriteCacheHolder::Instance().get(sprNum, train.remap);
+   if (OpenGL::SpriteCache::Instance().has(sprNum, train.remap))
+   t = OpenGL::SpriteCache::Instance().get(sprNum, train.remap);
    else {
-   t = OpenGL::SpriteCacheHolder::Instance().create(train.sprNum, train.sprType, -1);
+   t = OpenGL::SpriteCache::Instance().create(train.sprNum, train.sprType, -1);
    }
    glBindTexture(GL_TEXTURE_2D, t.inPage);
 

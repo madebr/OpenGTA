@@ -4,7 +4,6 @@
 #include <SDL_sound.h>
 #include <SDL_mixer.h>
 #include "sound_device.h"
-#include "Singleton.h"
 
 namespace Audio {
   class Mixer {
@@ -27,9 +26,6 @@ namespace Audio {
       inline bool checkDeviceOK() { return (device.getStatus() == 
         Audio::SoundDevice::OPEN); }
   };
-
-  typedef Loki::SingletonHolder<Mixer, Loki::CreateUsingNew, 
-    Loki::DefaultLifetime, Loki::SingleThreaded> MixerHolder;
 }
 
 #endif

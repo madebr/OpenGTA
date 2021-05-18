@@ -25,11 +25,10 @@
 #ifdef WITH_SOUND
 
 #include <SDL_sound.h>
-#include "Functor.h"
 
 namespace Audio {
   static int music_volume = 127;
-  typedef Loki::Functor<void> MusicFinishedCallbackType;
+  using MusicFinishedCallbackType = std::function<void()>;
 
   struct MusicPlayerCtrl {
     static bool         isPlaying;

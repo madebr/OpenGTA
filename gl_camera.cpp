@@ -73,7 +73,7 @@ namespace OpenGL {
       eye.y -= 0.1f * ticks/40.0f;
     }
 
-    OpenGTA::Map & map = OpenGTA::MapHolder::Instance().get();
+    OpenGTA::Map & map = OpenGTA::ActiveMap::Instance().get();
     if (y < map.getNumBlocksAtNew(PHYSFS_uint8(x), PHYSFS_uint8(z)) && y > 0.0f) {
       OpenGTA::Map::BlockInfo * block = map.getBlockAtNew(PHYSFS_uint8(x), PHYSFS_uint8(z), PHYSFS_uint8(y));
       if (block->blockType() > 0 && block->blockType() <= 5) {
@@ -227,7 +227,7 @@ namespace OpenGL {
   }
 
   void Camera::moveByMouse() {
-    Screen & screen = ScreenHolder::Instance();
+    Screen & screen = Screen::Instance();
     int w, h;
     w = screen.getWidth() / 2;
     h = screen.getHeight() / 2;

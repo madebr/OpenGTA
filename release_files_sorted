@@ -79,8 +79,6 @@ ogta/license.txt
 ogta/lid_normal_data.h
 ogta/localplayer.cpp
 ogta/localplayer.h
-ogta/loki.make
-ogta/loki.make.w32_cross
 ogta/lua_addon/lua_camera.cpp
 ogta/lua_addon/lua_camera.h
 ogta/lua_addon/lua_cityview.cpp

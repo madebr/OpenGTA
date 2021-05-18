@@ -25,12 +25,10 @@
 
 #include <SDL_mixer.h>
 #include <map>
-#include "Singleton.h"
-#include "SmallObj.h"
 
 namespace Audio {
   
-  class SampleType_MixChunk : public Loki::SmallObject<> {
+  class SampleType_MixChunk {
     public:
       SampleType_MixChunk(Uint8 *mem, Mix_Chunk *ch) : memory(mem), chunk(ch) {}
       ~SampleType_MixChunk() {
@@ -69,9 +67,6 @@ namespace Audio {
     }
     m_map.clear();
   }
-
-  typedef Loki::SingletonHolder< SampleCache , Loki::CreateUsingNew, 
-    Loki::DefaultLifetime, Loki::SingleThreaded> SampleCacheHolder;
 }
 
 #endif

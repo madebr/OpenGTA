@@ -3,10 +3,9 @@
 
 #include <list>
 #include <map>
+#include <random>
 #include <SDL_video.h>
-#include <cassert> // yasli/random.h needs it
 #include "math3d.h"
-#include "yasli/random.h"
 
 namespace Util {
   typedef std::pair<SDL_Rect, SDL_Rect> TupleOfRects;
@@ -15,15 +14,16 @@ namespace Util {
 
   class SpriteCreationArea {
     public:
+      SpriteCreationArea();
       //ListOfTupleOfRects validTuple;
       TupleOfRects validRects;
       void setRects(const SDL_Rect & allowed, const SDL_Rect & denied);
       TupleOfUint8 getValidCoord();
-      Random rnd;
       bool isOnScreen(const Vector3D & p);
       bool isOffScreen(const Vector3D & p);
     private:
       SDL_Rect onScreen;
+      std::mt19937 rng_;
   };
 
 

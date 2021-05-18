@@ -156,7 +156,7 @@ namespace OpenGL {
   PagedTexture SpriteCache::create(PHYSFS_uint16 sprNum, 
     OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes st, PHYSFS_sint16 remap  = -1 ) {
     /*
-    OpenGTA::GraphicsBase & style = OpenGTA::StyleHolder::Instance().get();
+    OpenGTA::GraphicsBase & style = OpenGTA::ActiveStyle::Instance().get();
     PHYSFS_uint16 real_num = style.spriteNumbers.reIndex(sprNum, st);
 
     OpenGTA::GraphicsBase::SpriteInfo* info = style.getSprite(real_num);
@@ -172,7 +172,7 @@ namespace OpenGL {
   PagedTexture SpriteCache::create(PHYSFS_uint16 sprNum,
         OpenGTA::GraphicsBase::SpriteNumbers::SpriteTypes st,
         PHYSFS_sint16 remap, PHYSFS_uint32 delta) {
-    OpenGTA::GraphicsBase & style = OpenGTA::StyleHolder::Instance().get();
+    OpenGTA::GraphicsBase & style = OpenGTA::ActiveStyle::Instance().get();
     PHYSFS_uint16 real_num = style.spriteNumbers.reIndex(sprNum, st);
 
     OpenGTA::GraphicsBase::SpriteInfo* info = style.getSprite(real_num);
@@ -187,7 +187,7 @@ namespace OpenGL {
   OpenGL::PagedTexture SpriteCache::createSprite(size_t sprite_num, PHYSFS_sint16 remap,
     PHYSFS_uint32 delta, OpenGTA::GraphicsBase::SpriteInfo* info) {
     INFO << "creating new sprite: " << sprite_num << " remap: " << remap << std::endl;
-    unsigned char* src = OpenGTA::StyleHolder::Instance().get().
+    unsigned char* src = OpenGTA::ActiveStyle::Instance().get().
       getSpriteBitmap(sprite_num, remap , delta);
     #if 0
     if (sprite_num == 257) {
@@ -198,7 +198,7 @@ namespace OpenGL {
       assert(surface);
       uint16_t bpp = surface->format->BytesPerPixel;
       ImageUtil::NextPowerOfTwo npot(surface->w, surface->h);
-      uint8_t * buffer = Util::BufferCacheHolder::Instance().requestBuffer(npot.w * npot.h * bpp);
+      uint8_t * buffer = Util::BufferCache::Instance().requestBuffer(npot.w * npot.h * bpp);
       SDL_LockSurface(surface);
       ImageUtil::copyImage2Image(buffer, (uint8_t*)surface->pixels, surface->pitch, surface->h,
           npot.w * bpp);
@@ -217,8 +217,8 @@ namespace OpenGL {
       glwidth <<= 1;
     while(glheight < info->h)
       glheight <<= 1;
-    unsigned char* dst = Util::BufferCacheHolder::Instance().requestBuffer(glwidth * glheight * 4);
-    Util::BufferCacheHolder::Instance().unlockBuffer(src);
+    unsigned char* dst = Util::BufferCache::Instance().requestBuffer(glwidth * glheight * 4);
+    Util::BufferCache::Instance().unlockBuffer(src);
     assert(dst != NULL);
     unsigned char * t = dst;
     unsigned char * r = src;
@@ -229,7 +229,7 @@ namespace OpenGL {
     }
 #endif
     ImageUtil::NextPowerOfTwo npot(info->w, info->h);
-    Util::BufferCache & bc = Util::BufferCacheHolder::Instance();
+    Util::BufferCache & bc = Util::BufferCache::Instance();
     uint8_t* dst = bc.requestBuffer(npot.w * npot.h * 4);
 
     ImageUtil::copyImage2Image(dst, src, info->w * 4, info->h, npot.w * 4);
@@ -248,8 +248,8 @@ namespace OpenGL {
       const int srcpitch = glwidth * 4;
       const int dstpitch = glwidth * 8;
       Uint8* srcpix = dst;
-      Util::BufferCacheHolder::Instance().lockBuffer(dst);
-      Uint8* dstpix = Util::BufferCacheHolder::Instance().requestBuffer(glwidth * glheight * 4 * 4);
+      Util::BufferCache::Instance().lockBuffer(dst);
+      Uint8* dstpix = Util::BufferCache::Instance().requestBuffer(glwidth * glheight * 4 * 4);
       Uint32 E0, E1, E2, E3, B, D, E, F, H;
       for(int looph = 0; looph < glheight; ++looph)
       {
@@ -272,7 +272,7 @@ namespace OpenGL {
           *(Uint32*)(dstpix + (looph*2+1)*dstpitch + (loopw*2+1)*4) = E3;
         }
       }
-      Util::BufferCacheHolder::Instance().unlockBuffer(dst);
+      Util::BufferCache::Instance().unlockBuffer(dst);
       dst = dstpix;
 #endif
     }

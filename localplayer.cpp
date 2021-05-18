@@ -2,11 +2,11 @@
 #include "spritemanager.h"
 
 namespace OpenGTA {
-  Pedestrian & PlayerController::getPed() {
-    return SpriteManagerHolder::Instance().getPed(playerId); 
+  Pedestrian & LocalPlayer::getPed() {
+    return SpriteManager::Instance().getPed(playerId);
   }
 
-  bool PlayerController::up(const uint32_t & key) {
+  bool LocalPlayer::up(const uint32_t & key) {
     if (!pc_ptr)
       return false;
     bool handled = false;
@@ -37,7 +37,7 @@ namespace OpenGTA {
     return handled;
   }
 
-  bool PlayerController::down(const uint32_t & key) {
+  bool LocalPlayer::down(const uint32_t & key) {
     if (!pc_ptr)
       return false;
     bool handled = false;

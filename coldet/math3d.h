@@ -240,6 +240,23 @@ inline Matrix3D operator*(const Matrix3D& m1, const Matrix3D& m2)
     m1._41*m2._14 + m1._42*m2._24 + m1._43*m2._34 + m1._44*m2._44);
 }
 
+#undef _11
+#undef _12
+#undef _13
+#undef _14
+#undef _21
+#undef _22
+#undef _23
+#undef _24
+#undef _31
+#undef _32
+#undef _33
+#undef _34
+#undef _41
+#undef _42
+#undef _43
+#undef _44
+
 inline void
 Matrix3D::rotate(const Vector3D& v)
 {

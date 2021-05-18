@@ -96,7 +96,7 @@ using OpenGL::PagedTexture;
 
     Util::BufferCache::LockedBuffer lbuf(nbytes);
     /*
-    uint8_t * buffer = Util::BufferCacheHolder::Instance().
+    uint8_t * buffer = Util::BufferCache::Instance().
       requestBuffer(nbytes);
     */
     uint8_t *buffer = lbuf();
@@ -145,7 +145,7 @@ using OpenGL::PagedTexture;
     NextPowerOfTwo npot(surface->w, surface->h);
     uint16_t bpp = surface->format->BytesPerPixel;
 
-    uint8_t * buffer = Util::BufferCacheHolder::Instance().requestBuffer(npot.w * npot.h * bpp);
+    uint8_t * buffer = Util::BufferCache::Instance().requestBuffer(npot.w * npot.h * bpp);
     SDL_LockSurface(surface);
     copyImage2Image(buffer, (uint8_t*)surface->pixels, surface->pitch, surface->h,
         npot.w * bpp);
@@ -208,7 +208,7 @@ using OpenGL::PagedTexture;
     if (!(npot.w == uint32_t(w) && npot.h == uint32_t(h))) {
       uint32_t bpp = (rgba ? 4 : 3);
       uint32_t bufSize = npot.w * npot.h * bpp;
-      buff = Util::BufferCacheHolder::Instance().requestBuffer(bufSize);
+      buff = Util::BufferCache::Instance().requestBuffer(bufSize);
       copyImage2Image(buff, (uint8_t*)pixels, w * bpp, h, npot.w * bpp);
     }
 
@@ -225,7 +225,7 @@ using OpenGL::PagedTexture;
     const int srcpitch = src_width * 3;
     const int dstpitch = src_width * 6;
 
-    uint8_t *dstpix = Util::BufferCacheHolder::Instance().requestBuffer(src_width *
+    uint8_t *dstpix = Util::BufferCache::Instance().requestBuffer(src_width *
         src_height * 3 * 4);
     int E0, E1, E2, E3, B, D, E, F, H;
     for(int looph = 0; looph < src_height; ++looph)
@@ -256,7 +256,7 @@ using OpenGL::PagedTexture;
     const int srcpitch = src_width * 4;
     const int dstpitch = src_width * 8;
 
-    uint8_t* dstpix = Util::BufferCacheHolder::Instance().requestBuffer(src_width *
+    uint8_t* dstpix = Util::BufferCache::Instance().requestBuffer(src_width *
         src_height * 4 * 4);
     Uint32 E0, E1, E2, E3, B, D, E, F, H;
     for(int looph = 0; looph < src_height; ++looph)

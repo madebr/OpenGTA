@@ -25,14 +25,24 @@
 
 #include <string>
 #include <physfs.h>
-#include "Singleton.h"
 
 namespace Util {
   // central path storage
   // Note: assumes that physfs is ready when instance is created
   class FileHelper {
-    public:
+    private:
       FileHelper();
+      ~FileHelper() = default;
+    public:
+      FileHelper(const FileHelper& copy) = delete;
+      FileHelper& operator=(const FileHelper& copy) = delete;
+
+      static FileHelper& Instance()
+      {
+        static FileHelper instance;
+        return instance;
+      }
+
       const std::string & getBaseDataPath() const;
       const std::string & getModDataPath() const;
       const std::string & getUserHomeDir() const;
@@ -46,10 +56,7 @@ namespace Util {
       std::string modDataPath;
       std::string userHomeDir;
   };
-
-  typedef Loki::SingletonHolder<FileHelper, Loki::CreateUsingNew, Loki::DefaultLifetime,
-          Loki::SingleThreaded> FileHelperHolder;
 }
-#define GET_FILE_HELPER Util::FileHelperHolder::Instance()
+#define GET_FILE_HELPER Util::FileHelper::Instance()
 
 #endif

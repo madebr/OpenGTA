@@ -22,10 +22,9 @@
 ************************************************************************/
 #include "font_cache.h"
 
-namespace OpenGTA {
-  FontCache::FontCache() {
-  }
+#include <cassert>
 
+namespace OpenGTA {
   FontCache::~FontCache() {
     for (FontMap::iterator i = loadedFonts.begin(); i != loadedFonts.end(); i++) {
       delete i->second;

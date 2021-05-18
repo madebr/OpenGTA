@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -45,7 +46,7 @@ void print_car(OpenGTA::GraphicsBase::CarInfo & ci) {
   PRINT(acceleration) PRINT(braking) PRINT(grip) PRINT(handling)
   // remaps
   PRINTC(vtype) PRINTC(model) PRINTC(turning) PRINTC(damagable) <<
-  "model-name:" << OpenGTA::MainMsgHolder::Instance().get().getText(ostr.str()) << "|"
+  "model-name:" << OpenGTA::MainMsgLookup::Instance().get().getText(ostr.str()) << "|"
   PRINTC(cx)  PRINTC(cy)  PRINT(moment) 
   PRINT(rbpMass) PRINT(g1_Thrust) PRINT(tyreAdhesionX) PRINT(tyreAdhesionY)
   PRINT(handBrakeFriction) PRINT(footBrakeFriction) PRINT(frontBrakeBias)
@@ -73,9 +74,9 @@ void run_init(const char*) {
 
 // dump all cars in style
 void run_main() {
-  OpenGTA::MainMsgHolder::Instance().load(msg_file);
-  OpenGTA::StyleHolder::Instance().load(style_file);
-  OpenGTA::GraphicsBase & style = OpenGTA::StyleHolder::Instance().get();
+  OpenGTA::MainMsgLookup::Instance().load(msg_file);
+  OpenGTA::ActiveStyle::Instance().load(style_file);
+  OpenGTA::GraphicsBase & style = OpenGTA::ActiveStyle::Instance().get();
   std::cout << "DUMP_OBJ_INFO BEGIN" << std::endl;
   for (size_t i = 0; i < style.carInfos.size(); ++i) {
     OpenGTA::GraphicsBase::CarInfo * cinfo = style.carInfos[i];

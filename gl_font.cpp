@@ -148,7 +148,7 @@ namespace OpenGL {
     while(glheight < h)
       glheight <<= 1;
 
-    Util::BufferCache & bc = Util::BufferCacheHolder::Instance();
+    Util::BufferCache & bc = Util::BufferCache::Instance();
     
     unsigned char* dst = bc.requestBuffer(glwidth * glheight * 4);
     assert(dst != NULL);

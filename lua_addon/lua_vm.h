@@ -2,15 +2,24 @@
 #define OPENGTA_SCRIPT_VM_H
 
 #include "lua.hpp"
-#include "Singleton.h"
 #include "gl_cityview.h"
 
 namespace OpenGTA {
   namespace Script {
     class LuaVM {
-      public:
+      private:
         LuaVM();
         ~LuaVM();
+      public:
+        LuaVM(const LuaVM& copy) = delete;
+        LuaVM& operator=(const LuaVM& copy) = delete;
+
+        static LuaVM& Instance()
+        {
+          static LuaVM instance;
+          return instance;
+        }
+
         void  runString(const char*);
         void  runFile(const char*);
         void  callSimpleFunction(const char*);
@@ -41,8 +50,6 @@ namespace OpenGTA {
         bool _registered;
         void prepare();
     };
-    typedef Loki::SingletonHolder<LuaVM, Loki::CreateUsingNew, Loki::DefaultLifetime,
-      Loki::SingleThreaded> LuaVMHolder;
   }
 }
 #endif

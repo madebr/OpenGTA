@@ -370,7 +370,7 @@ namespace OpenGTA {
 
     unsigned char * page_start = rawSprites + info->page * page_size;
     
-    BufferCache & bcache = BufferCacheHolder::Instance();
+    BufferCache & bcache = BufferCache::Instance();
     unsigned char * dest = bcache.requestBuffer(page_size);
     bcache.lockBuffer(dest);
     memcpy(dest, page_start, page_size);

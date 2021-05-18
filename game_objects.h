@@ -32,6 +32,8 @@
 #include "OpenSteer/Proximity.h"
 #include "util/set.h"
 
+#include <list>
+
 namespace OpenGTA {
   
   struct GameObject_common;

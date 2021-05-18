@@ -23,9 +23,6 @@
 #ifndef BUFFER_CACHE_H
 #define BUFFER_CACHE_H
 #include <map>
-#include "Singleton.h"
-
-using namespace Loki;
 
 namespace Util {
 
@@ -54,9 +51,18 @@ namespace Util {
    * \endcode
    */
   class BufferCache {
-    public:
+    private:
       BufferCache();
       ~BufferCache();
+    public:
+      BufferCache(const BufferCache& copy) = delete;
+      BufferCache& operator=(const BufferCache& copy) = delete;
+
+      static BufferCache& Instance()
+      {
+        static BufferCache instance;
+        return instance;
+      }
 
       /** Returns a buffer of (at least) len bytes.
        *
@@ -107,10 +113,5 @@ namespace Util {
       void freeBuffer(BufferMap_t::const_iterator pos);
       unsigned int total_bytes;
   };
-
-  /** Instance of BufferCache.
-   */
-  typedef SingletonHolder<BufferCache, CreateUsingNew, DefaultLifetime,
-          SingleThreaded> BufferCacheHolder;
 }
 #endif
