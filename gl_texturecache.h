@@ -117,12 +117,12 @@ namespace OpenGL {
       unsigned int clearMagic;
       unsigned int minClearElements;
 
-      typedef struct texTuple {
+      struct texTuple {
         GLuint   texId;
         uint32_t refCount;
         bool     hasAlpha;
         bool     isAnimated;
-      } texTuple;
+      };
       typedef std::map<key_type, texTuple*> CacheMapType;
       CacheMapType cached;
       std::string m_name;
