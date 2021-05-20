@@ -82,7 +82,7 @@ using OpenGL::PagedTexture;
 
   OpenGL::PagedTexture loadImageRAW(const std::string & name) {
 
-    PHYSFS_file * fd = GET_FILE_HELPER.openReadVFS(name);
+    PHYSFS_file * fd = Util::FileHelper::OpenReadVFS(name);
 
     uint32_t nbytes = PHYSFS_fileLength(fd);
 
@@ -110,9 +110,7 @@ using OpenGL::PagedTexture;
   OpenGL::PagedTexture loadImageRATWithPalette(const std::string & name,
       const std::string & palette_file) {
 
-    Util::FileHelper & fh = GET_FILE_HELPER;
-
-    PHYSFS_file * fd = fh.openReadVFS(name);
+    PHYSFS_file * fd = Util::FileHelper::OpenReadVFS(name);
     uint32_t nbytes = PHYSFS_fileLength(fd);
 
     WidthHeightPair whp = lookupImageSize(name, nbytes);
@@ -126,7 +124,7 @@ using OpenGL::PagedTexture;
     PHYSFS_close(fd);
 
     // if this causes an exception, the buffercache will cleanup
-    fd = fh.openReadVFS(palette_file);
+    fd = Util::FileHelper::OpenReadVFS(palette_file);
     OpenGTA::Graphics8Bit::RGBPalette rgb(fd);
     PHYSFS_close(fd);
 

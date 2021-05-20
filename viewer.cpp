@@ -20,6 +20,7 @@
 * 3. This notice may not be removed or altered from any source          *
 * distribution.                                                         *
 ************************************************************************/
+#include <filesystem>
 #include <iostream>
 #include <iomanip>
 #include <SDL_opengl.h>
@@ -307,27 +308,26 @@ void run_init(const char* prg_name) {
   PHYSFS_init(prg_name);
 
   // physfs-ogta
-  Util::FileHelper & fh = GET_FILE_HELPER;
-  if (fh.existsInSystemFS(fh.getBaseDataPath())) {
-    PHYSFS_addToSearchPath(fh.getBaseDataPath().c_str(), 1);
-  }
-  else {
-    WARN << "Could not load data-source: " << fh.getBaseDataPath() << std::endl;
-  }
-  
+  const auto &data_path = Util::FileHelper::BaseDataPath();
+  if (std::filesystem::exists(data_path))
+    PHYSFS_addToSearchPath(data_path.c_str(), 1);
+  else
+    WARN << "Could not load data-source: " << data_path << std::endl;
+
   PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
 
-  if (fh.existsInSystemFS(fh.getModDataPath()))
-    PHYSFS_addToSearchPath(fh.getModDataPath().c_str(), 0);
+  const auto &mod_path = Util::FileHelper::ModDataPath();
+  if (std::filesystem::exists(mod_path))
+    PHYSFS_addToSearchPath(mod_path.c_str(), 0);
 
   // screen, no window yet
   OpenGL::Screen & screen = OpenGL::Screen::Instance();
 
   // check for a configfile
 #ifdef WITH_LUA
-  if (fh.existsInVFS("config")) {
-    char* config_as_string = (char*)fh.bufferFromVFS(
-      fh.openReadVFS("config"));
+  if (PHYSFS_exists("config")) {
+    char* config_as_string = (char*)Util::FileHelper::BufferFromVFS(
+      Util::FileHelper::OpenReadVFS("config"));
     
     OpenGTA::Script::LuaVM & vm = OpenGTA::Script::LuaVM::Instance();
     try {
@@ -1105,7 +1105,7 @@ void run_main() {
     lang = getenv("LANG");
   if (!lang)
     lang = "en";
-  OpenGTA::MainMsgLookup::Instance().load(Util::FileHelper::lang2MsgFilename(lang));
+  OpenGTA::MainMsgLookup::Instance().load(Util::FileHelper::Lang2MsgFilename(lang));
 
   //m_font = new OpenGL::DrawableFont();
   //m_font->loadFont("F_MTEXT.FON");

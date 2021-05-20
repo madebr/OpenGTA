@@ -1,35 +1,34 @@
 /************************************************************************
-* Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
-*                                                                       *
-* This software is provided as-is, without any express or implied       *
-* warranty. In no event will the authors be held liable for any         *
-* damages arising from the use of this software.                        *
-*                                                                       *
-* Permission is granted to anyone to use this software for any purpose, *
-* including commercial applications, and to alter it and redistribute   *
-* it freely, subject to the following restrictions:                     *
-*                                                                       *
-* 1. The origin of this software must not be misrepresented; you must   *
-* not claim that you wrote the original software. If you use this       *
-* software in a product, an acknowledgment in the product documentation *
-* would be appreciated but is not required.                             *
-*                                                                       *
-* 2. Altered source versions must be plainly marked as such, and must   *
-* not be misrepresented as being the original software.                 *
-*                                                                       *
-* 3. This notice may not be removed or altered from any source          *
-* distribution.                                                         *
-************************************************************************/
-#include <algorithm>
-#include <cassert>
-#include <cstdlib>
-#include <unistd.h>
-#include <physfs.h>
-#include <sstream>
-#include "m_exceptions.h"
+ * Copyright (c) 2005-2007 tok@openlinux.org.uk                          *
+ *                                                                       *
+ * This software is provided as-is, without any express or implied       *
+ * warranty. In no event will the authors be held liable for any         *
+ * damages arising from the use of this software.                        *
+ *                                                                       *
+ * Permission is granted to anyone to use this software for any purpose, *
+ * including commercial applications, and to alter it and redistribute   *
+ * it freely, subject to the following restrictions:                     *
+ *                                                                       *
+ * 1. The origin of this software must not be misrepresented; you must   *
+ * not claim that you wrote the original software. If you use this       *
+ * software in a product, an acknowledgment in the product documentation *
+ * would be appreciated but is not required.                             *
+ *                                                                       *
+ * 2. Altered source versions must be plainly marked as such, and must   *
+ * not be misrepresented as being the original software.                 *
+ *                                                                       *
+ * 3. This notice may not be removed or altered from any source          *
+ * distribution.                                                         *
+ ************************************************************************/
 #include "file_helper.h"
+
 #include "buffercache.h"
 #include "log.h"
+#include "m_exceptions.h"
+
+#include <algorithm>
+#include <cassert>
+#include <physfs.h>
 
 #ifndef OGTA_DEFAULT_DATA_PATH
 #define OGTA_DEFAULT_DATA_PATH "gtadata.zip"
@@ -47,98 +46,79 @@
 #define OGTA_DEFAULT_HOME_PATH PHYSFS_getBaseDir()
 #endif
 
+namespace {
+
+std::string getEnvSafe(const char *envname, std::string def_value = "")
+{
+    const char *value = getenv(envname);
+    return (value != nullptr) ? value : def_value;
+}
+
+} // namespace
+
 namespace Util {
-  FileHelper::FileHelper() :
-    baseDataPath(OGTA_DEFAULT_DATA_PATH),
-    modDataPath(OGTA_DEFAULT_MOD_PATH),
-    userHomeDir(OGTA_DEFAULT_HOME_PATH) {
-    const char *e = getenv("OGTA_DATA");
-    if (e != NULL)
-      baseDataPath = std::string(e);
-    e = getenv("OGTA_MOD");
-    if (e != NULL)
-      modDataPath = std::string(e);
-    e = getenv("OGTA_HOME");
-    if (e != NULL)
-      userHomeDir = std::string(e);
-  }
+namespace FileHelper {
 
-  const std::string & FileHelper::getBaseDataPath() const {
-    return baseDataPath;
-  }
+const std::string &BaseDataPath()
+{
+    static std::string value = getEnvSafe("OGTA_DATA", OGTA_DEFAULT_DATA_PATH);
+    return value;
+}
 
-  const std::string & FileHelper::getModDataPath() const {
-    return modDataPath;
-  }
+const std::string &ModDataPath()
+{
+    static std::string value = getEnvSafe("OGTA_MOD", OGTA_DEFAULT_MOD_PATH);
+    return value;
+}
 
-  const std::string & FileHelper::getUserHomeDir() const {
-    return userHomeDir;
-  }
+const std::string &UserHomeDir()
+{
+    static std::string value = getEnvSafe("OGTA_HOME", OGTA_DEFAULT_HOME_PATH);
+    return value;
+}
 
-  bool FileHelper::existsInSystemFS(const std::string & file) const {
-    if (file.length() == 0)
-      return 0;
-#ifdef LINUX
-    return (access(file.c_str(), R_OK) == 0);
-#endif
-#ifdef WIN32
-    FILE * f = fopen(file.c_str(), "rb");
-    bool res = (f != NULL);
-    if (f)
-      fclose(f);
-    return res;
-#endif
-  }
+std::string Lang2MsgFilename(std::string_view l)
+{
+    static std::map<std::string_view, std::string> langmap {
+        { "en", "ENGLISH.FXT" },
+        { "de", "GERMAN.FXT" },
+        { "fr", "FRENCH.FXT" },
+        { "it", "ITALIAN.FXT" }
+    };
+    if (l.size() > 2)
+        l = l.substr(0, 2);
+    auto it = langmap.find(l);
+    if (it != langmap.end())
+        return it->second;
+    WARN << "Unknown language: " << l << " - falling back to english"
+         << std::endl;
+    return "ENGLISH.FXT";
+}
 
-  bool FileHelper::existsInVFS(const std::string & file) const {
-    if (file.length() == 0)
-      return 0;
-    return PHYSFS_exists(file.c_str());
-  }
-
-  PHYSFS_file *FileHelper::openReadVFS(const std::string & file) const {
-    PHYSFS_file * fd = PHYSFS_openRead(file.c_str());
+PHYSFS_file *OpenReadVFS(const std::string &file)
+{
+    PHYSFS_file *fd = PHYSFS_openRead(file.c_str());
     if (fd)
-      return fd;
+        return fd;
     // try lower case
-    std::string name2(file);
+    std::string name2 = file;
     std::transform(name2.begin(), name2.end(), name2.begin(), tolower);
     fd = PHYSFS_openRead(name2.c_str());
-    if (!fd) { // still no joy, give up
-      std::ostringstream o;
-      o << file << " with error: " << PHYSFS_getLastError();
-      throw E_FILENOTFOUND(o.str());
-    }
+    if (!fd) // still no joy, give up
+        throw E_FILENOTFOUND(file + " with error: " + PHYSFS_getLastError());
     // take this one instead
     return fd;
-  }
-
-  unsigned char* FileHelper::bufferFromVFS(PHYSFS_file *fd) const {
-    assert(fd);
-    unsigned int size = PHYSFS_fileLength(fd);
-    unsigned char* buffer = BufferCache::Instance().requestBuffer(size+1);
-    size = PHYSFS_read(fd, buffer, 1, size);
-    PHYSFS_close(fd);
-    return buffer;
-  }
-
-  const std::string FileHelper::lang2MsgFilename(const char *l) {
-    assert(l);
-    std::string lang(l);
-    if (lang.size() > 2)
-      lang = lang.substr(0, 2);
-    std::transform(lang.begin(), lang.end(), lang.begin(), tolower);
-    if (lang == "en")
-      return std::string("ENGLISH.FXT");
-    else if (lang == "de")
-      return std::string("GERMAN.FXT");
-    else if (lang == "fr")
-      return std::string("FRENCH.FXT");
-    else if (lang == "it")
-      return std::string("ITALIAN.FXT");
-
-    WARN << "Unknown language: " << l << " - falling back to english"
-      << std::endl;
-    return std::string("ENGLISH.FXT");
-  }
 }
+
+unsigned char *BufferFromVFS(PHYSFS_file *file)
+{
+    assert(file != nullptr);
+    unsigned int size = PHYSFS_fileLength(file);
+    unsigned char *buffer = BufferCache::Instance().requestBuffer(size + 1);
+    size = PHYSFS_read(file, buffer, 1, size);
+    PHYSFS_close(file);
+    return buffer;
+}
+
+} // namespace FileHelper
+} // namespace Util
