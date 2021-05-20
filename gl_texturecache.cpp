@@ -22,7 +22,6 @@
 ************************************************************************/
 #include <iostream>
 #include <limits>
-#include <sstream>
 #include "gl_texturecache.h"
 #include "log.h"
 
@@ -38,9 +37,7 @@ namespace OpenGL {
   template <typename key_type>
     TextureCache<key_type>::TextureCache() {
       instance_id = instance_count++;
-      std::ostringstream stream;
-      stream << "TextureCache_" << instance_count;
-      m_name = stream.str();
+      m_name = "TextureCache_" + std::to_string(instance_count);
       has_cached_query = false;
       clearMagic = 0;
       minClearElements = 50;

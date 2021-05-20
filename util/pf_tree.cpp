@@ -21,6 +21,12 @@
 * distribution.                                                         *
 ************************************************************************/
 #include "pf_tree.hpp"
+
+#include "m_exceptions.h"
+
+#include <cstring>
+#include <string>
+
 namespace PrefixFreeTree {
 
   Node::~Node() {
@@ -41,18 +47,13 @@ namespace PrefixFreeTree {
         return map[node_val]->insert(str, offset);
       }
       else {
-        if (i->second->isLeaf()) {
-          std::ostringstream os;
-          os << "Cannot enter '" << str << "' at offset " << offset <<
-            " as a leaf node already exists";
-          throw E_INVALIDFORMAT(os.str());
-        }
-        if ((offset == str_len) && (!i->second->isLeaf())) {
-          std::ostringstream os;
-          os << "Cannot enter '" << str
-            << "' as a non-leaf node already exists" << std::endl;
-          throw E_INVALIDFORMAT(os.str());
-        }
+        if (i->second->isLeaf())
+            throw E_INVALIDFORMAT(std::string { "Cannot enter '" } + str
+                                  + "' at offset " + std::to_string(offset)
+                                  + " as a leaf node already exists");
+        if ((offset == str_len) && (!i->second->isLeaf()))
+          throw E_INVALIDFORMAT(std::string { "Cannot enter '" } + str
+                                + "' as a non-leaf node already exists");
         return i->second->insert(str, offset);
       }
     }

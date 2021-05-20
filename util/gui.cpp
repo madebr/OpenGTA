@@ -6,7 +6,6 @@
 #ifdef WITH_LUA
 #include "lua_vm.h"
 #endif
-#include <sstream>
 #include "localplayer.h"
 
 extern float screen_gamma;
@@ -237,11 +236,8 @@ namespace GUI {
 
   const OpenGL::PagedTexture & Manager::getCachedImage(size_t Id) {
     GuiTextureCache::iterator i = findByCacheId(Id);
-    if (i == texCache.end()) {
-      std::ostringstream o;
-      o << "cached texture id " << int(Id);
-      throw E_UNKNOWNKEY(o.str());
-    }
+    if (i == texCache.end())
+      throw E_UNKNOWNKEY("cached texture id " + std::to_string(int(Id)));
     return i->second;
   }
 
@@ -315,11 +311,7 @@ namespace GUI {
           return o;
       }
     }
-    std::ostringstream o;
-    o << "object by id " << int(id);
-    throw E_UNKNOWNKEY(o.str());
-
-    return 0;
+    throw E_UNKNOWNKEY("object by id " + std::to_string(int(id)));
   }
 
   void Manager::removeById(const size_t id) {
@@ -476,11 +468,8 @@ namespace GUI {
     lua_settop(L, top);
 #endif
     Object * o = Manager::Instance().findObject(GAMMA_LABEL_ID);
-    if (o) {
-      std::ostringstream os;
-      os << "Gamma: " << v;
-      static_cast<Label*>(o)->text = os.str();
-    }
+    if (o)
+      static_cast<Label*>(o)->text = "Gamma: " + std::to_string(v);
     /*
     Object * o2 = Manager::Instance().findObject(1001);
     if (o2) {
@@ -536,11 +525,8 @@ namespace GUI {
     if (wantedLevel)
       wantedLevel->number = pc.getWantedLevel();
 
-    if (cashLabel) {
-      std::ostringstream os;
-      os << pc.getCash();
-      cashLabel->text = os.str();
-    }
+    if (cashLabel)
+      cashLabel->text = std::to_string(pc.getCash());
   }
 
   void remove_ingame_gui() {

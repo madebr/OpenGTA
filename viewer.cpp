@@ -24,7 +24,6 @@
 #include <iostream>
 #include <iomanip>
 #include <SDL_opengl.h>
-#include <sstream>
 #include <unistd.h>
 #include "blockanim.h"
 #include "dataholder.h"
@@ -679,9 +678,11 @@ void show_gamma_config() {
   gm.add(sb, 90);
 
   r.y += 40;
-  std::ostringstream os;
-  os << "Gamma: " << screen_gamma;
-  GUI::Label * l = new GUI::Label(GUI::GAMMA_LABEL_ID, r, os.str(), "F_MTEXT.FON", 1);
+  GUI::Label *l = new GUI::Label(GUI::GAMMA_LABEL_ID,
+                                 r,
+                                 "Gamma: " + std::to_string(screen_gamma),
+                                 "F_MTEXT.FON",
+                                 1);
   gm.add(l, 80);
 
   screen.setSystemMouseCursor(true);
@@ -1226,9 +1227,7 @@ void run_main() {
       fps = num_frames_drawn / 2;
       num_frames_drawn = 0;
       fps_last_tick = now_ticks;
-      std::ostringstream os;
-      os << fps << " fps";
-      fps_label->text = os.str();
+      fps_label->text = std::to_string(uint32_t(fps)) + " fps";
 #ifdef WITH_LUA
       vm.setGlobalInt("current_fps", fps);
 #endif

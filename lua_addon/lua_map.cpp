@@ -1,5 +1,4 @@
 #include <cassert>
-#include <sstream>
 #include "lua_map.h"
 #include "m_exceptions.h"
 
@@ -67,11 +66,8 @@ namespace OpenGTA {
     int Block::l_getTextureId(lua_State *L) {
       int which = luaL_checkinteger(L, 1);
       int v = 0;
-      if ((which < 0) || (which > 4)) {
-        std::ostringstream ostr;
-        ostr << "Quad id " << which << " is invalid";
-        throw E_OUTOFRANGE(ostr.str());
-      }
+      if ((which < 0) || (which > 4))
+        throw E_OUTOFRANGE("Quad id " + std::to_string(which) + " is invalid");
       switch(which) {
         case 0:
           v = lid;

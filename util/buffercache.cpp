@@ -22,7 +22,6 @@
 ************************************************************************/
 #include <iostream>
 #include <string>
-#include <sstream>
 #include <cassert>
 #include <cstring>
 #include "buffercache.h"
@@ -85,18 +84,16 @@ namespace Util {
       }
       ++i;
     }
-    std::ostringstream o;
-    o << "Cannot lock unknown buffer " << tb;
-    throw E_UNKNOWNKEY(o.str());
+    throw E_UNKNOWNKEY(std::string { "Cannot lock unknown buffer " }
+                       + reinterpret_cast<char *>(tb));
     //throw std::string("Unknown buffer - cannot lock it");
   }
 
   void BufferCache::unlockBuffer(unsigned char* tb) {
     BufferMap_T::const_iterator i = locked.find(tb);
     if (i == locked.end()) {
-      std::ostringstream o;
-      o << "Cannot unlock unknown buffer " << tb;
-      throw E_UNKNOWNKEY(o.str());
+      throw E_UNKNOWNKEY(std::string { "Cannot unlock unknown buffer " }
+                         + reinterpret_cast<char *>(tb));
       //throw std::string("Unknow buffer - cannot unlock it");
     }
     allocated[i->second] = i->first;

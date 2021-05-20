@@ -21,7 +21,6 @@
 * distribution.                                                         *
 ************************************************************************/
 #include <cassert>
-#include <sstream>
 #include "gl_font.h"
 #include "log.h"
 #include "buffercache.h"
@@ -134,9 +133,7 @@ namespace OpenGL {
     unsigned char * src = fontSource->getCharacterBitmap(
         fontSource->getIdByChar(c), &w, &h);
     if (src == NULL) {
-      std::ostringstream o;
-      o << "Failed to load bitmap for: " << c;
-      throw E_UNKNOWNKEY(o.str());
+      throw E_UNKNOWNKEY("Failed to load bitmap for: " + std::to_string(c));
       //throw std::string("Failed to load bitmap for character: " + c);
     }
     unsigned int glwidth = 1;

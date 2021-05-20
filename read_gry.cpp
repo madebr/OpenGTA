@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <iostream>
 #include <cassert>
-#include <sstream>
 #include "opengta.h"
 #include "buffercache.h"
 #include "log.h"
@@ -263,10 +262,8 @@ namespace OpenGTA {
       ++i;
     }
     //throw std::string("Failed to find car by model");
-    std::ostringstream o;
-    o << "Searching for car model " << int(model) << " failed";
-    throw E_UNKNOWNKEY(o.str());
-    return NULL;
+    throw E_UNKNOWNKEY("Searching for car model " + std::to_string(int(model))
+                       + " failed");
   }
 
   unsigned int GraphicsBase::getRandomPedRemapNumber() {
@@ -298,9 +295,7 @@ namespace OpenGTA {
     }
     if (fd == NULL) {
       //throw std::string("FileNotFound: ") + style;
-      std::ostringstream o;
-      o << style << " with error: " << SDL_GetError();
-      throw E_FILENOTFOUND(o.str());
+      throw E_FILENOTFOUND(style + " with error: " + SDL_GetError());
     }
     _topHeaderSize = 52;
     rawTiles = NULL;
@@ -1013,11 +1008,8 @@ namespace OpenGTA {
       std::transform(pal2.begin(), pal2.end(), pal2.begin(), tolower);
       fd = PHYSFS_openRead(pal2.c_str());
     }
-    if (!fd) {
-      std::ostringstream o;
-      o << palette << " with error: " << PHYSFS_getLastError();
-      throw E_FILENOTFOUND(o.str());
-    }
+    if (!fd)
+      throw E_FILENOTFOUND(palette + " with error: " + PHYSFS_getLastError());
     loadFromFile(fd);
   }
   

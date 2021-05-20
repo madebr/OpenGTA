@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <iostream>
 #include <cassert>
-#include <sstream>
 #include "opengta.h"
 #include "navdata.h"
 #include "log.h"
@@ -97,9 +96,7 @@ namespace OpenGTA {
     }
     if (!fd) {
       //throw std::string("FileNotFound: ") + filename;
-      std::ostringstream o;
-      o << filename << " with error: " << SDL_GetError();
-      throw E_FILENOTFOUND(o.str());
+      throw E_FILENOTFOUND(filename + " with error: " + SDL_GetError());
     }
     size_t level_as_num = Helper::mapFileName2Number(filename);
     loadHeader();
@@ -336,11 +333,9 @@ namespace OpenGTA {
     INFO << int(t) << " at " << int(x) << " " << int(y) << std::endl;
     LocationMap::iterator i = locations.find(t);
     LocationMap::iterator j;
-    if (i == locations.end()) {
-      std::ostringstream o;
-      o << "location-type " << int(t) << " not found in map";
-      throw E_UNKNOWNKEY(o.str());
-    }
+    if (i == locations.end())
+      throw E_UNKNOWNKEY("location-type " + std::to_string(int(t))
+                         + " not found in map");
     int _x(x);
     int _y(y);
     int min_d = 255 * 255;

@@ -1,7 +1,6 @@
 #include <cassert>
 #include <iostream>
 #include <string>
-#include <sstream>
 #include "opengta.h"
 #include "dataholder.h"
 
@@ -37,8 +36,7 @@ void parse_args(int argc, char* argv[]) {
 }
 
 void print_car(OpenGTA::GraphicsBase::CarInfo & ci) {
-  std::ostringstream ostr;
-  ostr << "car" << int(ci.model);
+  std::string model = "car" + std::to_string(int(ci.model));
 #define PRINT(c)  << #c << ":" << ci.c << "|"
 #define PRINTC(c) << #c << ":" << int(ci.c) << "|"
   std::cout  PRINT(width)  PRINT(height)  PRINT(depth)
@@ -46,7 +44,7 @@ void print_car(OpenGTA::GraphicsBase::CarInfo & ci) {
   PRINT(acceleration) PRINT(braking) PRINT(grip) PRINT(handling)
   // remaps
   PRINTC(vtype) PRINTC(model) PRINTC(turning) PRINTC(damagable) <<
-  "model-name:" << OpenGTA::MainMsgLookup::Instance().get().getText(ostr.str()) << "|"
+  "model-name:" << OpenGTA::MainMsgLookup::Instance().get().getText(model) << "|"
   PRINTC(cx)  PRINTC(cy)  PRINT(moment) 
   PRINT(rbpMass) PRINT(g1_Thrust) PRINT(tyreAdhesionX) PRINT(tyreAdhesionY)
   PRINT(handBrakeFriction) PRINT(footBrakeFriction) PRINT(frontBrakeBias)

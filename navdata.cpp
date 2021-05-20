@@ -155,10 +155,9 @@ namespace OpenGTA {
 
   NavData::NavData(PHYSFS_uint32 size, PHYSFS_file *fd, const size_t level_num) {
     if (size % 35) {
-      std::ostringstream o;
-      o << "Navdata size: " << size << " % 35 != 0";
-      throw E_INVALIDFORMAT(o.str());
-      //throw std::string("Invalid NavData size in mapfile");
+        throw E_INVALIDFORMAT("Navdata size: " + std::to_string(size)
+                              + " % 35 != 0");
+        // throw std::string("Invalid NavData size in mapfile");
     }
     PHYSFS_uint32 c = size / 35;
     assert(fd);
@@ -216,10 +215,8 @@ namespace OpenGTA {
         return it->second;
       ++it;
     }
-    std::ostringstream o;
-    o << "Querying invalid sector at " << int(x) << ", " << int(y);
-    throw E_OUTOFRANGE(o.str());
-    return NULL;
+    throw E_OUTOFRANGE("Querying invalid sector at " + std::to_string(int(x))
+                       + ", " + std::to_string(int(y)));
   }
 
   void NavData::clear() {

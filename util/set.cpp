@@ -28,7 +28,6 @@
 
 #define INTEGRATE_OGTA
 #ifdef INTEGRATE_OGTA
-#include <sstream>
 #include "m_exceptions.h"
 #endif
 
@@ -117,9 +116,7 @@ namespace Util {
   void Set::set_last(int n) {
     if (n > last) {
 #ifdef INTEGRATE_OGTA
-      std::ostringstream o;
-      o << n << " > " << last << std::endl;
-      throw E_OUTOFRANGE(o.str());
+      throw E_OUTOFRANGE(std::to_string(n) + " > " + std::to_string(last));
 #else
       printf("%i is larger than previous last n (%i), aborting\n", n, last);
 #endif
@@ -158,9 +155,7 @@ namespace Util {
     else
 #ifdef INTEGRATE_OGTA
     {
-      std::ostringstream o;
-      o << k << " >= " << last << std::endl;
-      throw E_OUTOFRANGE(o.str());
+      throw E_OUTOFRANGE(std::to_string(k) + " >= " + std::to_string(last));
     }
 #else
     assert(k < last);
@@ -177,9 +172,7 @@ namespace Util {
     else
 #ifdef INTEGRATE_OGTA
     {
-      std::ostringstream o;
-      o << k << " >= " << last << std::endl;
-      throw E_OUTOFRANGE(o.str());
+      throw E_OUTOFRANGE(std::to_string(k) + " >= " + std::to_string(last));
     }
 #else
     assert(k < last);
@@ -190,10 +183,9 @@ namespace Util {
   int Set::as_int(int start, int len) const {
     if (start < 0 || start > last || start + len > last) {
 #ifdef INTEGRATE_OGTA
-      std::ostringstream o;
-      o << "invalid query: " << start << " length " << len <<
-      " with data-length " << last << std::endl;
-      throw E_OUTOFRANGE(o.str());
+      throw E_OUTOFRANGE("invalid query: " + std::to_string(start) + " length "
+                         + std::to_string(len) + " with data-length "
+                         + std::to_string(last));
 #else
       fprintf(stderr, "Set::Err: queried index out of range (%i, %i ; %i)\n", start, len, last);
       return -1;
@@ -213,10 +205,9 @@ namespace Util {
   int Set::as_int2(int start, int len) const {
     if (start < 0 || start > last || start + len > last) {
 #ifdef INTEGRATE_OGTA
-      std::ostringstream o;
-      o << "invalid query: " << start << " length " << len <<
-      " with data-length " << last << std::endl;
-      throw E_OUTOFRANGE(o.str());
+      throw E_OUTOFRANGE("invalid query: " + std::to_string(start) + " length "
+                         + std::to_string(len) + " with data-length "
+                         + std::to_string(last));
 #else
       fprintf(stderr, "Set::Err: queried index out of range (%i, %i ; %i)\n", start, len, last);
       return -1;

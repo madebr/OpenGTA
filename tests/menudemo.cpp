@@ -1,5 +1,4 @@
 #include <iostream>
-#include <sstream>
 #include <SDL_image.h>
 #include <SDL_opengl.h>
 #include <unistd.h>
@@ -216,11 +215,8 @@ namespace GUI {
 
   const OpenGL::PagedTexture & Manager::getCachedImage(size_t Id) {
     GuiTextureCache::iterator i = findByCacheId(Id);
-    if (i == texCache.end()) {
-      std::ostringstream o;
-      o << "cached texture id " << int(Id);
-      throw E_UNKNOWNKEY(o.str());
-    }
+    if (i == texCache.end())
+      throw E_UNKNOWNKEY("cached texture id " + std::to_string(int(Id)));
     return i->second;
   }
 
@@ -309,11 +305,7 @@ namespace GUI {
           return o;
       }
     }
-    std::ostringstream o;
-      o << "object by id " << int(id);
-      throw E_UNKNOWNKEY(o.str());
-
-    return 0;
+    throw E_UNKNOWNKEY("object by id " + std::to_string(int(id)));
   }
 
   void Manager::removeById(const size_t id) {
@@ -427,9 +419,7 @@ void run_init() {
 
   std::vector<uint16_t> frame_nums(8);
   for (int i = 0; i < 8; ++i) {
-    std::stringstream o;
-    o << "F_LOGO" << i << ".RAW";
-    guiManager.cacheImageRAW(o.str(), 100+i);
+    guiManager.cacheImageRAW("F_LOGO" + std::to_string(i) + ".RAW", 100+i);
     frame_nums[i] = 100+i;
   }
   guiManager.createAnimation(frame_nums, 5, 1);

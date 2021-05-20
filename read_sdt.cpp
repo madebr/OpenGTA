@@ -21,7 +21,6 @@
 * distribution.                                                         *
 ************************************************************************/
 #include <algorithm>
-#include <sstream>
 #include <cassert>
 #include <cstring>
 #include "m_exceptions.h"
@@ -54,9 +53,8 @@ namespace OpenGTA {
     PHYSFS_uint32 num_e = PHYSFS_fileLength(dataFile);
     if (num_e % 12) {
       //throw std::string("Ups: invalid SDT file?");
-      std::stringstream o;
-      o << "SDT filesize " << num_e << " % 12 != 0";
-      throw E_INVALIDFORMAT(o.str());
+      throw E_INVALIDFORMAT("SDT filesize " + std::to_string(uint32_t(num_e))
+                            + " % 12 != 0");
     }
     num_e /= 12;
     PHYSFS_uint32 r1, r2, sr;
@@ -100,9 +98,8 @@ namespace OpenGTA {
     MapType::iterator i = knownEntries.find(key);
     if (i == knownEntries.end()) {
       //throw std::string("Unknown sound-db entry");
-      std::ostringstream o;
-      o << "Querying for sound id: " << key;
-      throw E_UNKNOWNKEY(o.str());
+      throw E_UNKNOWNKEY("Querying for sound id: "
+                         + std::to_string(unsigned(key)));
     }
     return i->second;
   }

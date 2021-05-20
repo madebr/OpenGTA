@@ -21,7 +21,6 @@
 * distribution.                                                         *
 ************************************************************************/
 #include <iostream>
-#include <sstream>
 #include <SDL_opengl.h>
 #include <unistd.h>
 #include "gl_screen.h"
@@ -185,17 +184,17 @@ void drawScene(Uint32 ticks) {
 
     glPushMatrix();
     glTranslatef(10, 10, 0);
-    std::ostringstream sprite_info_str;
-    std::ostringstream ostr;
-    ostr << "car" << int(car_model);
 
-    if (car) {
-      sprite_info_str << vtype2name(car->carInfo.vtype)<< " model: " << int(car_model) << " name: " << 
-        OpenGTA::MainMsgLookup::Instance().get().getText(ostr.str());
+    std::string sprite_info;
+    if (car != nullptr) {
+      sprite_info = std::string { vtype2name(car->carInfo.vtype) }
+            + " model: " + std::to_string(int(car_model)) + " name: "
+            + OpenGTA::MainMsgLookup::Instance().get().getText(
+                "car" + std::to_string(int(car_model)));
+    } else {
+      sprite_info = "not a model: " + std::to_string(int(car_model));
     }
-    else
-      sprite_info_str << "not a model: " << int(car_model);
-    m_font.drawString(sprite_info_str.str());
+    m_font.drawString(sprite_info);
     glPopMatrix();
   }
   else {
@@ -212,9 +211,9 @@ void drawScene(Uint32 ticks) {
 
     glPushMatrix();
     glTranslatef(10, 10, 0);
-    std::ostringstream sprite_info_str;
-    sprite_info_str << spr_type_name(spr_type) << " offset " << frame_offset;
-    m_font.drawString(sprite_info_str.str());
+    std::string sprite_info = std::string { spr_type_name(spr_type) }
+        + " offset " + std::to_string(frame_offset);
+    m_font.drawString(sprite_info);
     glPopMatrix();
   }
 

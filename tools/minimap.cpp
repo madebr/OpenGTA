@@ -1,5 +1,4 @@
 #include <cassert>
-#include <sstream>
 #include "opengta.h"
 #include "dataholder.h"
 #include "log.h"
@@ -48,9 +47,9 @@ void save_map_level(OpenGTA::Map & map, size_t level, const char* out_prefix) {
   }
 
   SDL_UnlockSurface(surface);
-  std::ostringstream ostr;
-  ostr << out_prefix << "_" << level << ".bmp";
-  SDL_SaveBMP(surface, ostr.str().c_str());
+  std::string filename =
+      std::string { out_prefix } + "_" + std::to_string(level) + ".bmp";
+  SDL_SaveBMP(surface, filename.c_str());
 
 
 }

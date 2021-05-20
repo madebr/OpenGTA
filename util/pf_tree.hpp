@@ -23,11 +23,7 @@
 #ifndef PREFIX_FREE_TREE_H
 #define PREFIX_FREE_TREE_H
 
-#include <string.h>
 #include <map>
-#include <string>
-#include <sstream>
-#include "m_exceptions.h"
 
 namespace PrefixFreeTree {
 

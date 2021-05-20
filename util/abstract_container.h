@@ -25,7 +25,6 @@
 
 #include <string>
 #include <list>
-#include <sstream>
 #include "m_exceptions.h"
 
 template <class T>
@@ -80,9 +79,7 @@ typename std::list<T>::iterator AbstractContainer<T>::findById(uint32_t & id) {
     if (i->id() == id)
       return i;
   }
-  std::ostringstream ostr;
-  ostr << id;
-  throw E_UNKNOWNKEY(ostr.str());
+  throw E_UNKNOWNKEY(std::to_string(id));
 }
 
 #endif
