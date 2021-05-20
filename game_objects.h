@@ -99,7 +99,7 @@ namespace OpenGTA {
       InventoryMap inventory;
       uint8_t activeWeapon;
       uint32_t * activeAmmo;
-      uint32_t aiMode;
+      uint32_t aiMode = 0;
       static uint32_t fistAmmo;
       struct AiData {
         AiData() : id1(0), id2(0), pos1() {}
