@@ -75,7 +75,7 @@ void on_exit() {
 
 int main(int argc, char* argv[]) {
   PHYSFS_init(argv[0]);
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
   atexit(on_exit);
   OpenGTA::Script::IniScriptBridge p(argv[1]);
   p.loadLevel(atoi(argv[2]));

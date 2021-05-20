@@ -111,7 +111,7 @@ namespace OpenGTA {
     assert(buf);
     memset(buf, 0, t_len);
     PHYSFS_seek(dataFile, e.rawStart);
-    PHYSFS_read(dataFile, buf, 1, e.rawSize);
+    PHYSFS_readBytes(dataFile, buf, e.rawSize);
     return buf;
   }
   
@@ -120,7 +120,7 @@ namespace OpenGTA {
 #ifdef SOUND_DUMPER
 int main(int argc, char*argv[]) {
   PHYSFS_init(argv[0]);
-  PHYSFS_addToSearchPath("gtadata.zip", 1);
+  PHYSFS_mount("gtadata.zip", nullptr, 1);
   try {
     OpenGTA::SoundsDB sounds(argv[1]);
   }

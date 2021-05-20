@@ -403,10 +403,10 @@ void font_play(float b) {
 
 void run_init() {
   PHYSFS_init("ogta");
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
-  PHYSFS_addToSearchPath("gtadata.zip", 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
+  PHYSFS_mount("gtadata.zip", nullptr, 1);
   if (getenv("OGTA_MOD"))
-    PHYSFS_addToSearchPath(getenv("OGTA_MOD"), 0);
+    PHYSFS_mount(getenv("OGTA_MOD"), nullptr, 0);
   OpenGL::Screen & screen = OpenGL::Screen::Instance();
   screen.activate(arg_screen_w, arg_screen_h);
   screen.setSystemMouseCursor(true);

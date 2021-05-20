@@ -105,7 +105,9 @@ PHYSFS_file *OpenReadVFS(const std::string &file)
     std::transform(name2.begin(), name2.end(), name2.begin(), tolower);
     fd = PHYSFS_openRead(name2.c_str());
     if (!fd) // still no joy, give up
-        throw E_FILENOTFOUND(file + " with error: " + PHYSFS_getLastError());
+        throw E_FILENOTFOUND(
+            file + " with error: "
+            + PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
     // take this one instead
     return fd;
 }
@@ -115,7 +117,7 @@ unsigned char *BufferFromVFS(PHYSFS_file *file)
     assert(file != nullptr);
     unsigned int size = PHYSFS_fileLength(file);
     unsigned char *buffer = BufferCache::Instance().requestBuffer(size + 1);
-    size = PHYSFS_read(file, buffer, 1, size);
+    size = PHYSFS_readBytes(file, buffer, size);
     PHYSFS_close(file);
     return buffer;
 }

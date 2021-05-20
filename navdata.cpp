@@ -74,11 +74,11 @@ namespace OpenGTA {
     isADummy = 0;
     assert(fd);
     //memset(name2, 0, 30);
-    PHYSFS_read(fd, static_cast<void*>(&x), 1, 1);
-    PHYSFS_read(fd, static_cast<void*>(&y), 1, 1);
-    PHYSFS_read(fd, static_cast<void*>(&w), 1, 1);
-    PHYSFS_read(fd, static_cast<void*>(&h), 1, 1);
-    PHYSFS_read(fd, static_cast<void*>(&sam), 1, 1);
+    PHYSFS_readBytes(fd, static_cast<void*>(&x), 1);
+    PHYSFS_readBytes(fd, static_cast<void*>(&y), 1);
+    PHYSFS_readBytes(fd, static_cast<void*>(&w), 1);
+    PHYSFS_readBytes(fd, static_cast<void*>(&h), 1);
+    PHYSFS_readBytes(fd, static_cast<void*>(&sam), 1);
     // seek over the name embedded in the mapfile; use sample-num to
     // lookup in msg-db
     //PHYSFS_read(fd, static_cast<void*>(&name2), 30, 1);

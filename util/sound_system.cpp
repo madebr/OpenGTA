@@ -94,8 +94,8 @@ namespace Audio {
 using namespace Audio;
 int main(int argc, char* argv[]) {
   PHYSFS_init(argv[0]);
-  PHYSFS_addToSearchPath("gtadata.zip", 1);
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
+  PHYSFS_mount("gtadata.zip", nullptr, 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
 
   SoundSystem noisemaker;
   noisemaker.listMusicDecoders();

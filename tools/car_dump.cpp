@@ -66,8 +66,8 @@ void print_car(OpenGTA::GraphicsBase::CarInfo & ci) {
 
 void run_init(const char*) {
   PHYSFS_init("mapview");
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
-  PHYSFS_addToSearchPath("gtadata.zip", 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
+  PHYSFS_mount("gtadata.zip", nullptr, 1);
 }
 
 // dump all cars in style

@@ -46,7 +46,7 @@ namespace OpenGTA {
     int i = 0;
     std::string tmp;
     while (!PHYSFS_eof(f)) {
-      PHYSFS_read(f, static_cast<void*>(&v), 1, 1);
+      PHYSFS_readBytes(f, static_cast<void*>(&v), 1);
 
       /* thanks to: Michael Mendelsohn
        * http://gta.mendelsohn.de/
@@ -130,7 +130,7 @@ namespace OpenGTA {
 
 int main(int argc, char* argv[]) {
   PHYSFS_init(argv[0]);
-  PHYSFS_addToSearchPath("gtadata.zip", 1);
+  PHYSFS_mount("gtadata.zip", nullptr, 1);
   const char* lang = getenv("OGTA_LANG");
   if (!lang)
     lang = getenv("LANG");

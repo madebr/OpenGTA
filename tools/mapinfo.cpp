@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
   }
 
   PHYSFS_init(argv[0]);
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
 
   std::string map_filename(argv[1]);
   OpenGTA::Map map(map_filename);

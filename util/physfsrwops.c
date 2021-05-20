@@ -22,6 +22,11 @@
 #include <stdio.h>  /* used for SEEK_SET, SEEK_CUR, SEEK_END ... */
 #include "physfsrwops.h"
 
+static const char *get_error(void)
+{
+    return PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode());
+}
+
 static int physfsrwops_seek(SDL_RWops *rw, int offset, int whence)
 {
     PHYSFS_file *handle = (PHYSFS_file *) rw->hidden.unknown.data1;
@@ -37,8 +42,7 @@ static int physfsrwops_seek(SDL_RWops *rw, int offset, int whence)
         PHYSFS_sint64 current = PHYSFS_tell(handle);
         if (current == -1)
         {
-            SDL_SetError("Can't find position in file: %s",
-                          PHYSFS_getLastError());
+            SDL_SetError("Can't find position in file: %s", get_error());
             return(-1);
         } /* if */
 
@@ -60,7 +64,7 @@ static int physfsrwops_seek(SDL_RWops *rw, int offset, int whence)
         PHYSFS_sint64 len = PHYSFS_fileLength(handle);
         if (len == -1)
         {
-            SDL_SetError("Can't find end of file: %s", PHYSFS_getLastError());
+            SDL_SetError("Can't find end of file: %s", get_error());
             return(-1);
         } /* if */
 
@@ -88,7 +92,7 @@ static int physfsrwops_seek(SDL_RWops *rw, int offset, int whence)
     
     if (!PHYSFS_seek(handle, (PHYSFS_uint64) pos))
     {
-        SDL_SetError("PhysicsFS error: %s", PHYSFS_getLastError());
+        SDL_SetError("PhysicsFS error: %s", get_error());
         return(-1);
     } /* if */
 
@@ -99,11 +103,11 @@ static int physfsrwops_seek(SDL_RWops *rw, int offset, int whence)
 static int physfsrwops_read(SDL_RWops *rw, void *ptr, int size, int maxnum)
 {
     PHYSFS_file *handle = (PHYSFS_file *) rw->hidden.unknown.data1;
-    PHYSFS_sint64 rc = PHYSFS_read(handle, ptr, size, maxnum);
+    PHYSFS_sint64 rc = PHYSFS_readBytes(handle, ptr, size * maxnum);
     if (rc != maxnum)
     {
         if (!PHYSFS_eof(handle)) /* not EOF? Must be an error. */
-            SDL_SetError("PhysicsFS error: %s", PHYSFS_getLastError());
+            SDL_SetError("PhysicsFS error: %s", get_error());
     } /* if */
 
     return((int) rc);
@@ -113,9 +117,9 @@ static int physfsrwops_read(SDL_RWops *rw, void *ptr, int size, int maxnum)
 static int physfsrwops_write(SDL_RWops *rw, const void *ptr, int size, int num)
 {
     PHYSFS_file *handle = (PHYSFS_file *) rw->hidden.unknown.data1;
-    PHYSFS_sint64 rc = PHYSFS_write(handle, ptr, size, num);
+    PHYSFS_sint64 rc = PHYSFS_writeBytes(handle, ptr, size * num);
     if (rc != num)
-        SDL_SetError("PhysicsFS error: %s", PHYSFS_getLastError());
+        SDL_SetError("PhysicsFS error: %s", get_error());
 
     return((int) rc);
 } /* physfsrwops_write */
@@ -126,7 +130,7 @@ static int physfsrwops_close(SDL_RWops *rw)
     PHYSFS_file *handle = (PHYSFS_file *) rw->hidden.unknown.data1;
     if (!PHYSFS_close(handle))
     {
-        SDL_SetError("PhysicsFS error: %s", PHYSFS_getLastError());
+        SDL_SetError("PhysicsFS error: %s", get_error());
         return(-1);
     } /* if */
 
@@ -140,7 +144,7 @@ static SDL_RWops *create_rwops(PHYSFS_file *handle)
     SDL_RWops *retval = NULL;
 
     if (handle == NULL)
-        SDL_SetError("PhysicsFS error: %s", PHYSFS_getLastError());
+        SDL_SetError("PhysicsFS error: %s", get_error());
     else
     {
         retval = SDL_AllocRW();
@@ -188,4 +192,3 @@ SDL_RWops *PHYSFSRWOPS_openAppend(const char *fname)
 } /* PHYSFSRWOPS_openAppend */
 
 /* end of physfsrwops.c ... */
-

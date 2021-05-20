@@ -182,8 +182,8 @@ void drawScene() {
 
 void run_init(const char* prg) {
   PHYSFS_init("blockview");
-  PHYSFS_addToSearchPath("gtadata.zip", 1);
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
+  PHYSFS_mount("gtadata.zip", nullptr, 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
 
   OpenGL::Screen & screen = OpenGL::Screen::Instance();
   screen.activate(arg_screen_w, arg_screen_h);
@@ -201,7 +201,7 @@ void run_main() {
   int paused = 0;
 
   PHYSFS_init("blockview");
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
   glPolygonMode(GL_FRONT, GL_FILL);
   glEnable(GL_CULL_FACE);
 

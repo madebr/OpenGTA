@@ -309,15 +309,15 @@ void run_init(const char* prg_name) {
   // physfs-ogta
   const auto &data_path = Util::FileHelper::BaseDataPath();
   if (std::filesystem::exists(data_path))
-    PHYSFS_addToSearchPath(data_path.c_str(), 1);
+    PHYSFS_mount(data_path.c_str(), nullptr, 1);
   else
     WARN << "Could not load data-source: " << data_path << std::endl;
 
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
 
   const auto &mod_path = Util::FileHelper::ModDataPath();
   if (std::filesystem::exists(mod_path))
-    PHYSFS_addToSearchPath(mod_path.c_str(), 0);
+    PHYSFS_mount(mod_path.c_str(), nullptr, 0);
 
   // screen, no window yet
   OpenGL::Screen & screen = OpenGL::Screen::Instance();

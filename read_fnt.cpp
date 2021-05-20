@@ -58,8 +58,8 @@ namespace OpenGTA {
     delete [] workBuffer;
   }
   void Font::readHeader(PHYSFS_file *fd) {
-    PHYSFS_read(fd, static_cast<void*>(&numChars), 1, 1);
-    PHYSFS_read(fd, static_cast<void*>(&charHeight), 1, 1);
+    PHYSFS_readBytes(fd, static_cast<void*>(&numChars), 1);
+    PHYSFS_readBytes(fd, static_cast<void*>(&charHeight), 1);
     INFO << "Font contains " << int(numChars) << 
       " characters of height " << int(charHeight) << std::endl;
   }
@@ -137,12 +137,11 @@ namespace OpenGTA {
   SDL_FreeSurface(s);
   }
   Font::Character::Character(PHYSFS_file *fd, uint8_t height) {
-    PHYSFS_read(fd, static_cast<void*>(&width), 1, 1);
-    int c = int(width);
-    c *= int(height);
+    PHYSFS_readBytes(fd, static_cast<void*>(&width), 1);
+    size_t c = size_t(width) * size_t(height);
     //std::cout <<"width " << int(width) << " going to read " << c << " bytes" << std::endl;
     rawData = new uint8_t[c];
-    PHYSFS_read(fd, static_cast<void*>(rawData), 1, c);
+    PHYSFS_readBytes(fd, static_cast<void*>(rawData), c);
   }
   Font::Character::~Character() {
     delete [] rawData;
@@ -419,8 +418,8 @@ int main(int argc, char* argv[]) {
   PHYSFS_init(argv[0]);
   atexit(do_exit);
   std::cout << "Physfs-Base: " << PHYSFS_getBaseDir() << std::endl;
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
-  PHYSFS_addToSearchPath("gtadata.zip", 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
+  PHYSFS_mount("gtadata.zip", nullptr, 1);
   std::cout << "Has: " << argv[1] << " : " << PHYSFS_exists(argv[1]) << std::endl;
   OpenGTA::Font a(argv[1]);
   a.dumpAs("out.bmp", atoi(argv[2]));

@@ -89,8 +89,8 @@ namespace OpenGTA {
 
 void run_init(const char*) {
   PHYSFS_init("mapview");
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
-  PHYSFS_addToSearchPath("gtadata.zip", 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
+  PHYSFS_mount("gtadata.zip", nullptr, 1);
   OpenGL::Screen::Instance().activate(640, 480);
   SDL_EnableKeyRepeat( 100, SDL_DEFAULT_REPEAT_INTERVAL );
 

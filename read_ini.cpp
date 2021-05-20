@@ -53,7 +53,7 @@ namespace OpenGTA {
       PHYSFS_sint64 fd_off = 0;
       while(!PHYSFS_eof(fd)) {
         memset(buffer, 0, buflen+1);
-        PHYSFS_sint64 fd_off_add = PHYSFS_read(fd, static_cast<void*>(buffer), 1, buflen);
+        PHYSFS_sint64 fd_off_add = PHYSFS_readBytes(fd, static_cast<void*>(buffer), buflen);
 
         char * buf_ptr = buffer;
         while (buf_ptr) {
@@ -136,7 +136,7 @@ namespace OpenGTA {
     bool first_part_of_section = true;
     while(PHYSFS_tell(fd) < end_of_section) {
       memset(buffer+offset, 0, read_bytes+1);
-      PHYSFS_read(fd, buffer + offset, 1, read_bytes);
+      PHYSFS_readBytes(fd, buffer + offset, read_bytes);
       char* line_start = buffer;
       while (1) {
         char* line_end = strchr(line_start, '\r');
@@ -204,7 +204,7 @@ void on_exit() {
 
 int main(int argc, char* argv[]) {
   PHYSFS_init(argv[0]);
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
   atexit(on_exit);
   OpenGTA::ScriptParser p(argv[1]);
   p.loadLevel(atoi(argv[2]));

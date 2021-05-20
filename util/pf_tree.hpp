@@ -23,6 +23,8 @@
 #ifndef PREFIX_FREE_TREE_H
 #define PREFIX_FREE_TREE_H
 
+#include <cstdint>
+#include <cstdlib>
 #include <map>
 
 namespace PrefixFreeTree {

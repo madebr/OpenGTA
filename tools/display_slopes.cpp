@@ -373,7 +373,7 @@ void run_main() {
   int paused = 0;
 
   PHYSFS_init("mapview");
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
 
 /*
   SDL_Surface * tex = IMG_Load("lid.jpg");

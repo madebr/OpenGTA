@@ -106,8 +106,8 @@ int main(int argc, char* argv[]) {
   atexit(at_exit);
   PHYSFS_init(argv[0]);
   // add pwd to search path
-  PHYSFS_addToSearchPath(PHYSFS_getBaseDir(), 1);
-  PHYSFS_addToSearchPath("gtadata.zip", 1);
+  PHYSFS_mount(PHYSFS_getBaseDir(), nullptr, 1);
+  PHYSFS_mount("gtadata.zip", nullptr, 1);
   char* file = NULL;
   SDL_Init(SDL_INIT_VIDEO);
 

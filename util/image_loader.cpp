@@ -100,7 +100,7 @@ using OpenGL::PagedTexture;
       requestBuffer(nbytes);
     */
     uint8_t *buffer = lbuf();
-    PHYSFS_read(fd, buffer, 1, nbytes);
+    PHYSFS_readBytes(fd, buffer, nbytes);
     PHYSFS_close(fd);
 
     return createEmbeddedTexture(whp.first, whp.second, false, buffer);
@@ -120,7 +120,7 @@ using OpenGL::PagedTexture;
       throw E_UNKNOWNKEY(name + " - RAT file size unknown");
     }
     Util::BufferCache::LockedBuffer lb1(nbytes);
-    PHYSFS_read(fd, lb1(), 1, nbytes);
+    PHYSFS_readBytes(fd, lb1(), nbytes);
     PHYSFS_close(fd);
 
     // if this causes an exception, the buffercache will cleanup
