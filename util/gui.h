@@ -159,11 +159,10 @@ namespace GUI {
         const std::string & fontFile, const size_t fontScale) : Object(Id, r), text(s) {
       OpenGL::DrawableFont & fnt = OpenGTA::FontCache::Instance().getFont(fontFile, fontScale);
       font = &fnt;
-      align = 0;
     }
     OpenGL::DrawableFont * font;
     std::string text;
-    uint8_t align;
+    uint8_t align = 0;
     void draw();
   };
 
