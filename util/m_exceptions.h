@@ -6,64 +6,71 @@
 
 namespace Util {
 
-  struct LocalException : public std::exception {
-    LocalException(const char *f, const size_t l, const char* n);
-    LocalException(const char *f, const size_t l, const char* n,
-        const std::string msg);
+struct LocalException : public std::exception {
+    LocalException(const std::string &f, const size_t l, const std::string &n)
+        : msg { n + " (" + f + ":" + std::to_string(l) }
+    {}
+    LocalException(const std::string &f,
+                   const size_t l,
+                   const std::string &n,
+                   const std::string &m)
+        : msg { n + " (" + f + ":" + std::to_string(l) + "): " + m }
+    {}
     virtual ~LocalException() noexcept = default;
-    const char * what() const noexcept { return msg.c_str(); }
+    const char *what() const noexcept { return msg.c_str(); }
     std::string msg;
-  };
+};
 
-  /* Actually I wouldn't make the derived destructors virtual,
-   * but g++ complains if I don't. No idea why.
-   *
-   * Anyway exceptions shouldn't happen that often and gcc is
-   * usually right about those things...
-   */
+struct FileNotFound : public LocalException {
+    FileNotFound(const std::string &f, const size_t l, const std::string &_msg)
+        : LocalException(f, l, "FileNotFound", _msg)
+    {}
+};
 
-  struct FileNotFound : public LocalException {
-    FileNotFound(const char* f, const size_t l, const std::string _msg);
-    virtual ~FileNotFound() throw() {}
-  };
+struct IOError : public LocalException {
+    IOError(const std::string &f, const size_t l, const std::string &_msg)
+        : LocalException(f, l, "IOError", _msg)
+    {}
+};
 
-  struct IOError : public LocalException {
-    IOError(const char* f, const size_t l, const std::string _msg);
-    virtual ~IOError() throw() {}
-  };
+struct InvalidFormat : public LocalException {
+    InvalidFormat(const std::string &f, const size_t l, const std::string &_msg)
+        : LocalException(f, l, "InvalidFormat", _msg)
+    {}
+};
 
-  struct InvalidFormat : public LocalException {
-    InvalidFormat(const char* f, const size_t l, const std::string _msg);
-    virtual ~InvalidFormat() throw() {}
-  };
+struct UnknownKey : public LocalException {
+    UnknownKey(const std::string &f, const size_t l, const std::string &_msg)
+        : LocalException(f, l, "UnknownKey", _msg)
+    {}
+};
 
-  struct UnknownKey : public LocalException {
-    UnknownKey(const char* f, const size_t l, const std::string _msg);
-    virtual ~UnknownKey() throw() {}
-  };
+struct OutOfRange : public LocalException {
+    OutOfRange(const std::string &f, const size_t l, const std::string &_msg)
+        : LocalException(f, l, "OutOfRange", _msg)
+    {}
+};
 
-  struct OutOfRange : public LocalException {
-    OutOfRange(const char* f, const size_t l, const std::string _msg);
-    virtual ~OutOfRange() throw () {}
-  };
+struct OutOfMemory : public LocalException {
+    OutOfMemory(const std::string &f, const size_t l, const std::string &_msg)
+        : LocalException(f, l, "OutOfMemory", _msg)
+    {}
+};
 
-  struct OutOfMemory : public LocalException {
-    OutOfMemory(const char* f, const size_t l, const std::string _msg);
-    virtual ~OutOfMemory() throw() {}
-  };
+struct ScriptError : public LocalException {
+    ScriptError(const std::string &f, const size_t l, const std::string &_msg)
+        : LocalException(f, l, "ScriptError", _msg)
+    {}
+};
 
-  struct ScriptError : public LocalException {
-    ScriptError(const char* f, const size_t l, const std::string _msg);
-    virtual ~ScriptError() throw() {}
-  };
+struct NotSupported : public LocalException {
+    NotSupported(const std::string &f, const size_t l, const std::string &_msg)
+        : LocalException(f, l, "NotSupported", _msg)
+    {}
+};
+} // namespace Util
 
-  struct NotSupported : public LocalException {
-    NotSupported(const char* f, const size_t l, const std::string _msg);
-    virtual ~NotSupported() throw() {}
-  };
-}
-
-// to avoid the need for the namespace when writing catch-all blocks 
+// to avoid the need for the namespace when writing catch-all blocks
 typedef Util::LocalException Exception;
 
 #ifdef WIN32
@@ -71,13 +78,13 @@ typedef Util::LocalException Exception;
 #endif
 
 // to auto-fill line+file information where the exception was created
-#define E_FILENOTFOUND(m)  Util::FileNotFound(__FILE__, __LINE__, m)
-#define E_IOERROR(m)       Util::IOError(__FILE__, __LINE__, m)
+#define E_FILENOTFOUND(m) Util::FileNotFound(__FILE__, __LINE__, m)
+#define E_IOERROR(m) Util::IOError(__FILE__, __LINE__, m)
 #define E_INVALIDFORMAT(m) Util::InvalidFormat(__FILE__, __LINE__, m)
-#define E_UNKNOWNKEY(m)    Util::UnknownKey(__FILE__, __LINE__, m)
-#define E_OUTOFRANGE(m)    Util::OutOfRange(__FILE__, __LINE__, m)
-#define E_OUTOFMEMORY(m)   Util::OutOfMemory(__FILE__, __LINE__, m)
-#define E_SCRIPTERROR(m)   Util::ScriptError(__FILE__, __LINE__, m)
-#define E_NOTSUPPORTED(m)  Util::NotSupported(__FILE__, __LINE__, m)
+#define E_UNKNOWNKEY(m) Util::UnknownKey(__FILE__, __LINE__, m)
+#define E_OUTOFRANGE(m) Util::OutOfRange(__FILE__, __LINE__, m)
+#define E_OUTOFMEMORY(m) Util::OutOfMemory(__FILE__, __LINE__, m)
+#define E_SCRIPTERROR(m) Util::ScriptError(__FILE__, __LINE__, m)
+#define E_NOTSUPPORTED(m) Util::NotSupported(__FILE__, __LINE__, m)
 
 #endif
