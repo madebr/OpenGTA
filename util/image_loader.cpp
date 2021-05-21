@@ -26,17 +26,17 @@
 #include "file_helper.h"
 #include "buffercache.h"
 #include "log.h"
-#include "cistring.h"
 #include "opengta.h"
 #include "physfsrwops.h"
 #include "SDL_image.h"
 #include "m_exceptions.h"
+#include "string_helpers.h"
 
 namespace ImageUtil {
 using OpenGL::PagedTexture;
 
   WidthHeightPair lookupImageSize(const std::string & name, const uint32_t size) {
-    Util::ci_string iname(name.c_str());
+    std::string iname { Util::string_upper(name) };
     uint16_t width = 0;
     uint16_t height = 0;
     uint32_t bpp = 0;

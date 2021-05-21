@@ -8,20 +8,18 @@
 *                                                                       *
 * This notice may not be removed or altered.                            *
 ************************************************************************/
-#include <algorithm>
 #include <iostream>
 #include <cassert>
-#include "cistring.h"
 #include "opengta.h"
 #include "m_exceptions.h"
 #include "log.h"
+#include "string_helpers.h"
 
 namespace OpenGTA {
   Font::Font(const std::string &file) {
     PHYSFS_file *fd = PHYSFS_openRead(file.c_str());
     if (fd == NULL) {
-      std::string f2(file);
-      std::transform(f2.begin(), f2.end(), f2.begin(), tolower);
+      std::string f2 { Util::string_lower(file) };
       fd = PHYSFS_openRead(f2.c_str());
     }
     if (!fd)
@@ -148,7 +146,7 @@ namespace OpenGTA {
   }
   
   void Font::loadMapping(const std::string & name) {
-    Util::ci_string name2(name.c_str());
+    std::string name2 { Util::string_lower(name) };
 #define chr(n) ((char)(n))
     if (name2.find("big1.fon") != std::string::npos) {
       INFO << "found mapping: big1.fon - " << name << std::endl;
