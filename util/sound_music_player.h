@@ -26,6 +26,8 @@
 
 #include <SDL_sound.h>
 
+#include <functional>
+
 namespace Audio {
   static int music_volume = 127;
   using MusicFinishedCallbackType = std::function<void()>;

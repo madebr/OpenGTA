@@ -30,7 +30,7 @@ namespace Audio {
     CacheType::iterator i = cached.find(id);
     if (i == cached.end()) {
       ChunkData c = loadChunk(file, idx);
-      cached.insert(std::make_pair<ChunkId, ChunkData>(id, c));
+      cached.insert(std::make_pair(id, c));
       i = cached.find(id);
     }
     return i->second;
