@@ -15,6 +15,17 @@
 #include "m_exceptions.h"
 #include "log.h"
 
+namespace {
+std::string format_map(const std::map<std::string, std::string> &m)
+{
+  std::string ret = "{ ";
+  for (const auto& [key, val] : m)
+    ret.append("{" + key + ": " + val + "}, ");
+  ret.append(" }");
+  return ret;
+}
+}
+
 namespace OpenGTA {
   MessageDB::MessageDB() {
     load("ENGLISH.FXT");
@@ -27,6 +38,7 @@ namespace OpenGTA {
     messages.clear();
   }
   void MessageDB::load(const std::string &file) {
+    INFO << "Trying to load file " << file << std::endl;
     PHYSFS_file* f = PHYSFS_openRead(file.c_str());
     if (f == NULL) {
       std::string f2(file);
@@ -72,6 +84,7 @@ namespace OpenGTA {
           i = 0;
         }
         else if (v == 0x00) {
+          INFO << "v == 0, tmp = " << tmp << std::endl;
           buff[i] = 0x00;
           if (tmp.length() > 0)
             messages[tmp] = std::string(buff);
@@ -97,8 +110,9 @@ namespace OpenGTA {
   const std::string& MessageDB::getText(const char* id) {
     std::map<std::string, std::string>::iterator i = messages.find(std::string(id));
     if (i == messages.end()) {
-      ERROR << "string lookup failed for key: " << id << std::endl;
-      return _error;
+        ERROR << "string lookup failed for key: " << id
+              << ", map = " << format_map(messages) << std::endl;
+        return _error;
     }
     return i->second;
   }
@@ -106,8 +120,9 @@ namespace OpenGTA {
   const std::string& MessageDB::getText(const std::string &id) {
     std::map<std::string, std::string>::iterator i = messages.find(id);
     if (i == messages.end()) {
-      ERROR << "string lookup failed for key: " << id << std::endl;
-      return _error;
+        ERROR << "string lookup failed for key: " << id
+              << ", map = " << format_map(messages) << std::endl;
+        return _error;
     }
     return i->second;
   }
@@ -117,8 +132,9 @@ namespace OpenGTA {
     snprintf(reinterpret_cast<char*>(&tmp), 10, "%i", id);
     std::map<std::string, std::string>::iterator i = messages.find(std::string(tmp));
     if (i == messages.end()) {
-      ERROR << "string lookup failed for key: " << id << std::endl;
-      return _error;
+        ERROR << "string lookup failed for key: " << id
+              << ", map = " << format_map(messages) << std::endl;
+        return _error;
     }
     return i->second;
   }
@@ -137,7 +153,7 @@ int main(int argc, char* argv[]) {
   if (!lang)
     lang = "en";
   OpenGTA::MessageDB* strings = new OpenGTA::MessageDB(
-    Util::FileHelper::lang2MsgFilename(lang)
+    Util::FileHelper::Lang2MsgFilename(lang)
   );
   std::cout << strings->getText(1001) << std::endl;
   
