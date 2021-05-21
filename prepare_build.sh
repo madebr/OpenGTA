@@ -403,7 +403,7 @@ $SDL_GL_SWAP_CONTROL
 
 // use escape sequences to mark Log::info/warn/error()
 #ifdef LINUX
-//#define LOG_USE_ANSI_COLORS
+#define LOG_USE_ANSI_COLORS
 #endif
 EOF
 }
