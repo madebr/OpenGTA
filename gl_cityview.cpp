@@ -295,7 +295,7 @@ namespace OpenGTA {
 
   OpenGL::PagedTexture CityView::renderMap2Texture() {
     OpenGL::Screen & screen = OpenGL::Screen::Instance();
-    uint32_t width = screen.getWidth();
+    // uint32_t width = screen.getWidth();
     uint32_t height = screen.getHeight();
 
     uint32_t gl_h = 1;
@@ -407,7 +407,7 @@ namespace OpenGTA {
 
     GLuint tex = ImageUtil::createGLTexture(gl_h, gl_h, false, img_buf);
     float f_h = float(height) / gl_h;
-    float f_w = float(width)  / gl_h;
+    // float f_w = float(width)  / gl_h;
     //float horiz_corr = (1.0f - f_w) / 2.0f;
     //return OpenGL::PagedTexture(tex, 0+horiz_corr, 0, f_w+horiz_corr, f_h);
     

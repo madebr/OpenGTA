@@ -1071,7 +1071,7 @@ void draw_mapmode() {
         i++;
         continue;
       }
-      uint8_t l_type = i->first;
+      // uint8_t l_type = i->first;
       float l_x, l_y;
       l_x = i->second->x / 255.0f * h;// *  map_tex.coords[1].u;
       l_y = i->second->y / 255.0f * h;// * map_tex.coords[1].u;

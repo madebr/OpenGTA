@@ -13,7 +13,7 @@ namespace OpenGTA {
         Util::CellIterator ci(ped->pos);
         if (!ci.isValid())
           return;
-        OpenGTA::Map::BlockInfo & bi = ci.getBlock();
+        // OpenGTA::Map::BlockInfo & bi = ci.getBlock();
         //INFO << " ped in bt: " << int(bi.blockType()) << std::endl;
         //INFO << ped->pos.x << " " << ped->pos.z << std::endl;
         std::pair<bool, Util::CellIterator> f = ci.findNeighbourWithType(3, ped->rot);

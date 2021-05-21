@@ -254,10 +254,14 @@ namespace OpenGL {
       h = 1;
     surface = SDL_SetVideoMode(w, h, bpp, videoFlags);
     if (surface == NULL) {
-      ERROR << "vide-mode: " << w << ", " << h << " bpp: " << bpp << 
-      " hw-surface: " << (videoFlags & SDL_HWSURFACE == SDL_HWSURFACE ? "on" : "off") << 
-      " hw-blit: " << (videoFlags & SDL_HWACCEL == SDL_HWACCEL ? "on" : "off") << std::endl;
-      throw E_NOTSUPPORTED(SDL_GetError());
+        ERROR << "vide-mode: " << w << ", " << h << " bpp: " << bpp
+              << " hw-surface: "
+              << (((videoFlags & SDL_HWSURFACE) == SDL_HWSURFACE) ? "on"
+                                                                  : "off")
+              << " hw-blit: "
+              << (((videoFlags & SDL_HWACCEL) == SDL_HWACCEL) ? "on" : "off")
+              << std::endl;
+        throw E_NOTSUPPORTED(SDL_GetError());
     }
 
     glViewport(0, 0, w, h);
