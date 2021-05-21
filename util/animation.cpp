@@ -59,18 +59,16 @@ namespace Util {
   }
 
   void Animation::flipFrame(bool forward = true) {
-    switch(forward) {
-      case true:
-        if (currentFrame < numFrames - 1)
-          ++currentFrame;
-        else if (currentFrame == numFrames - 1)
-          isDone();
-        break;
-      case false:
-        if (currentFrame == 0)
-          isDone();
-        else
-          --currentFrame;
+    if (forward) {
+      if (currentFrame < numFrames - 1)
+        ++currentFrame;
+      else if (currentFrame == numFrames - 1)
+        isDone();
+    } else {
+      if (currentFrame == 0)
+        isDone();
+      else
+        --currentFrame;
     }
   }
 
