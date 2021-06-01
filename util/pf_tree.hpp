@@ -39,35 +39,34 @@ namespace PrefixFreeTree {
     Node & insert(const char * str, size_t offset = 0);
   };
 
-#define CHECK_HANDLE_LEAF if (curPos->isLeaf()) { Handler<T>::call(curPos->leaf_value); }
-
   template <typename T, template <class> class Handler>
     class Walker : public Handler<T>, public Node {
       public:
         Walker() : Handler<T>(), Node(), curPos(this) {}
 
         void push(int v) {
-          MapType::iterator i = curPos->map.find(v);
-          if (i != curPos->map.end()) {
-            curPos = i->second;
-            CHECK_HANDLE_LEAF;
-          }
-          else {
-            i = map.find(v);
-            if (i != map.end()) {
-              curPos = i->second;
-              CHECK_HANDLE_LEAF;
-            }
-            else
-              curPos = this;
-          }
+          if (checkMap(curPos->map))
+            return;
+          if (checkMap(map))
+            return;
+          curPos = this;
         }
 
       private:
         Node * curPos;
+
+        bool checkMap(const Node::MapType& m, int v)
+        {
+          auto it = m.find(v);
+          if (it == m.end())
+            return false;
+          curPos = it->second;
+          if (curPos->isLeaf())
+            Handler<T>::call(curPos->leaf_value);
+          return true;
+        }
     };
 
 }
-#undef CHECK_HANDLE_LEAF
 
 #endif
