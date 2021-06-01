@@ -14,55 +14,49 @@
 Util::Log::error(__FILE__, __LINE__) << "GL error: " << _err << " = " << Util::Log::glErrorName(_err) << std::endl; }
 
 #define ANSI_COLOR_OFF "\033[0m"
-#define ANSI_COLOR_INFO "\033[32mInfo ("
-#define ANSI_COLOR_WARN "\033[33mWarning ("
-#define ANSI_COLOR_ERR  "\033[31mError ("
+#define ANSI_COLOR_INFO "\033[32m"
+#define ANSI_COLOR_WARN "\033[33m"
+#define ANSI_COLOR_ERR  "\033[31m"
 
 namespace Util {
   class Log {
     public:
-      inline static std::ostream & info(const char* f, int l) { 
-        if (level) return emptyStream; 
+      inline static std::ostream & info(const char* f, int l) {
+        if (level) return emptyStream;
+        std::cout
 #ifdef LOG_USE_ANSI_COLORS
-        std::cout << ANSI_COLOR_INFO <<
-#else
-        std::cout << "Info (" <<
+        << ANSI_COLOR_INFO
 #endif
-          f << ":" << l << "): "
+        << "Info (" << f << ":" << l << "): "
 #ifdef LOG_USE_ANSI_COLORS
-          << ANSI_COLOR_OFF;
-#else
-          ;
+        << ANSI_COLOR_OFF
 #endif
+        ;
         return std::cout;
       }
       inline static std::ostream & warn(const char* f, int l) {
         if (level > 1) return emptyStream;
+        std::cerr
 #ifdef LOG_USE_ANSI_COLORS
-        std::cerr << ANSI_COLOR_WARN <<
-#else
-        std::cerr << "Warning (" <<
+        << ANSI_COLOR_WARN
 #endif
-          f << ":" << l << "): "
+        << "Warning (" << f << ":" << l << "): "
 #ifdef LOG_USE_ANSI_COLORS
-          << ANSI_COLOR_OFF;
-#else
-          ;
+        << ANSI_COLOR_OFF
 #endif
+        ;
         return std::cerr;
       }
       inline static std::ostream & error(const char* f, int l) {
+        std::cerr
 #ifdef LOG_USE_ANSI_COLORS
-        std::cerr << ANSI_COLOR_ERR <<
-#else
-        std::cerr << "Error (" <<
+        << ANSI_COLOR_ERR
 #endif
-          f << ":" << l << "): "
+        << "Error (" << f << ":" << l << "): "
 #ifdef LOG_USE_ANSI_COLORS
-          << ANSI_COLOR_OFF;
-#else
-          ;
+        << ANSI_COLOR_OFF
 #endif
+        ;
         return std::cerr;
       }
       static void setOutputLevel(unsigned int newLevel);
