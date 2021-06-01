@@ -905,17 +905,15 @@ namespace OpenGTA {
   }
   
   unsigned char* Graphics8Bit::getSide(unsigned int idx, unsigned int palIdx, bool rgba = false) {
-    prepareSideTexture(idx-1, reinterpret_cast<unsigned char*>(tileTmp));
+    prepareSideTexture(idx-1, tileTmp);
     unsigned char *res;
     if (rgba) {
-      masterRGB->apply(4096, reinterpret_cast<unsigned char*>(tileTmp), 
-          reinterpret_cast<unsigned char*>(tileTmpRGBA), true);
-      res = reinterpret_cast<unsigned char*>(tileTmpRGBA);
+      masterRGB->apply(4096, tileTmp, tileTmpRGBA, true);
+      res = tileTmpRGBA;
     }
     else {
-      masterRGB->apply(4096, reinterpret_cast<unsigned char*>(tileTmp), 
-          reinterpret_cast<unsigned char*>(tileTmpRGB), false);
-      res = reinterpret_cast<unsigned char*>(tileTmpRGB);
+      masterRGB->apply(4096, tileTmp, tileTmpRGB, false);
+      res = tileTmpRGB;
     }
     return res;
   }
@@ -934,20 +932,18 @@ namespace OpenGTA {
   }
   
   unsigned char *Graphics8Bit::getLid(unsigned int idx, unsigned int palIdx, bool rgba = false) {
-    prepareLidTexture(idx-1, reinterpret_cast<unsigned char*>(tileTmp));
+    prepareLidTexture(idx-1, tileTmp);
     if (palIdx > 0)
-      applyRemap(4096, palIdx, reinterpret_cast<unsigned char*>(tileTmp));
+      applyRemap(4096, palIdx, tileTmp);
     
     unsigned char *res;
     if (rgba) {
-      masterRGB->apply(4096, reinterpret_cast<unsigned char*>(tileTmp), 
-        reinterpret_cast<unsigned char*>(tileTmpRGBA), true);
-      res = reinterpret_cast<unsigned char*>(tileTmpRGBA);
+      masterRGB->apply(4096, tileTmp, tileTmpRGBA, true);
+      res = tileTmpRGBA;
     }
     else {
-      masterRGB->apply(4096, reinterpret_cast<unsigned char*>(tileTmp), 
-        reinterpret_cast<unsigned char*>(tileTmpRGB), false);
-      res = reinterpret_cast<unsigned char*>(tileTmpRGB);
+      masterRGB->apply(4096, tileTmp, tileTmpRGB, false);
+      res = tileTmpRGB;
     }
     return res;
   }
@@ -966,26 +962,24 @@ namespace OpenGTA {
   }
   
   unsigned char* Graphics8Bit::getAux(unsigned int idx, unsigned int palIdx, bool rgba = false) {
-    prepareAuxTexture(idx-1, reinterpret_cast<unsigned char*>(tileTmp));
+    prepareAuxTexture(idx-1, tileTmp);
     unsigned char *res;
     if (rgba) {
 
-      masterRGB->apply(4096, reinterpret_cast<unsigned char*>(tileTmp), 
-          reinterpret_cast<unsigned char*>(tileTmpRGBA), true);
-      res = reinterpret_cast<unsigned char*>(tileTmpRGBA);
+      masterRGB->apply(4096, tileTmp, tileTmpRGBA, true);
+      res = tileTmpRGBA;
     }
     else {
-      masterRGB->apply(4096, reinterpret_cast<unsigned char*>(tileTmp), 
-          reinterpret_cast<unsigned char*>(tileTmpRGB), false);
-      res = reinterpret_cast<unsigned char*>(tileTmpRGB);
+      masterRGB->apply(4096, tileTmp, tileTmpRGB, false);
+      res = tileTmpRGB;
     }
     return res;
   }
 
   unsigned char* GraphicsBase::getTmpBuffer(bool rgba = false) {
     if (rgba)
-      return reinterpret_cast<unsigned char*>(tileTmpRGBA);
-    return reinterpret_cast<unsigned char*>(tileTmpRGB);
+      return tileTmpRGBA;
+    return tileTmpRGB;
   }
         
   /* RGBPalette */
