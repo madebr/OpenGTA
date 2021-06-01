@@ -26,6 +26,7 @@
 #include <SDL_opengl.h>
 #include <unistd.h>
 #include "blockanim.h"
+#include "config.h"
 #include "dataholder.h"
 #include "entity_controller.h"
 #include "file_helper.h"
