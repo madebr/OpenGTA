@@ -4,6 +4,7 @@
 #include "entity_controller.h"
 #include "id_sys.h"
 #include "key_handler.h"
+#include "m_exceptions.h"
 
 namespace OpenGTA {
 
@@ -32,7 +33,8 @@ namespace OpenGTA {
         pc_ptr = NULL;
       }
       PedController & getCtrl() {
-        assert(pc_ptr);
+        if (pc_ptr == nullptr)
+          throw E_NOTSUPPORTED("Player is not available");
         return *pc_ptr;
       }
       void setCtrl(PedController & pc) {
