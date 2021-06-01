@@ -3,6 +3,7 @@
 #include <SDL_image.h>
 #include <SDL_opengl.h>
 #include "common_sdl_gl.h"
+#include "log.h"
 #include "opengta.h"
 
 extern SDL_Surface* screen;
@@ -425,7 +426,7 @@ void run_main() {
           screen = SDL_SetVideoMode( event.resize.w,
               event.resize.h, 32, videoFlags );
           if (!screen)
-            ERROR("Failed to set video mode after resize event");
+            ERROR << "Failed to set video mode after resize event" << std::endl;
           resize(event.resize.w, event.resize.h);
           break;
         case SDL_QUIT:
