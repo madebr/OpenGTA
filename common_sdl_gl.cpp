@@ -2,6 +2,8 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 
+#include "log.h"
+
 extern int global_EC;
 
 #ifndef VIEWGL_FOVY
@@ -66,7 +68,7 @@ void initVideo(int w, int h, int bpp) {
   */
 
   if (!videoInfo)
-    ERROR("VideoInfo query failed");
+    ERROR << "VideoInfo query failed" << std::endl;
   videoFlags  = SDL_OPENGL;
   videoFlags |= SDL_GL_DOUBLEBUFFER;
   videoFlags |= SDL_HWPALETTE;
@@ -74,22 +76,22 @@ void initVideo(int w, int h, int bpp) {
   //videoFlags |= SDL_FULLSCREEN;
   
   if ( videoInfo->hw_available ) {
-    std::cerr << "Info: Using HWSURFACE" << std::endl;
+    INFO << "Using HWSURFACE" << std::endl;
     videoFlags |= SDL_HWSURFACE;
   }
   else {
-    std::cerr << "Info: Using SWSURFACE" << std::endl;
+    INFO << "Using SWSURFACE" << std::endl;
     videoFlags |= SDL_SWSURFACE;
   }
   if ( videoInfo->blit_hw ) {
-    std::cerr <<  "Info: Using HWACCEL" << std::endl;
+    INFO <<  "Using HWACCEL" << std::endl;
     videoFlags |= SDL_HWACCEL;
   }
   SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
   screen = SDL_SetVideoMode( w, h, bpp, videoFlags );
   if (!screen)
-    ERROR("SDL failed to generate requested VideoSurface!");
+    ERROR << "SDL failed to generate requested VideoSurface!" << std::endl;
 
   resize(w, h);
 }
