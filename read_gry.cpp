@@ -8,11 +8,11 @@
 *                                                                       *
 * This notice may not be removed or altered.                            *
 ************************************************************************/
-#include <algorithm>
 #include <iostream>
 #include <cassert>
 #include "opengta.h"
 #include "buffercache.h"
+#include "file_helper.h"
 #include "log.h"
 #include "m_exceptions.h"
 #include "set.h"
@@ -287,16 +287,7 @@ namespace OpenGTA {
   }    
 
   Graphics8Bit::Graphics8Bit(const std::string& style) : GraphicsBase() {
-    fd = PHYSFS_openRead(style.c_str());
-    if (fd == NULL) {
-      std::string style2(style);
-      transform(style2.begin(), style2.end(), style2.begin(), tolower);
-      fd = PHYSFS_openRead(style2.c_str());
-    }
-    if (fd == NULL) {
-      //throw std::string("FileNotFound: ") + style;
-      throw E_FILENOTFOUND(style + " with error: " + SDL_GetError());
-    }
+    fd = Util::FileHelper::OpenReadVFS(style);
     _topHeaderSize = 52;
     rawTiles = NULL;
     rawSprites = NULL;
@@ -1002,16 +993,7 @@ namespace OpenGTA {
   }
   
   Graphics8Bit::RGBPalette::RGBPalette(const std::string& palette) {
-    PHYSFS_file* fd = PHYSFS_openRead(palette.c_str());
-    if (fd == NULL) {
-      std::string pal2(palette);
-      std::transform(pal2.begin(), pal2.end(), pal2.begin(), tolower);
-      fd = PHYSFS_openRead(pal2.c_str());
-    }
-    if (!fd)
-        throw E_FILENOTFOUND(
-            palette + " with error: "
-            + PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
+    PHYSFS_file* fd = Util::FileHelper::OpenReadVFS(palette);
     loadFromFile(fd);
   }
   

@@ -10,6 +10,7 @@
 ************************************************************************/
 #include <iostream>
 #include <cassert>
+#include "file_helper.h"
 #include "opengta.h"
 #include "m_exceptions.h"
 #include "log.h"
@@ -17,14 +18,7 @@
 
 namespace OpenGTA {
   Font::Font(const std::string &file) {
-    PHYSFS_file *fd = PHYSFS_openRead(file.c_str());
-    if (fd == NULL) {
-      std::string f2 { Util::string_lower(file) };
-      fd = PHYSFS_openRead(f2.c_str());
-    }
-    if (!fd)
-      throw E_FILENOTFOUND(file);
-      //throw std::string("FileNotFound: ") + file;
+    PHYSFS_file *fd = Util::FileHelper::OpenReadVFS(file);
     readHeader(fd);
     int ww = 0;
     int lw = 0;

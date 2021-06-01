@@ -20,9 +20,9 @@
 * 3. This notice may not be removed or altered from any source          *
 * distribution.                                                         *
 ************************************************************************/
-#include <algorithm>
 #include <cassert>
 #include <cstring>
+#include "file_helper.h"
 #include "m_exceptions.h"
 #include "fx_sdt.h"
 
@@ -41,15 +41,7 @@ namespace OpenGTA {
   }
 
   SoundsDB::SoundsDB(const std::string & sdt_file) {
-    dataFile = PHYSFS_openRead(sdt_file.c_str());
-    if (!dataFile) {
-      std::string sdt2(sdt_file);
-      std::transform(sdt2.begin(), sdt2.end(), sdt2.begin(), tolower);
-      dataFile = PHYSFS_openRead(sdt2.c_str());
-    }
-    if (!dataFile)
-      throw E_FILENOTFOUND(sdt_file); 
-      //throw std::string("FileNotFound: ") + sdt_file;
+    dataFile = Util::FileHelper::OpenReadVFS(sdt_file);
     PHYSFS_uint32 num_e = PHYSFS_fileLength(dataFile);
     if (num_e % 12) {
       //throw std::string("Ups: invalid SDT file?");
@@ -71,13 +63,7 @@ namespace OpenGTA {
 
     std::string raw_file(sdt_file);
     raw_file.replace(raw_file.size() - 3, 3, "RAW");
-    dataFile = PHYSFS_openRead(raw_file.c_str());
-    if (!dataFile) {
-      std::string sdt2(raw_file);
-      std::transform(sdt2.begin(), sdt2.end(), sdt2.begin(), tolower);
-      dataFile = PHYSFS_openRead(sdt2.c_str());
-    }
-    assert(dataFile);
+    dataFile = Util::FileHelper::OpenReadVFS(raw_file);
 
   }
 

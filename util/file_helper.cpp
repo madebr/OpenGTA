@@ -25,8 +25,8 @@
 #include "buffercache.h"
 #include "log.h"
 #include "m_exceptions.h"
+#include "string_helpers.h"
 
-#include <algorithm>
 #include <cassert>
 #include <physfs.h>
 
@@ -101,8 +101,7 @@ PHYSFS_file *OpenReadVFS(const std::string &file)
     if (fd)
         return fd;
     // try lower case
-    std::string name2 = file;
-    std::transform(name2.begin(), name2.end(), name2.begin(), tolower);
+    std::string name2 { string_lower(file) };
     fd = PHYSFS_openRead(name2.c_str());
     if (!fd) // still no joy, give up
         throw E_FILENOTFOUND(

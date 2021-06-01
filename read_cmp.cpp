@@ -8,9 +8,9 @@
 *                                                                       *
 * This notice may not be removed or altered.                            *
 ************************************************************************/
-#include <algorithm>
 #include <iostream>
 #include <cassert>
+#include "file_helper.h"
 #include "opengta.h"
 #include "navdata.h"
 #include "log.h"
@@ -88,12 +88,7 @@ namespace OpenGTA {
 
   Map::Map(const std::string& filename) {
     nav = 0;
-    fd = PHYSFS_openRead(filename.c_str());
-    if (fd == NULL) {
-      std::string f2(filename);
-      std::transform(f2.begin(), f2.end(), f2.begin(), tolower);
-      fd = PHYSFS_openRead(f2.c_str());
-    }
+    fd = Util::FileHelper::OpenReadVFS(filename);
     if (!fd) {
       //throw std::string("FileNotFound: ") + filename;
       throw E_FILENOTFOUND(filename + " with error: " + SDL_GetError());

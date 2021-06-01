@@ -8,9 +8,9 @@
 *                                                                       *
 * This notice may not be removed or altered.                            *
 ************************************************************************/
-#include <algorithm>
 #include <stdio.h>
 #include <iostream>
+#include "file_helper.h"
 #include "opengta.h"
 #include "m_exceptions.h"
 #include "log.h"
@@ -39,15 +39,7 @@ namespace OpenGTA {
   }
   void MessageDB::load(const std::string &file) {
     INFO << "Trying to load file " << file << std::endl;
-    PHYSFS_file* f = PHYSFS_openRead(file.c_str());
-    if (f == NULL) {
-      std::string f2(file);
-      std::transform(f2.begin(), f2.end(), f2.begin(), tolower);
-      f = PHYSFS_openRead(f2.c_str());
-    }
-    if (f == NULL) {
-      throw E_FILENOTFOUND(file);
-    }
+    PHYSFS_file* f = Util::FileHelper::OpenReadVFS(file);
     
     messages.clear();
     
