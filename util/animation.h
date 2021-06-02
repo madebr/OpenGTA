@@ -50,7 +50,7 @@ namespace Util {
       } OnDone;
       Animation(uint16_t numFrames, uint16_t fps);
       Animation(const Animation & o);
-      inline const uint16_t & getCurrentFrameNumber() { return currentFrame; }
+      inline const uint16_t & getCurrentFrameNumber() const { return currentFrame; }
       inline void set(const Status doThis, const OnDone done = STOP) { status = doThis; onDone = done; }
       inline const Status & get() const { return status; }
       inline const OnDone & getDone() const { return onDone; }

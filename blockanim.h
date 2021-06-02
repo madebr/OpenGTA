@@ -22,6 +22,9 @@
 ************************************************************************/
 #include "opengta.h"
 #include "animation.h"
+
+#include <optional>
+
 namespace OpenGTA {
   class BlockAnim : public Util::Animation {
     public:
@@ -38,7 +41,7 @@ namespace OpenGTA {
           INFO << "FRAME " << int(anim_data->frame[i]) << std::endl;
         }*/
       }
-      uint8_t getFrame(uint8_t num) {
+      inline uint8_t getFrame(uint8_t num) const noexcept {
         return ad_ptr->frame[num];
       }
       GraphicsBase::LoadedAnim * ad_ptr;
@@ -46,14 +49,11 @@ namespace OpenGTA {
 
   class BlockAnimCtrl {
     public:
-      typedef std::vector<GraphicsBase::LoadedAnim*> DataAnimVector;
-      typedef std::vector<BlockAnim*> BlockAnimVector;
-      BlockAnimCtrl(const DataAnimVector & v);
-      ~BlockAnimCtrl();
+      BlockAnimCtrl(const std::vector<GraphicsBase::LoadedAnim*> & v);
       void update(uint32_t ticks);
-      BlockAnim * getAnim(uint8_t area, uint8_t id);
+      std::optional<BlockAnim> getAnim(uint8_t area, uint8_t id);
     private:
-      BlockAnimVector anims;
+      std::vector<BlockAnim> anims_;
 
   };
 }

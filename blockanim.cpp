@@ -23,10 +23,9 @@
 #include "blockanim.h"
 
 namespace OpenGTA {
-  BlockAnimCtrl::BlockAnimCtrl(const DataAnimVector & v) {
-    for (size_t i = 0; i < v.size(); i++) {
-      OpenGTA::GraphicsBase::LoadedAnim *da = v[i];
-      anims.push_back(new BlockAnim(da));
+  BlockAnimCtrl::BlockAnimCtrl(const std::vector<GraphicsBase::LoadedAnim*> & v) {
+    for (const auto &anim : v) {
+      anims_.emplace_back(anim);
     }
    /* while (i != v.end()) {
       OpenGTA::GraphicsBase::LoadedAnim * da = *i;
@@ -36,24 +35,19 @@ namespace OpenGTA {
   
   };
 
-  BlockAnim* BlockAnimCtrl::getAnim(uint8_t area, uint8_t id) {
-    for (size_t i = 0; i < anims.size(); i++) {
-      if ((anims[i]->ad_ptr->which == area) && (anims[i]->ad_ptr->block == id)) {
-        return anims[i];
-      }
+  std::optional<BlockAnim> BlockAnimCtrl::getAnim(uint8_t area, uint8_t id)
+  {
+    for (const auto &anim : anims_) {
+      if ((anim.ad_ptr->which == area) && (anim.ad_ptr->block == id))
+        return anim;
     }
-    return NULL;
+    return std::nullopt;
   }
 
-  void BlockAnimCtrl::update(uint32_t ticks) {
-    for (size_t i = 0; i < anims.size(); i++)
-      anims[i]->update(ticks);
-  }
-
-  BlockAnimCtrl::~BlockAnimCtrl() {
-    for (size_t i = 0; i < anims.size(); i++) {
-      delete anims[i];
+  void BlockAnimCtrl::update(uint32_t ticks)
+  {
+    for (auto &anim : anims_) {
+      anim.update(ticks);
     }
-    anims.clear();
   }
 }

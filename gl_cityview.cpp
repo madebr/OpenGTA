@@ -697,12 +697,8 @@ namespace OpenGTA {
 
     // FIXME: no remaps used!
     if (bi->lid) {
-      int frame_num = -1;//style->checkBlockAnimation(0, bi->lid);
-      BlockAnim * banim = blockAnims->getAnim(1, bi->lid);
-      if (banim) {
-        frame_num = banim->getCurrentFrameNumber();
-      }
-      if (frame_num <= 0) {
+      const auto banim = blockAnims->getAnim(1, bi->lid);
+      if (!banim.has_value()) {
         if (!lidCache->hasTexture(bi->lid)) {
           lid_tex = ImageUtil::createGLTexture(64, 64, is_flat, 
               style->getLid(static_cast<unsigned int>(bi->lid), 0, is_flat));
@@ -710,8 +706,8 @@ namespace OpenGTA {
         }
         else
           lid_tex = lidCache->getTextureWithId(bi->lid);
-      }
-      else {
+      } else {
+        const auto frame_num = banim->getCurrentFrameNumber();
         uint8_t aux_id = banim->getFrame(frame_num - 1);
         if (!auxCache->hasTexture(aux_id)) {
           lid_tex = ImageUtil::createGLTexture(64, 64, is_flat, 
@@ -723,12 +719,8 @@ namespace OpenGTA {
       }
     }
     if (bi->left) {
-      int frame_num = -1;
-      BlockAnim * banim = blockAnims->getAnim(0, bi->left);
-      if (banim) {
-        frame_num = banim->getCurrentFrameNumber();
-      }
-      if (frame_num <= 0) {
+      const auto banim = blockAnims->getAnim(0, bi->left);
+      if (!banim.has_value()) {
         if (!sideCache->hasTexture(bi->left)) {
           left_tex = ImageUtil::createGLTexture(64, 64, is_flat,
               style->getSide(static_cast<unsigned int>(bi->left), 0, is_flat));
@@ -736,8 +728,8 @@ namespace OpenGTA {
         }
         else
           left_tex = sideCache->getTextureWithId(bi->left);
-      }
-      else {
+      } else {
+        const auto frame_num = banim->getCurrentFrameNumber();
         uint8_t aux_id = banim->getFrame(frame_num - 1);
         if (!auxCache->hasTexture(aux_id)) {
           left_tex = ImageUtil::createGLTexture(64, 64, is_flat, 
@@ -750,12 +742,8 @@ namespace OpenGTA {
       }
     }
     if (bi->right) {
-      int frame_num = -1;
-      BlockAnim * banim = blockAnims->getAnim(0, bi->right);
-      if (banim) {
-        frame_num = banim->getCurrentFrameNumber();
-      }
-      if (frame_num <= 0) {
+      const auto banim = blockAnims->getAnim(0, bi->right);
+      if (!banim.has_value()) {
         if (!sideCache->hasTexture(bi->right)) {
           right_tex = ImageUtil::createGLTexture(64, 64, is_flat,
               style->getSide(static_cast<unsigned int>(bi->right), 0, is_flat));
@@ -763,8 +751,8 @@ namespace OpenGTA {
         }
         else
           right_tex = sideCache->getTextureWithId(bi->right);
-      }
-      else {
+      } else {
+        const auto frame_num = banim->getCurrentFrameNumber();
         uint8_t aux_id = banim->getFrame(frame_num - 1);
         if (!auxCache->hasTexture(aux_id)) {
           right_tex = ImageUtil::createGLTexture(64, 64, is_flat, 
@@ -776,12 +764,8 @@ namespace OpenGTA {
       }
     }
     if (bi->top) {
-      int frame_num = -1;
-      BlockAnim * banim = blockAnims->getAnim(0, bi->top);
-      if (banim) {
-        frame_num = banim->getCurrentFrameNumber();
-      }
-      if (frame_num <= 0) {
+      const auto banim = blockAnims->getAnim(0, bi->top);
+      if (!banim.has_value()) {
 
         if (!sideCache->hasTexture(bi->top)) {
           top_tex = ImageUtil::createGLTexture(64, 64, is_flat,
@@ -790,8 +774,8 @@ namespace OpenGTA {
         }
         else
           top_tex = sideCache->getTextureWithId(bi->top);
-      }
-      else {
+      } else {
+        const auto frame_num = banim->getCurrentFrameNumber();
         uint8_t aux_id = banim->getFrame(frame_num - 1);
         if (!auxCache->hasTexture(aux_id)) {
           top_tex = ImageUtil::createGLTexture(64, 64, is_flat, 
@@ -803,12 +787,8 @@ namespace OpenGTA {
       }
     }
     if (bi->bottom) {
-      int frame_num = -1;
-      BlockAnim * banim = blockAnims->getAnim(0, bi->bottom);
-      if (banim) {
-        frame_num = banim->getCurrentFrameNumber();
-      }
-      if (frame_num <= 0) {
+      const auto banim = blockAnims->getAnim(0, bi->bottom);
+      if (!banim.has_value()) {
 
         if (!sideCache->hasTexture(bi->bottom)) {
           bottom_tex = ImageUtil::createGLTexture(64, 64, is_flat,
@@ -817,8 +797,8 @@ namespace OpenGTA {
         }
         else
           bottom_tex = sideCache->getTextureWithId(bi->bottom);
-      }
-      else {
+      } else {
+        const auto frame_num = banim->getCurrentFrameNumber();
         uint8_t aux_id = banim->getFrame(frame_num - 1);
         if (!auxCache->hasTexture(aux_id)) {
           bottom_tex = ImageUtil::createGLTexture(64, 64, is_flat, 
